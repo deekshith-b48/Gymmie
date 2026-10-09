@@ -107,7 +107,7 @@ class _BackendSetupScreenState extends State<BackendSetupScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             InfoBanner(
-              _cfg.isConfigured ? 'Current server: ${_cfg.baseUrl}' : 'No backend is configured. Enter the address of the DGymBook API (or the bundled dev backend) to continue.',
+              _cfg.isConfigured ? 'Current server: ${_cfg.baseUrl}' : 'No backend is configured. Enter the address of the Gymmie API (or the bundled dev backend) to continue.',
               icon: Icons.dns_outlined,
             ),
             const Gap(20),

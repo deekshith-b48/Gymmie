@@ -21,6 +21,6 @@ export function startServer(overrides = {}) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const s = await startServer();
-  console.log(`DGymBook dev backend listening on http://${s.config.host}:${s.port}  (env=${s.config.env}, otp-dev=${s.config.devExposeOtp})`);
+  console.log(`Gymmie dev backend listening on http://${s.config.host}:${s.port}  (env=${s.config.env}, otp-dev=${s.config.devExposeOtp})`);
   console.log('This is a DEVELOPMENT backend for the reconstructed app, not the original DGymBook service.');
 }

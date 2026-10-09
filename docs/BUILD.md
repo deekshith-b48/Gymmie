@@ -1,4 +1,4 @@
-# Build, run and test
+# Build, run and test (Gymmie)
 
 All commands run from the project root. `source tool/env.sh` first (it puts the arm64 Flutter, JDK 21 and
 the Android SDK on `PATH` and sets `JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true`).

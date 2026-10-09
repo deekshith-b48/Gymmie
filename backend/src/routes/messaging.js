@@ -281,7 +281,7 @@ export function registerMessagingRoutes({ router, store, config }) {
     }
     const status = order.status === 'created' ? result : order.status === 'paid' ? 'success' : 'failed';
     const link = `dgymbook://payments?status=${status}&orderId=${encodeURIComponent(order.id)}&type=${order.type}`;
-    return html(`<h2>${status === 'success' ? 'Payment successful' : 'Payment failed'}</h2><p>Return to the DGymBook Partner app.</p><p><a href="${esc(link)}">Open the app</a></p><meta http-equiv="refresh" content="1;url=${esc(link)}">`);
+    return html(`<h2>${status === 'success' ? 'Payment successful' : 'Payment failed'}</h2><p>Return to the Gymmie app.</p><p><a href="${esc(link)}">Open the app</a></p><meta http-equiv="refresh" content="1;url=${esc(link)}">`);
   });
 
   // ---- subscription billing ----------------------------------------------------------------------------------------------

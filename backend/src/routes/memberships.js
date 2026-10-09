@@ -26,6 +26,8 @@ export const PURCHASE_SCHEMA = {
   kind: S.oneOf(['new', 'renewal', 'upcoming'], { default: 'new' }),
 };
 
+const overlapMessage = (c) => `Membership overlaps with ${c.planName} (${c.startDate} to ${c.endDate}). Choose a later start date.`;
+
 export const view = (m, today) => ({
   ...m, status: membershipStatus(m, today), balance: balanceOf(m), sessionsLeft: sessionsLeft(m),
   daysLeft: ['active', 'paused'].includes(membershipStatus(m, today)) ? diffDays(today, m.endDate) : null,
@@ -51,7 +53,7 @@ export function createMembership(ctx, memberId, input, { kind, previousMembershi
   const endDate = endDateFor(startDate, plan.durationDays);
   if (!skipOverlap) {
     const clash = overlaps(existing, startDate, endDate);
-    if (clash) throw conflict(`Membership overlaps with ${clash.planName} (${clash.startDate} to ${clash.endDate}). Choose a later start date.`);
+    if (clash) throw conflict(overlapMessage(clash));
   }
   const q = quote({ price: plan.price, discount: input.discount ? { type: input.discount.type ?? 'amount', value: input.discount.value } : null, tax: defaultTax(ctx) });
   const payments = normalisePayments(ctx, input);
@@ -105,7 +107,13 @@ export function registerMembershipRoutes({ router }) {
       startDate = lastEnd && lastEnd >= ctx.today() ? addDays(lastEnd, 1) : ctx.today();
     }
     startDate ??= ctx.today();
-    return { ...q, startDate, endDate: endDateFor(startDate, plan.durationDays), plan: { id: plan.id, name: plan.name, durationDays: plan.durationDays, sessions: plan.sessions ?? null } };
+    const endDate = endDateFor(startDate, plan.durationDays);
+    // A hand-picked start date can clash with a running membership; say so now instead of at confirm time.
+    if (b.memberId && b.startDate) {
+      const clash = overlaps(ctx.col('memberships').find((m) => m.memberId === b.memberId), startDate, endDate);
+      if (clash) throw conflict(overlapMessage(clash));
+    }
+    return { ...q, startDate, endDate, plan: { id: plan.id, name: plan.name, durationDays: plan.durationDays, sessions: plan.sessions ?? null } };
   });
 
   router.post('/v5/memberships', { perm: 'members.write' }, (ctx) => {

@@ -94,6 +94,12 @@ test('renewal starts after the current membership; overlap is refused; upcoming 
   const m = await addMember({ membership: { planId: monthly.id, amountReceived: 1180 } });
   const overlap = await o.as('POST', '/v5/memberships', { memberId: m.id, planId: monthly.id, startDate: addDays(TODAY(), 5) });
   assert.equal(overlap.status, 409);
+  // the price preview reports the same clash before the user confirms
+  const qClash = await o.as('POST', '/v5/memberships/quote', { planId: monthly.id, memberId: m.id, startDate: addDays(TODAY(), 5) });
+  assert.equal(qClash.status, 409);
+  assert.match(qClash.body.error.message, /overlaps with .*Choose a later start date/);
+  assert.equal((await o.as('POST', '/v5/memberships/quote', { planId: monthly.id, memberId: m.id })).status, 200); // default start never clashes
+  assert.equal((await o.as('POST', '/v5/memberships/quote', { planId: monthly.id, memberId: m.id, startDate: addDays(TODAY(), 31) })).status, 200);
   const renew = data(await o.as('POST', '/v5/memberships', { memberId: m.id, planId: quarterly.id, amountReceived: 0, kind: 'renewal' }));
   assert.equal(renew.startDate, addDays(TODAY(), 30));
   assert.equal(renew.status, 'upcoming');
