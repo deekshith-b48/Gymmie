@@ -12,13 +12,16 @@ Legend: ✅ implemented and exercised · 🟡 implemented, not exercised on devi
 | Transactions, balance, reminders, invoice PDF | ✅ | |
 | Reports | ✅ | |
 | Leads: list, form, convert | ✅ | |
-| Attendance logs, QR scan | ✅ | |
+| Attendance logs, QR scan | ✅ | off by default; admin enables in App Features |
+| Members-in-gym home card | ✅ | off by default; admin enables in App Features |
+| Member ID card (labels, QR, share as image) | ✅ | |
 | Staff, trainer schedule, working hours, bookings | ✅ | |
 | Products, sales, expenses | ✅ | |
 | Messaging: broadcasts, templates, credits, history, WhatsApp | 🟡 | outbox stand-in, nothing is actually sent |
 | Workout plans, diet plans, exercise library, generators, assign to member | ✅ | rule-based generators |
 | PAR-Q builder + member signing/view | ✅ builder / 🟡 signing | signature pad not drawn through on emulator |
-| Feedback, video links, biometric devices, poster | 🟡 | |
+| Feedback, video links, poster | 🟡 | |
+| Biometric devices | 🟡 | off by default; admin enables in App Features |
 | Settings hub and pages | ✅ | |
 | Report-schedule settings page | ❌ | |
 | Payment deep link (`dgymbook://payments`) handler | ❌ | manifest filter present |

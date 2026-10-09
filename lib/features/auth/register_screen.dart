@@ -111,7 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Create your DGymBook account, then set up your gym.',
+                'Create your Gymmie account, then set up your gym.',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 24),

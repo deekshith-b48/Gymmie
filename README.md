@@ -1,4 +1,4 @@
-# DGymBook Partner 1.9.4 — reconstruction
+# Gymmie (reconstruction of DGymBook Partner 1.9.4)
 
 Flutter app (`com.dgymbook.app`, package `gym_book_app`, version `1.9.4+1178`) plus a **development backend**.
 
@@ -32,9 +32,27 @@ then `flutter run`. Debug builds reach the host backend at `http://10.0.2.2:8787
 
 ## Verified (2026-10-09)
 
-`flutter analyze` — no issues · `flutter test` — 18 pass · `backend npm test` — 37 pass ·
+`flutter analyze` — no issues · `flutter test` — 20 pass · `backend npm test` — 38 pass ·
 `flutter build apk --debug` and `--release` succeed (logs in `docs/build-logs/`). Screens exercised on an Android emulator
 against the seeded backend.
+
+## Optional modules (admin switches)
+
+Attendance, the home-screen "Members in gym" card and Biometric devices are **off by default**. The owner or a manager turns them on
+under *Settings → App Features → Attendance & Access*. These three flags are additions of this reconstruction (not in the original
+catalog). They hide the UI (home cards, quick actions, Settings entries, routes); they are a display preference, not an access-control
+boundary: server permissions are unchanged. Restart the dev backend after pulling this change so it loads the new catalog.
+
+## Member ID card
+
+*Member menu → Generate ID card*: preview with photo, ID, plan validity, assigned labels and a check-in QR (same payload as
+"Show member QR"). Pick a colour theme, assign or create labels (saved to the member), and share the card as a PNG.
+
+## Name
+
+The app is shown as **Gymmie** (launcher label, title, login/splash/invoice text). The Android applicationId (`com.dgymbook.app`),
+the `dgymbook://` deep-link scheme and the Dart package name are unchanged so existing links, QR codes and installs keep working.
+The launcher icon is the original dumbbell mark; it contains no name.
 
 ## Known gaps — see `docs/FEATURE_MATRIX.md`
 

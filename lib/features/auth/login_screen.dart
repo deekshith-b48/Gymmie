@@ -107,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Welcome to DGymBook!'.tr,
+                'Welcome to Gymmie!'.tr,
                 style: Theme.of(context).textTheme.headlineSmall
                     ?.copyWith(fontWeight: FontWeight.w600),
               ),

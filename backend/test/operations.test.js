@@ -291,6 +291,20 @@ test('feature flags gate server behaviour', async () => {
   assert.equal((await g.as('PUT', '/v5/gyms/features/WHATSAPP_INTEGRATION', { enabled: true })).status, 404);
 });
 
+test('attendance, members-in-gym and biometrics are off by default and the owner can switch them on', async () => {
+  const g = await h.owner({ phone: '+919876509190', gymName: 'Optional Modules Gym', features: false });
+  const list = (await g.as('GET', '/v5/gyms/features')).body.data;
+  for (const key of ['ATTENDANCE', 'MEMBERS_IN_GYM', 'BIOMETRICS']) {
+    const f = list.find((x) => x.key === key);
+    assert.ok(f, `${key} is in the catalog`);
+    assert.equal(f.enabled, false, `${key} defaults to off`);
+    assert.equal(f.adminEnabled, true, `${key} can be enabled by the admin`);
+    const on = await g.as('PUT', `/v5/gyms/features/${key}`, { enabled: true });
+    assert.equal(on.status, 200);
+    assert.equal(on.body.data.find((x) => x.key === key).enabled, true);
+  }
+});
+
 test('biometric device API: key auth, check-in, denial for expired, enrolment and blocking', async () => {
   const dev = data(await o.as('POST', '/v3/biohub/devices', { name: 'Front Door', serialNumber: 'SN-1001', ip: '192.168.1.50', type: 'both' }));
   assert.ok(dev.deviceKey);
@@ -379,5 +393,5 @@ test('misc: video links, documents, FCM token registration and announcements', a
   assert.equal(data(await o.as('GET', '/v5/me/feature-announcements'))[0].seen, true);
   const cfg = data(await h.call('GET', '/v5/apps/configs/settings'));
   assert.equal(cfg.maintenanceMode, false);
-  assert.equal(cfg.featureCatalog.length, 15);
+  assert.equal(cfg.featureCatalog.length, 18);
 });

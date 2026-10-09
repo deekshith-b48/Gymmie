@@ -10,14 +10,14 @@ import 'router.dart';
 import 'session_cubit.dart';
 import 'settings_cubit.dart';
 
-class GymBookApp extends StatefulWidget {
-  const GymBookApp({super.key});
+class GymmieApp extends StatefulWidget {
+  const GymmieApp({super.key});
 
   @override
-  State<GymBookApp> createState() => _GymBookAppState();
+  State<GymmieApp> createState() => _GymmieAppState();
 }
 
-class _GymBookAppState extends State<GymBookApp> {
+class _GymmieAppState extends State<GymmieApp> {
   late final GoRouter _router = buildRouter();
 
   @override
@@ -29,7 +29,7 @@ class _GymBookAppState extends State<GymBookApp> {
       ],
       child: BlocBuilder<SettingsCubit, AppPrefs>(
         builder: (context, prefs) => MaterialApp.router(
-          title: 'DGymBook Partner',
+          title: 'Gymmie',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),

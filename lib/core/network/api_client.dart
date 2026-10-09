@@ -32,7 +32,7 @@ class ApiResponse {
   int get totalPages => meta.i('totalPages', 1);
 }
 
-/// REST client for the DGymBook API.
+/// REST client for the Gymmie API.
 ///
 ///  * Adds `Authorization: Bearer` and `x-gym-id` (gym-scoped routes).
 ///  * On a 401, refreshes the session ONCE (single-flight) and retries the request

@@ -23,7 +23,7 @@ const stringsHi = <String, String>{
   'Try again': 'पुनः प्रयास करें',
   'Loading': 'लोड हो रहा है',
   'Something went wrong': 'कुछ गलत हो गया',
-  'Welcome to DGymBook!': 'DGymBook में आपका स्वागत है!',
+  'Welcome to Gymmie!': 'Gymmie में आपका स्वागत है!',
   'Send OTP': 'OTP भेजें',
   'Verify & continue': 'सत्यापित करें और आगे बढ़ें',
   'Log out': 'लॉग आउट',

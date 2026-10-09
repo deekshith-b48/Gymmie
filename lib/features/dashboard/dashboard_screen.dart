@@ -26,12 +26,17 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final session = getIt<SessionCubit>();
     return BlocProvider<DashboardCubit>(
-      key: ValueKey(session.state.profile?.id),
+      key: ValueKey(
+        '${session.state.profile?.id}-${session.state.feature(Feat.attendance)}',
+      ),
       create: (_) => DashboardCubit(
         getIt<DashboardRepository>(),
         wantsInsights:
             session.state.feature(Feat.aiInsights) &&
             session.state.can(Perm.reportsRead),
+        wantsAttendance:
+            session.state.feature(Feat.attendance) &&
+            session.state.can(Perm.attendanceRead),
       ),
       child: const _DashboardView(),
     );
@@ -136,7 +141,7 @@ class _DashboardView extends StatelessWidget {
         Icons.how_to_reg,
         'Mark attendance',
         '/attendance',
-        s.can(Perm.attendanceWrite),
+        s.can(Perm.attendanceWrite) && s.feature(Feat.attendance),
       ),
       (
         Icons.contact_phone_outlined,
@@ -160,7 +165,7 @@ class _DashboardView extends StatelessWidget {
         Icons.qr_code_scanner,
         'Scan member QR',
         '/attendance/scan',
-        s.can(Perm.attendanceWrite),
+        s.can(Perm.attendanceWrite) && s.feature(Feat.attendance),
       ),
     ].where((e) => e.$4).toList();
     showAppSheet<void>(
@@ -313,14 +318,14 @@ class _Body extends StatelessWidget {
                 ),
             ],
           ),
-          if (s.can(Perm.attendanceRead))
+          if (s.can(Perm.attendanceRead) && s.feature(Feat.membersInGym))
             _LiveCard(
               o: d.occupancy,
-              onDevices: s.can(Perm.devicesRead)
+              onDevices: s.can(Perm.devicesRead) && s.feature(Feat.biometrics)
                   ? () => context.push('/biometrics')
                   : null,
             ),
-          if (s.can(Perm.attendanceRead))
+          if (s.can(Perm.attendanceRead) && s.feature(Feat.attendance))
             _AttendanceCard(
               data: data,
               onOpen: () => context.push('/attendance'),

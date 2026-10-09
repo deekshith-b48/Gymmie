@@ -38,20 +38,12 @@ class SplashScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'DGymBook',
+              'Gymmie',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 26,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.4,
-              ),
-            ),
-            const Text(
-              'Partner',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-                letterSpacing: 2,
               ),
             ),
             const SizedBox(height: 32),
@@ -120,7 +112,7 @@ class MaintenanceScreen extends StatelessWidget {
       child: EmptyState(
         asset: 'assets/amico.svg',
         title: 'Under Maintenance',
-        message: 'DGymBook is currently under maintenance. Please check back after a few hours.',
+        message: 'Gymmie is currently under maintenance. Please check back after a few hours.',
         actionLabel: 'Try again',
         onAction: () => getIt<SessionCubit>().boot(),
       ),

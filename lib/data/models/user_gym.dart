@@ -182,6 +182,9 @@ abstract final class Feat {
   static const upiQr = 'GYM_UPI_QR';
   static const diet = 'DIET_PLANS';
   static const workout = 'WORKOUT_PLANS';
+  static const attendance = 'ATTENDANCE';
+  static const membersInGym = 'MEMBERS_IN_GYM';
+  static const biometrics = 'BIOMETRICS';
 }
 
 class GymProfile {

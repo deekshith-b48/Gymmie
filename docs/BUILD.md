@@ -22,7 +22,7 @@ the Android SDK on `PATH` and sets `JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack
 
 ```bash
 cd backend
-npm test                 # 37 tests, in-memory DB, real HTTP
+npm test                 # 38 tests, in-memory DB, real HTTP
 node src/seed.js --reset # demo gym "Iron Temple Fitness"
 node src/server.js       # http://0.0.0.0:8787  (Android emulator reaches it at http://10.0.2.2:8787)
 ```

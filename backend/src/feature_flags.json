@@ -178,5 +178,41 @@
     "youtubeUrl": null,
     "docsUrl": null,
     "blogUrl": null
+  },
+  {
+    "key": "ATTENDANCE",
+    "name": "Attendance",
+    "description": "Mark and review member check-ins, QR scan and attendance charts",
+    "visible": true,
+    "adminEnabled": true,
+    "defaultEnabled": false,
+    "category": "Attendance & Access",
+    "youtubeUrl": null,
+    "docsUrl": null,
+    "blogUrl": null
+  },
+  {
+    "key": "MEMBERS_IN_GYM",
+    "name": "Members in Gym",
+    "description": "Show the live 'Members in gym' card on the home screen",
+    "visible": true,
+    "adminEnabled": true,
+    "defaultEnabled": false,
+    "category": "Attendance & Access",
+    "youtubeUrl": null,
+    "docsUrl": null,
+    "blogUrl": null
+  },
+  {
+    "key": "BIOMETRICS",
+    "name": "Biometric Devices",
+    "description": "Connect face or fingerprint devices to log member attendance",
+    "visible": true,
+    "adminEnabled": true,
+    "defaultEnabled": false,
+    "category": "Attendance & Access",
+    "youtubeUrl": null,
+    "docsUrl": null,
+    "blogUrl": null
   }
 ]

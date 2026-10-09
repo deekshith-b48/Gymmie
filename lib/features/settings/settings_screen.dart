@@ -87,13 +87,14 @@ class SettingsScreen extends StatelessWidget {
                 Icons.how_to_reg_outlined,
                 'Attendance'.tr,
                 '/attendance',
-                visible: s.can(Perm.attendanceRead),
+                visible:
+                    s.can(Perm.attendanceRead) && s.feature(Feat.attendance),
               ),
               item(
                 Icons.fingerprint,
                 'Biometrics'.tr,
                 '/biometrics',
-                visible: s.can(Perm.devicesRead),
+                visible: s.can(Perm.devicesRead) && s.feature(Feat.biometrics),
               ),
               item(
                 Icons.event_available_outlined,

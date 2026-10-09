@@ -17,6 +17,7 @@ import '../../core/widgets/sheets.dart';
 import '../../core/widgets/states.dart';
 import '../../data/models/finance.dart';
 import '../../data/models/members.dart';
+import '../../data/models/user_gym.dart';
 import '../../data/repositories/finance_repository.dart';
 import '../../data/repositories/members_repository.dart';
 import 'member_widgets.dart';
@@ -338,7 +339,8 @@ class _MembersScreenState extends State<MembersScreen> {
                               value: 'renew',
                               child: Text('Renew Membership'),
                             ),
-                          if (session.can(Perm.attendanceWrite))
+                          if (session.can(Perm.attendanceWrite) &&
+                              session.feature(Feat.attendance))
                             const PopupMenuItem(
                               value: 'mark',
                               child: Text('Mark attendance'),

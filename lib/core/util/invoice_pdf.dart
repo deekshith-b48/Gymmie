@@ -206,7 +206,7 @@ Future<Uint8List> buildInvoicePdf(InvoiceData inv) async {
         pw.Spacer(),
         pw.Center(
           child: pw.Text(
-            'Thank you for choosing ${inv.gym['name']}. Powered by DGymBook.',
+            'Thank you for choosing ${inv.gym['name']}. Powered by Gymmie.',
             style: pw.TextStyle(fontSize: 9, color: grey),
           ),
         ),

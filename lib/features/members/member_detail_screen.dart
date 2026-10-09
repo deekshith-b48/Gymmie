@@ -137,6 +137,8 @@ class _Menu extends StatelessWidget {
             await run(a.setReminder(m));
           case 'qr':
             await _showQr(context, m);
+          case 'idcard':
+            await context.push('/members/${m.id}/id-card');
           case 'delete':
             await _delete(context, m);
         }
@@ -156,6 +158,7 @@ class _Menu extends StatelessWidget {
           ),
         const PopupMenuItem(value: 'contact', child: Text('Save Contact')),
         const PopupMenuItem(value: 'qr', child: Text('Show member QR')),
+        const PopupMenuItem(value: 'idcard', child: Text('Generate ID card')),
         if (getIt<SessionCubit>().state.can(Perm.settingsWrite))
           const PopupMenuItem(
             value: 'delete',
@@ -346,7 +349,8 @@ class _Overview extends StatelessWidget {
                       label: 'WhatsApp',
                       onTap: () => _sendMessage(context, m, gymName, cur),
                     ),
-                    if (session.can(Perm.attendanceWrite))
+                    if (session.can(Perm.attendanceWrite) &&
+                        session.feature(Feat.attendance))
                       _Action(
                         icon: Icons.how_to_reg_outlined,
                         label: 'Attendance',

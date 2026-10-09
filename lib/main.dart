@@ -16,7 +16,7 @@ Future<void> main() async {
 
   Future<void> start() async {
     await _initFirebase();
-    runApp(const GymBookApp());
+    runApp(const GymmieApp());
     unawaited(getIt<SessionCubit>().boot());
   }
 

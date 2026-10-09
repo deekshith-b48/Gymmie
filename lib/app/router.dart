@@ -15,6 +15,8 @@ import '../features/dashboard/dashboard_screen.dart';
 import '../features/attendance/attendance_screen.dart';
 import '../features/attendance/scan_screen.dart';
 import '../data/models/fitness.dart';
+import '../data/models/user_gym.dart';
+import '../features/members/id_card_screen.dart';
 import '../features/engagement/engagement_screens.dart';
 import '../features/fitness/diet_screens.dart';
 import '../features/health/parq_screens.dart';
@@ -97,6 +99,11 @@ String? _redirect(SessionCubit session, AppConfig config, GoRouterState st) {
         loc.startsWith('/settings/subscription') ||
         loc == R.gymSetup;
     return allowed ? null : R.expiredGym;
+  }
+  // Optional modules the admin has switched off (Settings > App Features) are not reachable.
+  if ((loc.startsWith('/attendance') && !s.feature(Feat.attendance)) ||
+      (loc.startsWith('/biometrics') && !s.feature(Feat.biometrics))) {
+    return R.home;
   }
   if (_publicRoutes.contains(loc) ||
       loc == R.splash ||
@@ -214,6 +221,11 @@ GoRouter buildRouter() {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/members/:id/id-card',
+        builder: (_, st) =>
+            MemberIdCardScreen(memberId: st.pathParameters['id']!),
       ),
       GoRoute(path: '/feedback', builder: (_, _) => const FeedbackScreen()),
       GoRoute(

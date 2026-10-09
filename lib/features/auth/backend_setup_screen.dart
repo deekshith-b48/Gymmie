@@ -65,7 +65,7 @@ class _BackendSetupScreenState extends State<BackendSetupScreen> {
         _ok = ok;
         _result = ok
             ? 'Connected: the server responded OK.'
-            : 'The server answered with status ${r.statusCode}. Is this a DGymBook API?';
+            : 'The server answered with status ${r.statusCode}. Is this a Gymmie API?';
       });
     } catch (_) {
       setState(() {

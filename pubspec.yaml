@@ -1,5 +1,5 @@
 name: gym_book_app
-description: "DGymBook Partner: gym management for gym owners, managers, staff and trainers (reconstructed from the 1.9.4 APK)."
+description: "Gymmie: gym management for gym owners, managers, staff and trainers (reconstructed from the 1.9.4 APK)."
 publish_to: 'none'
 
 # versionName 1.9.4 / versionCode 1178 recovered from the original APK (apktool.yml).
