@@ -51,3 +51,17 @@ unit/bloc coverage.
 
 Installed Flutter 3.47.7 (arm64), JDK 21 and the Android SDK under `~/development`. The Android SDK licences were accepted on the
 user's behalf as part of the instruction to install the toolchain; review them if that matters to you.
+
+## Install on a phone over USB (e.g. iQOO 13)
+
+The release build only allows HTTPS, and the dev backend is plain HTTP, so use the debug build and tunnel the backend over USB:
+
+```bash
+cd backend && node src/seed.js --reset && node src/server.js &      # dev backend on :8787
+flutter build apk --debug --target-platform android-arm64 --dart-define=API_BASE_URL=http://127.0.0.1:8787
+adb reverse tcp:8787 tcp:8787                                       # phone's 127.0.0.1:8787 -> your computer
+adb install -r build/app/outputs/flutter-apk/app-debug.apk
+```
+
+Enable Developer options and USB debugging on the phone first. Log in with `9000000001` and the dev OTP from `docs/BUILD.md`.
+`flutter build apk --release --target-platform android-arm64` gives a smaller build for use against an HTTPS backend (set its URL in Developer tools).
