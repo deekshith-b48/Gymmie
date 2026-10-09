@@ -1,0 +1,13 @@
+{
+  "name": "dgymbook-dev-backend",
+  "version": "1.9.4",
+  "private": true,
+  "description": "Development backend for the reconstructed DGymBook Partner app. NOT the original DGymBook backend.",
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node src/seed.js",
+    "test": "node --test --test-concurrency=1 \"test/*.test.js\""
+  }
+}

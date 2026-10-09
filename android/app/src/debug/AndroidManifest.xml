@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The Flutter tool needs INTERNET in debug/profile to talk to the VM service. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- DEBUG ONLY: lets the app reach the plain-HTTP development backend (10.0.2.2:8787).
+         Release builds keep the platform default (cleartext blocked). -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

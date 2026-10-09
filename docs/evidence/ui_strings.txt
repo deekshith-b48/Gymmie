@@ -1,0 +1,2302 @@
+# English UI strings recovered from the Dart snapshot (framework/package strings subtracted; some residue remains).
+" could not be parsed as 
+" data-type="mention">
+" doesn't exist
+" expected
+" expected 
+" field of a WidgetStateMapper<
+" from "
+" into a LocationPermission.
+" is not a supported type.
+" must be 
+" must contain "
+" must start at column 
+" offset:
+" requires a reference dimension (viewport width/height) but none was available.
+" was dropped due to rate limiting.
+"-->" expected
+"; v="
+"?>" expected
+"Short" weekdays are currently not supported.
+"]" expected
+"]]>" expected
+"colors" and "colorStops" arguments must have equal length.
+"colors" must have length 2 if "colorStops" is omitted.
+"firebase_" prefix is reserved
+"matrix4" must have 16 entries.
+"positions" must have an even number of entries (each coordinate is an x,y pair).
+"recorder" must not already be associated with another Canvas.
+' Shapes: 
+' args 
+' as a function. Since types do not define a method 'call', this is not possible. Did you intend to call the 
+' sent to 
+' was not sampled (sample rate: 
+', center: 
+', from: 
+'s attendance logs for 
+(?:\r\n)?[ \t]+
+(\S+)@(\S+) line (\d+) >.* (Function|eval):\d+:\d+
+(anonymous function)
+(bundle: 
+(displayName: 
+(isNewUser: 
+0 days have been added.
+0 meals have been added.
+1 Credit / Person
+1 day/wk
+1 form
+1 plan
+10-digit mobile number
+12 Months
+1st half this year
+2nd half this year
+3.44.9 ([user-branch])
+3.44.9 ([user-branch]) - Git hash 0cae2fc0a4 - Git URL unknown source
+9895xxxxxx or 50xxxxxx
+A Firebase App named "[DEFAULT]" already exists
+A broadcast can include at most 5,000 recipients. Narrow your filters or exclude fewer members.
+A message on the 
+A provider for 
+A request for location permissions is already running, please wait for it to complete before doing another request.
+A response with a status code that is not within the range of inclusive 100 to exclusive 600is a non-standard response, possibly due to the server's software
+AI Diet Plans
+AI Insights
+AI PAR-Q
+AI Workouts
+AI Workouts and Diet Plans
+Access Denied
+Access denied
+Access to the location of the device is denied by the user.
+Account(id: 
+Action not allowed: Permission denied
+Action not allowed: Trainer access only
+Activate automated messaging. Recharge whatsapp credits and send messages to your customers seamlessly and see immediate results.
+Active Members
+Active Membership
+Add Booking
+Add Damage
+Add Device
+Add Exercise
+Add Guest
+Add Label
+Add Lead Member
+Add Link
+Add Manual Attendance
+Add Membership
+Add More
+Add New
+Add New Device
+Add New Group
+Add New Lead Welcome
+Add New Meal
+Add New Plan
+Add New Staff
+Add Plan failed with 
+Add Staff
+Add Stock
+Add Upcoming
+Add Video Links
+Add Widget
+Add a discount if needed.
+Add a new video link
+Add a short note
+Add as an expense
+Add gym logo
+Add image
+Add new
+Add new label
+Add new member
+Add product photo
+Add profile image
+Add some quick notes here
+Add their membership
+Add to Form
+Add your first member
+Add your first product to start tracking sales and stock
+Add your photo
+Added successfully
+Adding consent & signature
+Adding the standard readiness questions
+Address family not supported by protocol family, sourceAddress.type must be 
+AddressCheckOption(uri: 
+AddressCheckResult(option: 
+Admission no. (Latest first)
+Admission no. (Oldest first)
+After Discount
+After Surgery
+Age, body metrics, weight trend and any PAR-Q health flags are factored in automatically.
+Aland Islands
+Align barcode within the frame to scan
+All Plan Group
+All Plan Groups
+All Plans Group
+All Time Balance
+All colors are grayscale, no chroma.
+All devices have been reset successfully
+All products
+All time balance
+All-time Balance
+Allergies / foods to avoid
+Almost done
+Already booked
+Amount Received
+Amount not valid
+Amount or days cannot be empty or invalid
+Amount received
+An exception occurred while executing the 
+An unknown error occurred.
+Analytics error: 
+Analytics has multi-app support for web only.
+AnalyticsService.initialize() must run before use.
+Android: 
+Animation contains intersect masks. They are not supported but will be treated like add masks.
+Animation contains merge paths but they are disabled.
+Ankle Pain
+Anonymous function
+Antigua and Barbuda
+Any Lead / Member
+Anything else?
+Anything specific?
+Anything to avoid?
+App Preferences
+App Settings
+App Tutorial
+App had memory pressure. This indicates that the operating system would like applications to release caches to free up more memory.
+App start to plugin registration
+AppLocalizations.delegate failed to load unsupported locale "
+Approx. 
+Are you sure you want to
+Are you sure you want to 
+Are you sure you want to delete this tax configuration?
+Are you sure you want to delete this video link?
+Are you sure you want to dismiss the balance reminder banner?
+Are you sure you want to end this membership? This action cannot be undone.
+Are you sure you want to export transactions from
+Are you sure you want to export transactions from 
+Are you sure you want to freeze this membership?
+Are you sure you want to start this membership now? This action cannot be undone.
+Arena no longer in use, `releaseAll(reuse: false)` was called.
+Argument not in valid range.
+Asset not found
+AssetSource(path: 
+Assign Labels
+Assign Member
+Assign Members
+Assign Trainer
+Asthma / breathing
+At least one field should be passed to update reminder
+At least one of uri, files or text must be provided
+At-Risk Members
+At-risk members
+Attendance Declining
+Attendance declining
+Attendance disabled successfully
+Attendance enabled successfully
+Attendance marked successfully
+Attribute value for text-decoration-style="
+Attribute value for text-decoration="
+AudioEvent(eventType: 
+AudioPlayer has been disposed
+AudioPlayers Error: 
+AudioPlayers Exception: 
+AudioPlayers throw: 
+AuthCredential(providerId: 
+Authenticate to access
+Automated Messages
+Automated messages
+Available Methods
+Available equipment
+B44 compression not yet supported.
+BEGIN EXCLUSIVE
+BMI Tracker
+BOOKED MEMBERS
+Back Pain
+Back to Profile
+Back to dashboard
+Backend Code: 
+Backend URL
+Bad Debt
+Bad length for DQT block
+Balance Due
+Balance Paid
+Balance Payment Due
+Balance Payment Reminder
+Balance Problem
+Balance Reminder created successfully.
+Balance Reminder updated successfully.
+Balance cleared
+Balance payment due
+Balance reminders
+Balance: 
+Balancing nutrition for their goals
+BaseDeviceInfo{data: 
+Before Sentry Init Setup
+Biometric access blocked
+Biometric device is not reachable. Check its power and network connection.
+Birthday Today
+Birthdays Today
+Bitmap Glyph 
+Block Member
+Block biometric access
+Blood Donors
+Blood Group
+Blood Groups
+Blood group
+Blood pressure meds
+Body / paragraph text
+Body paragraph text
+Body text
+Body text *
+Body text will appear here...
+Bodyweight Only
+Bolivia, Plurinational State of
+Bone or joint
+Booking cancelled successfully
+Booking has already started and cannot be cancelled.
+Booking was already cancelled.
+Bosnia and Herzegovina
+BoxConstraint <
+Breathing Problem
+British Indian Ocean Territory
+Broadcast Name
+Broadcast created successfully
+Broadcast news or updates to all members at once.
+Broadcast updated successfully
+Broken / Dropped
+Browse categories
+Brunei Darussalam
+Build Muscle
+Build your PAR-Q form by adding title, text, question, and signature widgets.
+Bulk / Broadcast messages
+Bulk / broadcast messages
+Bulk Messaging
+Burkina Faso
+CacheManager: Downloading 
+CacheManager: Failed to download file from 
+CacheManager: Failed to load cached file for 
+CacheManager: Loaded 
+Camera error: 
+Can't finalize a finalized Request.
+Can't parse multi factor error
+Cancel Booking
+Cancel broadcast
+Cancel this booking?
+Cancelling a booking later won't affect sessions remaining.
+Cannot change
+Cannot convert json to point. Next token is 
+Cannot decode null enum value
+Cannot emit new states after calling close
+Cannot extract a non-Windows file path from a file URI with an authority
+Cannot interpolate between gradients. Lengths vary (
+Cannot read version 
+Cannot visit unresolved nodes with 
+Cape Verde
+Capture config is not set, skipping capture.
+Capture from IsolateError 
+Capture from onError 
+Category name
+Caused by:
+Cayman Islands
+Central African Republic
+Chance of Joining
+Chance of joining - Asc
+Chance of joining - Desc
+Change Date
+Change Gym Details
+Change Logs
+Change Password
+Change Schedule
+Change Tax No
+Change Tax No?
+Change Theme
+Change URL
+Change date
+Change gym details
+Change slot for this date
+Change { currentState: 
+Characters remaining after date parsing in 
+Chat on WhatsApp
+Check Out
+Check and connect
+Check for Updates
+Check for updates
+Check in
+Check this out!
+Chest pain
+Choose 'Active Membership' to see your active members.
+Choose 'This Month' to review this month's report.
+Choose 'This Month' to view this month's transactions.
+Choose Existing Diet Plan
+Choose Your Templates
+Choose existing templates!
+Choose from our collection of pre-designed templates. Your member's photo and details will be automatically added.
+Choose how the member paid.
+Choose how this update affects members who have already signed.
+Choose member
+Choose the type of content to add
+Choose your app language
+Choose your language
+Choosing foods and portions
+Christmas Island
+ChromeSafariBrowserSettings{activityButton: 
+Chronic Pain
+Clear All
+Clear All Bookings?
+Clear Logs
+Clear logs
+Click # to activate the variable picker. Select a variable to add to the text
+Client error - the request contains bad syntax or cannot be fulfilled
+ClientException with 
+ClientException: 
+Closure call with mismatched arguments: function '
+Cocos (Keeling) Islands
+Code: 
+Codec failed to produce an image, possibly due to invalid image data.
+Cold Start
+Collapse sidebar
+Column may not be negative, was 
+Coming Soon in the Next Update!
+Common Variables
+Common gym injuries & movement limits
+Compare & choose
+CompressError: 
+Computation timed out after 
+Configuration not initialized
+Configure Biometrics
+Confirm 
+Confirm Plan
+Confirm Renewal
+Confirm Upgrade
+Confirm and Delete
+Confirm phone number
+Congo, The Democratic Republic of the Congo
+Connecting to your Account
+Connecting to your account...
+Contact Support
+Contact Us
+Contact support Team to add device to your account
+Contact us
+Contact us.
+Content size below specified contentLength.  
+Context not found.
+Context not valid to show verification dialog
+Context not valid. Registration done
+Continue in English
+Convert to Member
+Convert your Illustrator layers to shape layers.
+Cook Islands
+Copy Message
+Copy log
+Costa Rica
+Cote d'Ivoire
+Could not add lead member
+Could not check and show review
+Could not fetch the gym tags
+Could not generate QR code for this payment.
+Could not generate QR code.
+Could not get country code
+Could not load file at 
+Could not parse CreditHistoryType: 
+Could not parse IntegrationKey: 
+Could not parse MembershipHistoryType
+Could not parse PlanType
+Could not parse Priority
+Could not parse Referral
+Could not parse Role
+Could not parse Status
+Could not parse font-size: 
+Could not save UPI ID. Please try again.
+Could not send message to 
+Could not share QR code.
+Could not update lead member
+Could not verify credit balance. Please try again.
+Could not verify pincode
+Country: 
+Create Expense
+Create New Broadcast
+Create Poster
+Create Product
+Create Reminder
+Create Sale
+Create Template
+Create expense
+Create my gym
+Create new broadcast
+Create poster
+Create your first broadcast to start messaging your members via WhatsApp. Reach everyone instantly with updates and news.
+Create your template
+Created At
+Created By
+Created at
+Created at - Asc
+Created at - Desc
+Created by
+Created by 
+Created on:
+Credit Recharge History
+Credit Usage History
+Credit transaction history
+Credit usage history
+Credits Required
+Credits left
+Credits left - low balance
+Credits recharged!
+Credits required 
+Credits used:
+Credits work across WhatsApp messages, bulk SMS, and more.
+Current BMI
+Current Plan
+Current stock
+Current user role not found
+Custom Date Range
+Custom Expiring Soon
+Custom URL
+Custom date range
+Customise Your Diet Plan
+Customise Your Plan
+Customize your icon
+Czech Republic
+DEBUG: Path interpolator error 
+DELETE FROM 
+DGymBook - Smart Gym Management
+DGymBook is currently under maintenance. Please check back after a few hours.
+DSN is null or empty
+DSN is required.
+Daily calorie target
+Damage reported
+Damage reported successfully
+Damaged in transit
+Damaged: 
+Date & Time
+Date & time
+Date of Birth
+Date of birth
+Day Name
+Default Method
+Default PaymentType not initialized
+Default payment select successfully
+Default payment set successfully
+Defective / Faulty
+Delete Day
+Delete Device
+Delete Diet Plan
+Delete Exercise
+Delete Expense
+Delete Log
+Delete Plan
+Delete Product
+Delete Sale
+Delete Staff
+Delete Tax Config
+Delete Transaction
+Delete Workout Plan
+Delete plan
+Delete video link
+Deleted Log
+Deleted enum value from 
+Delivery Schedule
+Desktop Redesign
+Detailed View
+Dev Error Logs
+Dev URL
+Developer Tools
+Developer tools
+Device Added but not connected. Check again after a while
+Device check-in was blocked because of an overdue balance reminder
+Device deleted successfully
+Diabetes / metabolic
+Didn't get a code?
+Didn't receive OTP?
+Didn't receive it?
+Didn't recieve your OTP?
+Diet Plan
+Diet Plan Added
+Diet Plan Name
+Diet Plan Share
+Diet Plans
+Diet plan assigned successfully
+Diet plan created successfully
+Diet plan deleted successfully
+Diet plan not found
+Diet plan updated successfully
+Dietary preference
+DioException [
+Disable Lead
+Disable attendance
+Disable plan
+Discount cannot be greater than plan price
+Discount cannot be greater than total price
+Discount must be less than plan price (
+Dismiss Balance Reminder Banner
+Displays as a large heading
+Dizziness / balance
+Do not like it
+Do not press back or close the app
+Do you like DGymbook
+Do you like DGymbook?
+Do you like using our app? Please let us know if you like enjoying our app.
+Do you want to
+Do you want to block the member?
+Do you want to broadcast this to your members?
+Do you want to cancel this broadcast?
+Do you want to change your password?
+Do you want to clear all error logs?
+Do you want to create this broadcast?
+Do you want to delete the transaction. This action cannot be undone
+Do you want to delete this day? This action cannot be undone.
+Do you want to delete this diet plan? This action cannot be undone.
+Do you want to delete this exercise? This action cannot be undone.
+Do you want to delete this product? This action cannot be undone.
+Do you want to delete this workout plan? This action cannot be undone.
+Do you want to disable the lead?
+Do you want to enable the lead?
+Do you want to export 
+Do you want to export attendance logs for 
+Do you want to export leads data?
+Do you want to export members data?
+Do you want to logout from all devices?
+Do you want to logout?
+Do you want to reset all devices?
+Do you want to turn on whatsapp integration?
+Do you want to unblock the member?
+Do you want to update this broadcast?
+Do you want to write-off the balance. This action cannot be undone
+Documents & invoice
+Documents & invoices
+Dominican Republic
+Don't have an account?
+Double release error
+Drag text and questions to reorder
+Draw your signature here
+Due date
+Duplicate JPG frame data found.
+Duplicate Plan
+Duplicate plan
+Duplicate slot, or the member already holds that time.
+Duplicated exception detected. Event 
+Duration (seconds)
+Duration(in days)
+E.g. fitness goals, emergency contact, or other notes.
+EEE, d MMM yyyy
+EEEE, d MMM
+EEEE, d MMM yyyy
+EOF reached without finding string terminator (length: 
+EXR Invalid type: 
+Edit Device
+Edit Exercise
+Edit Expense
+Edit Label
+Edit Link
+Edit Member
+Edit Product
+Edit Sale
+Edit Staff
+Edit expense
+Edit message template
+Edit your template
+Edit your video link
+Edited successfully
+Editing existing widget
+Eg. Day 1, Chest Day, etc.
+Eg. Strength Training etc...
+Eg: 1 cup of rice, 2 eggs, 1 apple, etc.
+Eg: Breakfast, Lunch, Dinner, etc.
+Eg: Jumping Jacks etc.
+Eg: Keto Diet Plan
+El Salvador
+Email or Phone is already used in another account
+Email: 
+Empty values
+Enable Lead
+Enable Sessions
+Enable attendance
+Enable plan
+Enable session
+End Membership
+End of input
+End of working hours
+End timestamp (
+EnricherIntegration failed to build contexts for 
+Enroll Face
+Enroll Fingerprint
+Enroll Member Face
+Enroll Member Fingerprint
+Enrolled Successfully
+Enrolled successfully
+Enter Amount
+Enter Group Name
+Enter IP address
+Enter Name
+Enter Number of Sessions
+Enter Phone Number
+Enter Phone number
+Enter Pin Code
+Enter Plan Amount
+Enter Plan Duration
+Enter Plan Name
+Enter a short description
+Enter address
+Enter amount
+Enter backend URL
+Enter body paragraph text...
+Enter broadcast name
+Enter category
+Enter email
+Enter group name
+Enter link
+Enter minimum stock quantity
+Enter name
+Enter no of days
+Enter notes
+Enter number of sessions
+Enter or scan barcode
+Enter percentage between 1-100
+Enter pincode
+Enter plan amount
+Enter plan duration
+Enter plan name
+Enter reason
+Enter reason for editing stock
+Enter sale price
+Enter serial number
+Enter the 6-digit code we sent to 
+Enter the OTP sent to your email
+Enter the code sent to your WhatsApp
+Enter the code sent to your email
+Enter the code sent to your phone
+Enter the duration in days. e.g. 30
+Enter the plan amount. e.g. 1000
+Enter the plan name. e.g. 1 Month
+Enter the verification sent to your 
+Enter total cost
+Enter your gym address
+Enter your height
+Enter your notes
+Enter your title
+Enter your weight
+Entity(role: 
+Envelope item of type "
+Equatorial Guinea
+Error Logs
+Error Message: 
+Error event raised in event handler : error condition has been reset
+Error handler must accept one Object or one Object and a StackTrace as arguments, and return a value of the returned future's type
+Error handler must accept one Object or one Object and a StackTrace as arguments.
+Error in Huffman-encoded data (code table is longer than expected).
+Error in Huffman-encoded data (decoded data are longer than expected).
+Error in Huffman-encoded data (decoded data are shorter than expected).
+Error in Huffman-encoded data (invalid code table entry).
+Error in Huffman-encoded data (invalid code).
+Error in Huffman-encoded data (unexpected end of code table data).
+Error in header for Huffman-encoded data (invalid number of bits).
+Error in header for PIZ-compressed data (invalid bitmap size).
+Error in the 'configureScope' callback, error: 
+Error loading Poppins from GoogleFonts: 
+Error loading Poppins from assets: 
+Error loading payment methods: 
+Error on 
+Error on getting logo 
+Error reading image header
+Error saving payment methods: 
+Error while capturing event with id: 
+Error while capturing transaction with id: 
+Error while creating 
+ErrorAndStackTrace{error: 
+Estimated Cost
+Event Method does not exist 
+Event name is reserved and cannot be used
+Event was dropped as the exception 
+Exception in Java code called through JNI: 
+Exception in thread "
+Exciting new features are on the way to make managing your gym even easier.
+Excluded 
+Excluded members
+Exercise Name
+Exercise created successfully
+Exercise deleted successfully
+Exercise updated successfully
+Existing Member
+Expand sidebar
+Expected ':'
+Expected BEGIN_ARRAY but was 
+Expected BEGIN_OBJECT but was 
+Expected END_ARRAY but was 
+Expected END_OBJECT but was 
+Expected a boolean but was 
+Expected a double but was 
+Expected a name but was 
+Expected a path command
+Expected a string but was 
+Expected a value but was 
+Expected an int but was 
+Expected more data
+Expected name
+Expected to find moveTo command
+Expected value
+Expense deleted successfully
+Expense filter should be less than 3 months
+Expenses By Types
+Expenses by types
+Experience level
+Expired between 30 and 60 days
+Expired between 60 and 90 days
+Expired between 90 and 120 days
+Expired in 30 days
+Expired in between 30 and 60 days
+Expired in between 60 and 90 days
+Expired in between 90 and 120 days
+Expired in last 10 days
+Expired in last 30 days
+Expiring Soon
+Expiring in
+Expiring in 10 days
+Expiry - Asc
+Expiry - Desc
+Explore member list
+Explore reports
+Explore transactions
+Export Attendance
+Export Credit Transaction History
+Export Data
+Export Leads
+Export Members
+Export Session Logs
+Export Successful
+Export Transactions
+Export Unavailable
+Export date range should be less than 3 months
+Export unavailable
+Extended for 
+Extended for 1 day
+Extended from 
+Failed members
+Failed to attach native span to app start transaction: 
+Failed to capture gym QR poster
+Failed to capture screenshot
+Failed to check WhatsApp credit balance
+Failed to convert image
+Failed to create broadcast
+Failed to decode image data.
+Failed to download invoice
+Failed to export credit history
+Failed to export session logs PDF
+Failed to generate credit payment web link url
+Failed to generate renewal web link url
+Failed to generate support logs
+Failed to get upload URLs
+Failed to handle credit plan payment
+Failed to handle renewal
+Failed to load PAR-Q broadcast details
+Failed to load broadcast for edit
+Failed to load dynamic library at path: 
+Failed to load excluded member for broadcast edit
+Failed to load image
+Failed to load image 
+Failed to load labels
+Failed to load payment methods
+Failed to load plans
+Failed to load recipients
+Failed to load templates
+Failed to load trainers
+Failed to load url
+Failed to parse stack frame: 
+Failed to parse the media type: 
+Failed to print PAR-Q form
+Failed to rasterize a picture: 
+Failed to read last_app_check from secure storage
+Failed to reset devices
+Failed to save payment methods
+Failed to set default payment
+Failed to update broadcast
+Failed to write last_app_check to secure storage
+Falkland Islands (Malvinas)
+Family history
+Faroe Islands
+Fatal: cannot convert string to Java string: 
+Fatty Liver
+Feature Unavailable!
+Feedback & Complaints
+Feedback and Complaints
+Feedback not found
+File is not an OpenEXR image file.
+Fill(color: 
+Filter and Sort
+Filter by Date
+Filter by date
+Finalizing the form
+Finalizing the plan
+Find Blood Donors
+FirebaseAuth(app: 
+First In
+First character of a number must be one of [0-9+-.].
+First frame render
+FlutterFire Messaging: An error occurred in your background messaging handler:
+Follow Up
+Follow Up Date
+Follow up
+Follow up Date
+Follow up date - Asc
+Follow up date - Desc
+Follow up date has passed. Snooze this person so you can get alerted later
+Follow up on
+Form not valid. Please try again
+Form title
+Form version
+Freeze Membership
+French Guiana
+French Polynesia
+Frozen On
+Full Gym
+Full Name
+Full name
+Fully Paid
+GST No. changed successfully
+Gain Muscle
+Gender (Required)
+General Fitness
+General Health
+General fitness
+Generate Diet Plan
+Generate PAR-Q Form
+Generate QR Code
+Generate Workout Plan
+Generate a new form?
+Generate returned no PAR-Q forms
+Generate returned no diet plans
+Generate returned no workout plans
+Generate with AI
+Generated: 
+Generating PAR-Q form
+Generating diet plan
+Generating workout plan
+Get Started with Automated Messages
+Get Stronger
+Get started
+GetIt: Object/factory with type 
+GetIt: You have to provide type. Did you accidentally do `var sl=GetIt.instance();` instead of var sl=GetIt.instance;
+Getting plans failed with 
+Given version string section is not a valid int
+Given version string should only have 3 sections
+Global Event Method does not exist 
+GlobalAudioEvent(eventType: 
+Glow opacity should be between 0.0 and 1.0
+Glyph 
+Go back
+Go back home
+Go to Member Profile
+Go to dashboard
+Got it
+Guest Name
+Guest Phone
+Guest name
+Guest: 
+Gym Address
+Gym Already Registered
+Gym Code
+Gym Code: 
+Gym Code: #
+Gym Feedback
+Gym Logo
+Gym Name
+Gym QR Code
+Gym QR regenerated
+Gym Staff
+Gym UPI QR
+Gym logo
+Gym name
+Gym not initialized
+Gym visits dropped 
+GymConfig not initialized
+HIIT / CrossFit
+HTTP request failed. Client is already closed.
+Hash.add() called after close().
+Hashing is unsupported for messages with more than 2^53 bits.
+Have renewed your subscription? 
+Have you renewed your subscription?
+Headers: 
+Heading text *
+Heading text will appear here...
+Health Conditions
+Health basics, diet and workout can be skipped for now.
+Heart / cardiovascular
+Heart Problem
+Height & Weight
+Help Center
+Helper Gym Subscription Renewal
+Here you can see the total bill amount after discount
+Hex input must be a 32-character hexadecimal string
+Hi! Your subscription ends on 
+High BP
+High Discounts
+High Overall Discounts
+High overall discounts
+Hip Pain
+Holy See (Vatican City State)
+Hong Kong
+Host platform returned null value for non-null return value.
+How does this work?
+How many options?
+I am Looking for support
+I confirm that the information provided above is accurate and I agree to participate in physical activity at this gym.
+I understand
+I would like to recharge my credits for the 
+ID Card
+ID card
+IP Address
+Illegal IPv6 address, address is too short
+Illegal IPv6 address, an IPv6 part can contain a maximum of 4 hex digits
+Illegal IPv6 address, an address must contain at most 8 parts
+Illegal IPv6 address, an address without a wildcard must contain exactly 8 parts
+Illegal IPv6 address, invalid character
+Illegal IPv6 address, invalid start colon
+Illegal IPv6 address, missing part
+Illegal IPv6 address, only one wildcard `::` is allowed
+Image compression failed
+Image data format not supported: 
+Image file does not exist in 
+ImageException: 
+ImageFilter.shader only supported with Impeller rendering engine.
+Immune Problem
+In order to resolve this exception you typically have either to verify and fix your request code or you have to fix the server code.
+In stock
+Inactive Plans
+Inactive plans
+Incomplete huffman data
+Initial Quantity
+Injury / Physical Risk
+Input too long. 
+Internal error: expected positive number, got 
+Internal error: unexpected format for ready message: '
+Invalid 
+Invalid "font-weight": 
+Invalid Block
+Invalid CSS hsl/hsla color syntax
+Invalid CSS rgb/rgba color syntax
+Invalid Color Cache
+Invalid Component in SOS block
+Invalid Frame Number: 
+Invalid Huffman Codes
+Invalid Image Data
+Invalid JPEG
+Invalid JPEG file
+Invalid LZW Data
+Invalid PNG data.
+Invalid PSD layer data
+Invalid PSD layer signature: 
+Invalid SOS block
+Invalid SVG data
+Invalid Transform
+Invalid argument
+Invalid base64 padding, padded length must be multiple of four, is 
+Invalid color type: 
+Invalid command type in path
+Invalid compression type: 
+Invalid configuration for vertices.
+Invalid content length 
+Invalid escape sequence: \
+Invalid exponent 
+Invalid flag value
+Invalid gAMA chunk
+Invalid huffman table size
+Invalid image dimensions.
+Invalid key in layer additional data
+Invalid locale "
+Invalid number of quantization tables
+Invalid pincode. Please check and try again.
+Invalid progressive encoding
+Invalid raw value.
+Invalid response format
+Invalid status code 
+Invalid statusCode: 
+Invalid type of payment
+Invalid url or unable to connect. Please check and try again.
+Invalid working-hour range.
+Invitation Pending
+Invite sent successfully
+Invoice No
+Invoice no
+Iran, Islamic Republic of Persian Gulf
+Is Tax included
+Is tax included
+Isle of Man
+Items with measurement
+JSON forbids NaN and infinities: 
+Joined First
+Joined Recently
+Joining Date
+Joining date
+Joint Pain
+JsonReader is closed
+Just Now
+Just now
+Keep Booking
+Keep Editing
+Knee Pain
+Known URLs
+Korea, Democratic People's Republic of Korea
+Korea, Republic of South Korea
+Label name is empty
+Label(id: 
+Language set to 
+Large heading text
+Last 30 days
+Last 6 Months
+Last 6 months
+Last 7 days
+Last Attended
+Last In
+Last Month
+Last Year
+Last attended
+Last membership expired on
+Last month
+Last regenerated: 
+Last three logs reported
+Last year
+Latitude: 
+Lead Disabled
+Lead Member Reminder
+Lead member not found
+Let's finish setting up
+Libyan Arab Jamahiriya
+Line may not be negative, was 
+LinearGradient(id: '
+Load Bytes
+LoadContextsIntegration failed to load contexts for 
+Loading PAR-Q form failed with 
+Loading weight records...
+LocalDirectory: '
+LocalFile: '
+Locale data has not been initialized, call 
+Locale does not match symbols.NAME
+LocaleDataException: 
+Location with the name "
+Locked until previous steps are done
+Log copied
+Log in with phone instead
+Log in with your email instead
+Log list is empty
+Log out
+Log the stocking cost as an expense
+Login with your email address
+Login with your phone number
+Logout from All Devices
+Looks like you haven't created any templates.
+Lose Fat
+Lottie doesn't support expressions.
+Lottie only supports bodymovin >= 4.4.0
+LottieImageAsset(width: 
+Love it
+Love it!!
+Low Energy
+Low Gym Attendance
+Low Stock Threshold
+Low balance
+Low gym attendance
+Low stock
+Low stock threshold cannot be greater than stock
+Low stock threshold cannot be less than 0
+MEMBER DETAILS
+MEMBERS IN GYM
+Major update
+Malformed exponential pattern "
+Malformed pattern "
+Manage Configuration
+Manage Configurations)
+Manage Diet Plans
+Manage Plan Group
+Manage Plan Groups
+Manage Plans
+Manage Products
+Manage Staff
+Manage Staffs
+Manage Your Gym
+Manage Your Templates
+Manage and customize the tax rules that apply to your memberships.
+Manage your Gym
+Manage your availability for each day
+Manual Attendance
+Mark And Unmark Session
+Mark Session
+Mark as Done
+Mark this balance reminder as done? You can set a new reminder later if the member still has a pending balance.
+Marked By
+Marked Session
+Marshall Islands
+Mask all images except asset images.
+Matching exercises to their goals
+Matrix cannot be inverted
+Max file size is 5MB
+Meal Name
+Meals per day
+Medical Risk (High Attention)
+Member At Risk
+Member Balance Reminder
+Member Birthday
+Member Churn Alert
+Member Code
+Member Contact Already Exists
+Member Contact Saved
+Member Details
+Member Health
+Member Info
+Member Labels
+Member Name
+Member Onboard
+Member Settlement Success
+Member Status
+Member Welcome
+Member churn alert
+Member has no active session plan with sessions left.
+Member is not assigned to this trainer.
+Member not found
+Member signature + I Agree
+Member signature + I Agree confirmation
+Member to edit not found
+MemberHealth(id: 
+Members can book trainer sessions and classes directly through the app.
+Members can check in instantly by scanning a QR code, no manual entry needed.
+Members synced to biometric devices successfully
+Members who signed an older version must sign again. Use when questions or health criteria change.
+Members with Balance
+Members with balance
+Membership 
+Membership - 
+Membership By Plans
+Membership Expired
+Membership Expiring Reminder
+Membership ID
+Membership Pause
+Membership Plans
+Membership Reminder
+Membership Renewal Success
+Membership Resume
+Membership Session Marked
+Membership Start Date
+Membership Status
+Membership Status Extend
+Membership Status Update
+Membership ends early: 
+Membership is required.
+Membership is required. 
+Membership plan
+Membership start date. 
+Memberships by Plan
+Message Preview
+Message Templates
+Message Type
+Message history
+Method: 
+Micronesia, Federated States of Micronesia
+Minor update
+Missing DateTime formatting patterns
+Missing exponent
+Missing glyph for character '
+Missing scheme in uri: 
+Missing values for keyframe.
+Mobile Data
+Mobile number not valid.
+MobileScannerBarcodeException(Could not detect a barcode in the input image.)
+More slots selected than member's available session budget.
+Most sold
+Move existing plans to
+Moving plans failed with 
+MultiFactorInfo{enrollmentTimestamp: 
+Multiple decimal separators in pattern "
+Multiple exponential symbols in pattern "
+Muscle Injury
+Must call setSink(sink) before accessing!
+My gym
+NO Gyms found
+Name (A-Z)
+Name (Required)
+Name (Z-A)
+Name cannot be empty
+Name cannot contain special characters
+Name must contain at least 3 characters
+Name or Phone Number
+Name or Phone number
+Name should only have alphabets or numbers.
+Native Method
+Native call `
+Neck Pain
+Need Help?
+Needs adjustment, not emergency
+Nesting too deep at 
+Net Month
+Netherlands Antilles
+New Caledonia
+New Category
+New Exercise
+New Feature
+New Joiner
+New Lead
+New Member
+New Members
+New Plan
+New Plan Group
+New Plan Group Name
+New Product
+New Sale
+New Sales
+New Zealand
+New joiner
+New update is available
+Next Monday
+Next Month
+No Activity found to handle intent { 
+No Connection
+No Device
+No Firebase App '[DEFAULT]' has been created - call Firebase.initializeApp()
+No Internet available
+No JNI instance is available
+No Labels Available
+No Lead Found
+No Logs Found
+No Members Assigned
+No Members assigned!
+No Membership found
+No Plan
+No Plan Selected
+No Plans Added. Please add a new plan first
+No Sessions Found
+No Sessions Recorded
+No Staffs found!
+No Tax Configured
+No Transaction found
+No Transactions Found
+No Video Links Yet! Add your first link now!
+No active membership found for this member. Click on add new membership to create a new membership plan.
+No biometric device added yet. Add one to start tracking live occupancy and busy hours.
+No broadcasts are scheduled. Create a new broadcast to schedule one. You can find completed or cancelled broadcasts in the history section.
+No broadcasts yet
+No categories yet
+No content even though contentLength was specified to be greater than 0: 
+No context available
+No credit plans available
+No credits available!
+No data available
+No eligible plans to upgrade to
+No enabled working hours. Please set working hours first.
+No enum value found for "
+No exercises added
+No exercises found
+No exercises yet
+No favorite feedback yet
+No feedback yet
+No form available to sign
+No form available to view
+No form yet
+No image selected
+No integration available
+No internet connection available
+No known health issues
+No leads match the selected filter
+No leads match the selected filters
+No logs found
+No logs found for this day
+No logs found to be reported!
+No matching timezones
+No member with balance
+No members match your filters
+No members with balance
+No message history yet
+No occupancy data available.
+No of days to extend the end date by
+No plan
+No product found for barcode: 
+No products match this filter
+No products yet
+No recent entries found
+No remaining sessions available to book
+No reminders found
+No results
+No sales recorded in the last 6 months
+No scheduled broadcasts yet
+No session logs to export
+No sessions found!
+No sessions recorded
+No sessions scheduled for this day
+No staff found
+No staffs found
+No stock for the item
+No stock history available
+No tax number added
+No template selected
+No transaction found
+No transactions to export
+No upcoming bookings for this member
+No weight records yet
+No widgets to preview
+No work hours enabled. Tap here to set your schedule.
+No working hours configured for 
+Non-https connection "
+Norfolk Island
+Northern Mariana Islands
+Not Active
+Not Connected
+Not a bitmap file.
+Not a valid method
+Not able to receive OTP?
+Not enough data in input.
+Not now
+Not tracked
+Notes (Optional)
+Notes (optional)
+Notes cannot exceed 500 characters
+Number (Required)
+Number of questions
+Numeric overflow
+OTP not valid. Enter 6 digit OTP
+OTP sent successfully
+OTP verification failed
+OTP verified successfully 
+Occurrence duration must be exactly 60 minutes.
+Offset may not be negative, was 
+Online Payments
+Online Payments Credit Purchase
+Online Payments Subscription
+Only single frame JPEGs supported
+Only trainers can add bookings
+Only trainers can manage working hours
+Only trainers can update working hours
+Open Devices
+Opening Stock Count
+Operation 'toDartString' not allowed on a 'nullptr'.
+Operation already completed
+Option 
+Or Visit: 
+Out of stock
+Outstanding Dues
+Outstanding dues
+PAR-Q Form
+PAR-Q Form Builder
+PAR-Q Not Signed
+PAR-Q Preview
+PAR-Q Signed
+PAR-Q Signed!
+PAR-Q form
+PAR-Q form not signed
+PAR-Q form saved successfully
+PARQ Form Share
+PEAK TODAY
+PLAN DETAILS
+PNG encode failed
+PRAGMA user_version
+PRAGMA user_version = 3
+PREVIEW MODE
+PSD invalid signature for layer additional data: 
+PSD: unsupported bit depth: 
+PackageInfo(appName: 
+Packaging damaged
+Page not found
+Paint(blendMode: 
+Palestinian Territory, Occupied
+Papua New Guinea
+Parse error in JSON deserialization: key "
+Partially Delivered
+Partially delivered
+Paste the URL here
+Path.combine() failed.  This may be due an invalid path; in particular, check for NaN values.
+PathException: 
+PathOps library was not initialized.
+Pattern matching error
+Pause date
+Paused on
+Payment Method
+Payment Methods
+Payment Type
+Payment Types
+Payment method is not valid
+Payment methods saved successfully
+Payment received cannot exceed total (
+Payment received is not valid.
+Payment type
+Payment type: 
+Pending Amount
+Percentage value "
+Permission Required
+Permission to access contacts denied
+Personal Details
+Photo 
+Physical Activity Readiness Questionnaire
+Pick up to 3
+PictureRecorder did not start recording.
+Pin Code
+Pincode is not verified. Please enter a valid pincode
+Plan Group
+Plan Groups
+Plan Name
+Plan Price
+Plan amount
+Plan created successfully
+Plan duration
+Plan name
+Plan: 
+Planning the day's meals
+Plans and Health
+Plans moved successfully
+Platform brightness was changed to 
+Platform interfaces must not be implemented with `implements`
+Please Check your Email
+Please Select
+Please Verify your Email
+Please add at least one day
+Please add at least one meal
+Please answer this question
+Please check the amount
+Please check your email
+Please check your internet connection. Your internet connection is either very slow or unavailable. Please try again.
+Please configure your tax information
+Please confirm you received the payment in your account before continuing.
+Please contact admin
+Please contact support to change your gym name
+Please create a new lead to track your potential customers
+Please create a new lead to track your potential customers.
+Please draw your signature
+Please enter Member name
+Please enter Staff name
+Please enter a broadcast name
+Please enter a category
+Please enter a name
+Please enter a plan name
+Please enter a valid URL
+Please enter a valid amount
+Please enter a valid email
+Please enter a valid email address
+Please enter a valid gym address
+Please enter a valid gym name
+Please enter a valid height.
+Please enter a valid opening count (0 or more)
+Please enter a valid phone number
+Please enter a valid pincode
+Please enter a valid quantity
+Please enter a valid quantity, Stock is less than the entered quantity
+Please enter a valid sale price
+Please enter a valid weight.
+Please enter an exercise name
+Please enter email
+Please enter the code
+Please enter the title
+Please enter valid email
+Please enter valid height
+Please enter valid weight
+Please mark a session to see the sessions log
+Please provide a value for 
+Please renew the subscription plan
+Please renew the subscription plan.
+Please scan it with your WhatsApp app
+Please select
+Please select a Payment Method
+Please select a category
+Please select a date range
+Please select a default payment method from selected methods
+Please select a member
+Please select a payment method
+Please select a payment type
+Please select a payment type and enter amount
+Please select a product
+Please select a reason
+Please select a scheduled date
+Please select at least one payment
+Please select at least one payment method
+Please select at least one recipient
+Please select role
+Please select start and end date
+Please select the method to receive the one-time password.
+Please select the plan group
+Please select the plan group where you would like to move the exiting plans to.
+Please verify your email
+Please verify your phone
+Please wait
+Please wait, pincode verification in progress
+Please wait...
+Positive and negative trunks must be the same
+Poster Template
+Prefix "firebase_" is reserved and cannot be used.
+Preview Template
+Previously signed members are unaffected. Use for wording fixes, formatting, or new text only.
+Price (W/O tax):
+Price Breakdown
+Price: 
+Primary activity
+Print Invoice
+Print PAR-Q Form
+Product Details
+Product History
+Product Sale Success
+Product already has a count. Use stock correction to change it.
+Product already has no quantity.
+Product is out of stock
+Project ID not found in the URI path of the DSN URI: 
+Projected using
+Prospect Gym Member Reminder
+Prospect Gym Member Welcome
+Proxy failed to establish tunnel (
+Puerto Rico
+QR Attendance
+QrInputTooLongException: 
+Quantity damaged
+Question text
+Question text *
+Question text will appear here...
+Quick Actions
+Quick Reports
+Quick reports
+RECENT ENTRIES
+RIGHT NOW
+RadialGradient(id: '
+Rate cannot be less than 0 nor greater than 100
+Reactivate now
+Read more about status codes at https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+Reading the member's profile
+Reason for Stock Edit
+Receive reports on 1st of every month
+Receive reports on 1st of every month, comparing previous month
+Receive reports once every 3 months
+Receive reports once every 3 months, comparing last 3 months
+Receive reports once every year
+Receive reports once every year end comparing previous year
+Recent Recharges
+Recent Transactions
+Recent Usage
+Recent activity
+Recent surgery / injury
+Recent transactions
+Recharge now
+Recharge to keep WhatsApp, Bulk SMS, and other features running smoothly. Approximately 
+Recharge your credits
+Recipe Link
+Recursive references detected: 
+RedirectRecord{statusCode: 
+Redirection: further action needs to be taken in order to complete the request
+Redo Extension
+Reducing quantity to 0 removes the item from the cart
+Referral 
+Referral code (optional)
+Refund & cancellation
+Refund and Cancellation
+Regenerate Gym QR
+Regenerating will invalidate the current QR link. Continue?
+Register *Yourself* And Leave *Feedback*
+Registration response missing.
+Remind members to clear pending dues before they lapse.
+Reminder date should be between tomorrow and next 90 days
+Reminder marked as done successfully.
+Reminders(renew: 
+Remove 
+Remove excess amount from above any
+Remove this exercise from the day?
+Render boundary not found
+Renew 
+Renew Membership
+Renew Now
+Renew Now!
+Renewal Due
+Renewal Sound
+Renewal due
+Replay config is not valid: width: 
+ReplayRecorder #
+Report filter should be less than 3 months
+Report last 3 logs
+Request aborted by `abortTrigger`
+Resend in
+Resend via SMS
+Resent Invite
+Reset App
+Reset all devices
+Reset biometric access
+Reset to Default
+Resistance Bands
+Rest (seconds, optional)
+Restart App
+Restart app
+Resume Membership
+Resume membership
+Revenue Concentration Risk
+Revenue concentration risk
+Review & Schedule
+Review Bookings
+Review Sessions
+Risk Members
+SENDING OPTION
+SESSION HISTORY (
+SESSION LOGS REPORT
+SVG contains too many nested reference expansions (possible Denial of Service exploit).
+Saint Barthelemy
+Saint Helena, Ascension and Tristan Da Cunha
+Saint Kitts and Nevis
+Saint Lucia
+Saint Martin
+Saint Pierre and Miquelon
+Saint Vincent and the Grenadines
+Sale (
+Sale created successfully
+Sale deleted successfully
+Sales by product
+Sample plan breakup for plan price 1000
+Sample tax breakup for plan  price 1000
+San Marino
+Sao Tome and Principe
+Saudi Arabia
+Save & Continue
+Save Contact
+Save Working Hours
+Save new version
+Saving PAR-Q form failed with 
+Scan Barcode
+Scan barcode
+Scan in to register, leave feedback, or browse plans, all from one simple menu.
+Scan the QR Code or visit the website above
+Schedule for later
+Scheduled Date
+Scheduled for
+Scheduled for:
+Screen size changed
+Screening areas
+Screening for the areas you chose
+Screenshot: skipping capture due to debouncing (too many captures within 
+Search Exercises
+Search for Gym name
+Search for name or phone
+Search for name or phone number
+Search for product name
+Search members by name or ID
+Search timezones
+Search your country by name
+Search your exercise here
+Section complete!
+See All
+See All Bookings
+See All Leads
+See All Sessions
+See Attendance Logs
+See all
+See all leads
+See all products
+See all sessions
+See attendance logs
+See full attendance log
+Select Date
+Select Label
+Select Labels
+Select Member
+Select OTP Method
+Select Plan
+Select Plan Group
+Select Product
+Select Recipients
+Select Start Date
+Select Template
+Select Trainer
+Select Variable
+Select category
+Select date range
+Select from list
+Select the Payment Type you want to use for the payment
+Select the Payment Type you want to use for the payments
+Select the plan you created.
+Select the timeline you want to export attendance logs for
+Select the timeline you want to export credit recharge and usage history for
+Select the timeline you want to export transactions for
+Select the timeline you want to export transactions to
+Select the timezone you want to use for the app
+Select variable
+Select your Country
+Select your gym
+Select your month and year
+Selected Plan Group
+Selected date and time cannot be in the future
+Selected date and time cannot be in the future.
+Selected date: 
+Selected plan group
+Selected slot is in the past or beyond the plan's end date.
+Selected slot is outside your enabled working hours.
+Selected time must be within working hours (
+Send Balance Reminder
+Send Balance Reminder?
+Send Birthday Message?
+Send Bulk Messages
+Send Follow Up Message
+Send Hello Message
+Send Hello Message?
+Send Invoice
+Send Last Invoice?
+Send Message
+Send Message?
+Send Now
+Send OTP
+Send Reminder
+Send Renewal Reminder for 
+Send Welcome Message
+Send Welcome Message?
+Send hello message
+Send now
+Send renewal reminder?
+Send smart automated WhatsApp messages to your members for renewals, reminders, and important updates.
+Send welcome message
+Senior / rehab
+Sentry sentry_version=7, sentry_client=
+SentryScreenshotWidget is not attached, skipping capture.
+Serial Number
+Server error - the server failed to fulfil an apparently valid request
+Session Logs - 
+Session Notes
+Session Progress:
+Session deleted successfully
+Session length
+Session logs for 
+Session marked successfully
+Session note
+Session notes
+Sessions cannot be empty or invalid
+Set Balance Reminder
+Set Hours
+Set Language
+Set Time Zone
+Set Time zone
+Set UPI ID
+Set a Balance Reminder
+Set up balance reminder
+Set up your gym
+Set when this membership starts.
+Set your working hours to allow bookings.
+Setting reps, sets and rest
+Settle Balance
+Setup Broadcast
+Shadow Color
+Shape data was missing information.
+ShapeFill{color=, fillEnabled=
+ShapeGroup{name: '
+Share Image
+Share Invoice
+Share Support Logs
+Share the QR code with your members to start collecting feedback.
+ShareResult(raw: 
+Shorebird read current patch failed
+Shorebird update check failed
+Shoulder Pain
+Show Disabled Plans
+Show ID
+Show UPI QR code
+Show disabled plans
+Show me
+Sierra Leone
+Sign Now
+Sign in
+Sign up
+Signature captured
+Signature pad
+Signed-in user is not a trainer in this gym.
+Simple Member Card
+SingleMemberState(isLoading: 
+Size already written
+Skip for now
+Smart training routines and meal guidance tailored to your client's goals, schedule, and preferences.
+Snooze Until
+Snooze this person so you can get alerted later
+Snooze until
+Social Media
+Solomon Islands
+Something went wrong
+Something went wrong while checking version
+Something went wrong while listening for position updates.
+Something went wrong! Please try again.
+Something went wrong, Please try again later
+Something went wrong. Please try again later.
+Sort by
+Sorted By
+Sorted by
+South Africa
+South Georgia and the South Sandwich Islands
+South Sudan
+Span '
+Span operation: 
+SpanFrameMetricsCollector 
+Special Care / Condition
+Specify Reason
+Split 
+Split payment method
+Split total must be equal to expense total
+Sri Lanka
+StackTrace: 
+Staff deleted
+Staff not found
+Staff to edit not found
+Standard questions included
+Start Membership Now?
+Start Now
+Start Of Image marker not found.
+Start Stock Tracking
+Start Tracking
+Start may not be negative, was 
+Start timestamp (
+Stay tuned! Update the app to enjoy these powerful features soon.
+Stock Alerts
+Stock added (
+Stock added successfully
+Stock cannot be 0 when logging as expense
+Stock corrected (
+Stock corrected: 
+Stock limit exceeded for 
+Stock removed (
+Stock reversed (
+Stock reversed: 
+Stock should be a valid quantity
+Stock tracking started
+Stock tracking stopped
+Stop Stock Tracking
+Stop Tracking
+Stream closed before it got prepared
+Stream type must be `Stream<List<int>>`
+String (for DateTime)
+Stroke History
+Stroke(color: 
+Structuring the training week
+Subjects do not support resume callbacks
+Subscription Expired!
+Subscription History
+Subscription Usage
+Subscriptions history
+Successful parse results do not have a message.
+Summary View
+Support Logs
+Support and Information
+Svalbard and Jan Mayen
+SvgFillAttributes(definitions: 
+SvgTheme(currentColor: 
+Switch Gym
+Switch Gyms
+Switch to another gym
+Switch to another gym.
+Switches this product to quantity-based tracking starting at the opening count.
+Sync Biometrics
+Sync Members
+Syrian Arab Republic
+TIFFFaxDecoder5 
+TRACKING STARTED
+TRACKING STOPPED
+Tailored to this member
+Take Screenshot
+Tanzania, United Republic of Tanzania
+Tap 'Add new member' to finish.
+Tap 'Continue' to assign a plan.
+Tap 'Member' to open the member form.
+Tap 'Plan' to open the plan form.
+Tap Confirm Renewal to continue.
+Tap Confirm.
+Tap Members to open your member list.
+Tap Reports to view your gym performance.
+Tap Save to add your new plan.
+Tap Save to apply the filter.
+Tap Send Message.
+Tap Transactions to see all member transactions.
+Tap pad to sign
+Tap the filter button to change the reporting period.
+Tap the filter button to choose a date range.
+Tap the filter button to refine the member list.
+Tap the heart on feedback to save it here.
+Tap the quick button again to add your first member. Members are assigned to the plan you just created.
+Tap the quick button to create your first plan. Plans hold your price and duration. Members get assigned to them.
+Tap this if nothing needs to be flagged
+Tap to add
+Tap to jump
+Tap to share with member
+Target path and source path cannot be the same.
+Task dropped due to reaching max (
+Tax Breakdown
+Tax Information
+Tax No
+Tax No. changed successfully
+Tax config deleted successfully
+Tell us about you
+Terms & conditions
+Terms and Conditions
+Text "
+Text scale factor changed to 
+TextPosition(reset: 
+The AI always adds the standard PAR-Q readiness questions, then screens for the areas you choose.
+The App is already listening to a stream of position updates. It is not possible to listen to more then one stream at the same time.
+The Content-Length header occurred more than once, at most one is allowed.
+The MobileScannerController has not been initialized. Call start() before using it.
+The MobileScannerController is already running. Stop it before starting again.
+The MobileScannerController was used after it was disposed.
+The Path cannot loop back on itself.
+The `handler` has already been called, make sure each handler gets called only once.
+The authentication challenge sent by the server is not correctly formatted.
+The basics
+The buffer must be created with `JByteBuffer.allocateDirect`.
+The connection errored: 
+The context line "
+The data is a type of `Map` (
+The error handler of Future.catchError must return a value of the future's type
+The error handler of Future.then must return a value of the returned future's type
+The file format version number's flag field contains unrecognized flags.
+The form has been submitted and a signed PDF has been generated.
+The length of the Uint8list returned by the custom RNG must be 16.
+The location service on the device is disabled.
+The member
+The memory region is undefined or direct buffer access is not supported by this JVM.
+The next export will be available on
+The next export will be available on 
+The object is an unaligned view buffer and the processor architecture does not support unaligned access.
+The parameter 'message' should not be null.
+The provided data does not match the currently supported version.
+The provided data was not a vector_graphics binary asset.
+The rect is larger than the boundary. The rect width must be less than the boundary width, and the rect height must be less than the boundary height.
+The reference was null
+The request connection took longer than 
+The request took longer than 
+The request was successfully received, understood, and accepted
+The selected time is already passed for this day. Set a valid time
+The span is already finished. Measurement 
+The span text "
+The start method did not return a texture id.
+The start method did not return a view configuration.
+The status code of 
+The supplied map doesn't contain the mandatory key `latitude`.
+The supplied map doesn't contain the mandatory key `longitude`.
+The tracer is already finished. Measurement 
+There must be at least one digit following the .
+These cards summarize new members and outstanding balance.
+These plans had no sign-ups in the last 3 months: 
+This Decoration subclass does not expect to be used for clipping.
+This Month
+This Week
+This Year
+This action cannot be undone
+This action cannot be undone.
+This action is final and cannot be undone
+This action is final and cannot be undone.
+This animation does not support split dimensions!
+This can happen if an inner synchronized block is spawned outside the block it was started from. Make sure the inner synchronized blocks are properly awaited
+This exception was thrown because the response has a status code of 
+This feature is not included in your current subscription
+This is an informational response - the request was received, continuing processing
+This member is blocked
+This membership has expired. Renew the plan to mark sessions.
+This membership is Paused
+This membership is frozen
+This message has been already sent. Do you want to send again?
+This month
+This replaces what's in the builder with an AI-generated PAR-Q. Your saved form stays as-is until you review and save the new one.
+This user has been disabled
+This widget is the root of the tree, so it has no ancestors, let alone a "
+This will be sent to
+This will be sent to 
+This will change the language of the entire app to your selected language.
+This will remove all upcoming bookings for
+This will switch the product to no quantity. Sales will no longer check or deduct stock. Past stock history will be preserved.
+This year
+Throwable type: 
+Time Filter
+Time Spent
+Time Zone
+Time zone
+Time: 
+Timezone set to default
+Timezone updated to
+To use an in-app web view, you must provide an http(s) URL.
+Today's Leads
+Today's leads
+Today, 
+Token is empty
+Too many percent/permill
+Top Performing Plan
+Top performing plan
+Total Cost
+Total Members
+Total Revenue
+Total Revenue breaks down memberships, sales, and expenses.
+Total Sessions
+Total from
+Tracking started (
+Tracking stopped
+Trained by
+Trainer Session/Class Bookings
+Trainer access only. This screen is not available for your role.
+Trainer assigned successfully
+Trainer cannot be deleted while members are assigned
+Trainer has no enabled working hours for this day.
+Trainer unassigned successfully
+Training days per week
+Transaction 
+Transaction Type
+Transaction filter should be less than 3 months
+Transaction type
+Transactions exported successfully to your email
+Tried to get location before initializing timezone database
+Trim Path: {start: 
+Trinidad and Tobago
+Try Again
+Try again
+Try again.
+Try this template
+Try to build errorBuilder with errorBuilder null
+Try to build progressIndicatorBuilder with progressIndicatorBuilder null
+Try wrapping the Overlay in a SizedBox to give it a finite size or use an OverlayEntry with canSizeOverlay set to true.
+Trying to clear ContentLength on HTTP 1.0 headers with 'Connection: Keep-Alive' set
+Trying to read 
+Trying to set 'Connection: Keep-Alive' on HTTP 1.0 headers with no ContentLength
+Turks and Caicos Islands
+Turn on
+Turn on now
+Type # and then select
+Type mismatch in JSON deserialization: key "
+Type: 
+UPI ID (VPA)
+UPI ID or VPA (e.g. merchant@bank)
+UPI ID saved
+UPI Payment QR
+UPI payment QR
+URL cannot be empty
+Unable decode the image
+Unable to cancel: Missing booking ID
+Unable to convert the value "
+Unable to decode image
+Unable to display U+
+Unable to download 
+Unable to establish connection on channel: "
+Unable to find a Jpeg image in the file
+Unable to find a path to "
+Unable to get application support directory
+Unable to get temporary directory
+Unable to guess the image type 
+Unable to load gym QR
+Unable to parse character data.
+Unable to send message.
+Unable to set different values for `contentType` and the content-type header.
+Unassign Trainer
+Unavailable (
+Unblock Member
+Unblock Now?
+Unconverted Leads
+Unconverted leads
+Under Maintenance
+Unexpected "0" in pattern "
+Unexpected value
+Unimplemented 
+United Arab Emirates
+United Kingdom
+United States
+Units sold this month
+Unknown InstrumentationSpan type: 
+Unknown JPEG marker 
+Unknown LevelMode format.
+Unknown ParqWidgetType: 
+Unknown color colorString: 
+Unknown color space: 
+Unknown colorString is empty or format incorrect: 
+Unknown format for WebP
+Unknown layer type 
+Unknown mask mode 
+Unknown mode 
+Unknown point starts with 
+Unknown segment command
+Unknown shape type 
+Unknown time
+Unknown trim path type 
+Unknown type tag 
+Unknown value for token of type 
+Unmark Session
+Unreachable code.
+Unrecognized message 
+Unrecognized method '
+Unsaved changes?
+Unsupported BMP compression type: 
+Unsupported Blend Mode: 
+Unsupported Compression Type: 
+Unsupported bitsPerPixel (
+Unsupported bitsPerSample: 
+Unsupported clipPath child 
+Unsupported color mode
+Unsupported color mode (4 components)
+Unsupported compression: 
+Unsupported matte type: 
+Unsupported matte type: Luma
+Unsupported matte type: Luma Inverted
+Unsupported nested <svg> element.
+Unsupported operation on parser reference
+Unsupported queryResult type 
+Unsupported text range units: 
+Unsupported transform: 
+Unterminated array
+Unterminated escape sequence
+Unterminated escape sequence at path 
+Unterminated object
+Upcoming Bookings
+Upcoming Features:
+Upcoming Plan
+Update Broadcast
+Update Details
+Update Gym
+Update Height & Weight
+Update Required
+Update track
+Updated On
+Updated on
+Updating plan group attendance failed with 
+Upgrade Membership
+Upgrade now
+Upgraded to 
+Upload ID card
+Upload an Image
+Upload failed
+Upload failed for file: 
+Usage: this month vs last month
+Use JsonReader.setLenient(true) to accept malformed JSON
+Use after release error
+Use biometrics or device credentials
+Use search to quickly find a member by name or phone number.
+Use this plan
+User Image
+User Preferences
+User not initialized
+User routed to an invalid url with 
+User: 
+UserCredential(additionalUserInfo: 
+UserMetadata(creationTime: 
+VectorGraphicsDecodeException: Failed to decode vector graphic from 
+Venezuela, Bolivarian Republic of Venezuela
+Verification email sent. Please check your inbox
+Verify & continue
+Verify Account
+Verify with a quick OTP, then register or leave feedback in seconds
+Verify your account
+Verify your number
+Video Links
+Video link deleted
+View All
+View All Gyms
+View Broadcast List
+View Gym QR Code
+View Invoice
+View Logs
+View Reminder
+View Signed PAR-Q
+View all
+View all Gyms
+View broadcast list
+View details
+View more >
+View weight graph
+Virgin Islands, British
+Virgin Islands, U.S.
+Wallis and Futuna
+Warm Start
+Warning database has been locked for 
+Warning: 
+Warning: Unsupported image format 
+Watch now
+Water / Moisture damage
+We couldn't complete your credit purchase. Please try again from the app or contact support if the problem persists.
+We couldn't complete your renewal. Please try again from the app or contact support if the problem persists.
+We have generated a QR code for you
+We recommend upgrading your plan. Please contact us to upgrade your plan and continue using our services
+We will send a one-time password to 
+We'll text a verification code to this number.
+Weak Bones
+WebViewRequest#uri is required to have a scheme.
+Weekly Working Hours
+Weight Trend
+Welcome to DGymBook!
+What should the form check for?
+What to screen
+What's New
+What's New?
+WhatsApp Integration
+Whatsapp Integration
+Which language do you prefer to talk to us in?
+Widget "
+Widget won't fit into the page as its height (
+WidgetFilter cannot mask widget 
+WidgetFilter unmasked: 
+WidgetStateProperty objects should only be used in places that document their support.
+Widgets that mix AutomaticKeepAliveClientMixin into their State must call super.build() but must ignore the return value of the superclass.
+WidgetsFlutterBinding has not been initialized yet. Creating 
+Wired (N/A)
+With Balance
+Word "
+Worker is closed
+Working hours updated successfully
+Workout Plan
+Workout Plan Added
+Workout Plan Share
+Workout Plans
+Workout plan assigned successfully
+Workout plan created successfully
+Workout plan deleted successfully
+Workout plan not found
+Workout plan updated successfully
+Would you like to continue with
+Would you like to continue with 
+Would you like to create this expense?
+Would you like to create this sale?
+Would you like to update this expense?
+Write Off Balance
+Write-off Balance
+Write-off Balance?
+Writing clear yes/no items
+XmlParserException: 
+Yes / No question
+You are all set!
+You are all set.
+You are ready to track members, revenue, and performance from Reports.
+You are running out of limits for membership plans.
+You are running out of limits for your membership plan
+You can always finish anything skipped from the profile page.
+You can mark sessions only after
+You can mark sessions only after 
+You can now filter transactions to review activity for any period.
+You can send the same message to many people at once. Useful for sharing important news or holiday updates.
+You can use 
+You can use Settings on your profile to manage your gym features.
+You cannot add an error while items are being added from addStream
+You cannot add items while items are being added from addStream
+You cannot close the subject while items are being added from addStream
+You do not have a tax number added.
+You do not have access to biometrics
+You do not have sufficient permissions to access this app. If you believe this is an error, please contact customer service for assistance.
+You don't have enough credits. Please recharge.
+You gave 
+You have 
+You have added the membership. 
+You have not added any Leads.
+You have not added any leads
+You have not set up WhatsApp integration yet
+You have not set up WhatsApp integration yet.
+You have unsaved changes. Are you sure you want to discard them?
+You must select a member for partial payment
+You now know how to search and filter members by their membership status.
+You only need to settle
+You're all set!
+You've Got New Feedback!
+Your Gym
+Your Sessions
+Your Subscription will expire soon. Please contact us to renew.
+Your Timezone has been forcefully changed to
+Your WhatsApp credits have been added. You can keep messaging members without interruption.
+Your WhatsApp integration is currently on. To manage credits or turn it off, please go to the WhatsApp section.
+Your account is disabled.
+Your app is up to date
+Your app version is outdated. Please update your app to continue using our services.
+Your changes to the PAR-Q form have not been saved. Save before leaving or discard them.
+Your changes to this diet plan have not been saved. Would you like to save before leaving?
+Your changes to this workout plan have not been saved. Would you like to save before leaving?
+Your configurations
+Your credits
+Your data has been successfully exported
+Your data has been successfully exported to Excel and sent to your email address:
+Your first member is added. Your gym is up and running.
+Your first plan is created. You can now add members and assign them to it.
+Your gym
+Your gym is already registered. Please contact support for assistance.
+Your message has been copied
+Your message template has been reset to default.
+Your message template has been saved.
+Your message would look like this
+Your profile is set. Leave feedback anytime from your menu
+Your sessions are completed
+Your subscription will expire soon
+Your timezone has been forcefully changed
+Your whatsapp account is successfully connected

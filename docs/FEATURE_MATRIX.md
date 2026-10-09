@@ -1,0 +1,27 @@
+# Feature matrix
+
+Legend: ✅ implemented and exercised · 🟡 implemented, not exercised on device · ❌ not implemented
+
+| Module | Status | Notes |
+|---|---|---|
+| Auth: phone login, OTP, register, gym setup/selection, backend setup | ✅ | dev OTP stand-in |
+| Splash, maintenance, expired, unauthorized, update screens | ✅ | |
+| Dashboard | ✅ | |
+| Members: list/filter, add/edit, detail, renew, at-risk, pick | ✅ | |
+| Memberships and plans (+ groups) | ✅ | |
+| Transactions, balance, reminders, invoice PDF | ✅ | |
+| Reports | ✅ | |
+| Leads: list, form, convert | ✅ | |
+| Attendance logs, QR scan | ✅ | |
+| Staff, trainer schedule, working hours, bookings | ✅ | |
+| Products, sales, expenses | ✅ | |
+| Messaging: broadcasts, templates, credits, history, WhatsApp | 🟡 | outbox stand-in, nothing is actually sent |
+| Workout plans, diet plans, exercise library, generators, assign to member | ✅ | rule-based generators |
+| PAR-Q builder + member signing/view | ✅ builder / 🟡 signing | signature pad not drawn through on emulator |
+| Feedback, video links, biometric devices, poster | 🟡 | |
+| Settings hub and pages | ✅ | |
+| Report-schedule settings page | ❌ | |
+| Payment deep link (`dgymbook://payments`) handler | ❌ | manifest filter present |
+| FCM push registration | ❌ | endpoint exists in backend; needs a real Firebase project |
+| `view-photo` route | ❌ | |
+| Localisation | 🟡 | English + partial Hindi |
