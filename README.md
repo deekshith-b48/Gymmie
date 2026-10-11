@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/brand/logo_title.png" alt="Gymmie" width="220">
+<img src="assets/brand/logo_mark.png" alt="Gymmie" width="120">
 
 # Gymmie 2.0
 
