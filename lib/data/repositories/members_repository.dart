@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import '../../core/network/api_client.dart';
 import '../../core/util/json.dart';
 import '../models/members.dart';
+import '../models/settings.dart';
 import '../models/plans.dart';
 
 class MembersRepository {
@@ -12,6 +13,43 @@ class MembersRepository {
 
   Future<ApiResponse> list(int page, int limit, Json query) =>
       _api.get('/v5/members', query: {...query, 'page': page, 'limit': limit});
+
+  /// Members' renewal / plan-change / cancellation requests (pending first).
+  Future<List<MembershipRequestRow>> membershipRequests({String? status}) async =>
+      (await _api.get('/v5/membership-requests', query: {'status': ?status, 'limit': 100}))
+          .list
+          .map(MembershipRequestRow.fromJson)
+          .toList();
+
+  /// Records the gym's answer. It does not change the membership or any money: staff do that as usual.
+  Future<void> decideRequest(String id, {required bool approve, String? note}) async {
+    await _api.post(
+      '/v5/membership-requests/$id/decision',
+      body: {'decision': approve ? 'approve' : 'reject', if (note != null && note.isNotEmpty) 'note': note},
+    );
+  }
+
+  /// A link the member can pay their dues with, through the gym's own payment account.
+  Future<DuesLink> duesPaymentLink(String memberId, {double? amount}) async =>
+      DuesLink.fromJson((await _api.post('/v5/members/$memberId/payment-link', body: {'amount': ?amount})).map);
+
+  /// A new access code for the member (the old one stops working at once). The code is in this answer only.
+  Future<({String code, String issuedAt})> issueAccessCode(String memberId) async {
+    final r = (await _api.post('/v5/members/$memberId/access-code')).map;
+    return (code: r.s('accessCode'), issuedAt: r.s('issuedAt'));
+  }
+
+  Future<void> revokeAccessCode(String memberId) async {
+    await _api.delete('/v5/members/$memberId/access-code');
+  }
+
+  Future<void> inviteToApp(String memberId) async {
+    await _api.post('/v5/members/$memberId/app-invite');
+  }
+
+  Future<void> reopenApp(String memberId) async {
+    await _api.post('/v5/members/$memberId/member-app/reopen');
+  }
 
   Future<MemberDetail> detail(String id) async =>
       MemberDetail.fromJson((await _api.get('/v5/members/$id')).map);

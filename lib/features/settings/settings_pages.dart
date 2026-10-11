@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import '../../core/legal/notices.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -143,15 +144,11 @@ class _GymDetailsScreenState extends State<GymDetailsScreen> {
                       bottom: 0,
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppColors.navy,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 16,
-                          color: Colors.white,
-                        ),
+                        child: Icon(Icons.camera_alt, size: 16, color: AppColors.onNavy),
                       ),
                     ),
                 ],
@@ -159,7 +156,7 @@ class _GymDetailsScreenState extends State<GymDetailsScreen> {
             ),
           ),
           const Gap(6),
-          const Center(
+          Center(
             child: Text(
               'Add gym logo',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -171,7 +168,7 @@ class _GymDetailsScreenState extends State<GymDetailsScreen> {
             label: 'Gym name',
             enabled: false,
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 6),
             child: Text(
               'Please contact support to change your gym name',
@@ -391,7 +388,7 @@ class _TaxScreenState extends State<TaxScreen> {
                     if (t.taxNumber != null)
                       Text(
                         'Tax No: ${t.taxNumber}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
                         ),
@@ -401,7 +398,7 @@ class _TaxScreenState extends State<TaxScreen> {
                       t.isIncluded
                           ? 'Price 1000 → tax ${Fmt.money(1000 - 1000 / (1 + t.rate / 100))}, taxable ${Fmt.money(1000 / (1 + t.rate / 100))}'
                           : 'Price 1000 + tax ${Fmt.money(1000 * t.rate / 100)} = ${Fmt.money(1000 + 1000 * t.rate / 100)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textMuted,
                       ),
@@ -710,7 +707,7 @@ class LanguageScreen extends StatelessWidget {
                 ),
                 subtitle: Text(e.key == 'en' ? 'English' : e.key.toUpperCase()),
                 trailing: p.language == e.key
-                    ? const Icon(Icons.check_circle, color: AppColors.success)
+                    ? Icon(Icons.check_circle, color: AppColors.success)
                     : null,
                 onTap: () async {
                   await getIt<SettingsCubit>().setLanguage(e.key);
@@ -754,7 +751,7 @@ class ThemeScreen extends StatelessWidget {
                 leading: Icon(i),
                 title: Text(l.tr),
                 trailing: p.themeMode == m
-                    ? const Icon(Icons.check_circle, color: AppColors.success)
+                    ? Icon(Icons.check_circle, color: AppColors.success)
                     : null,
                 onTap: () => getIt<SettingsCubit>().setTheme(m),
               ),
@@ -813,7 +810,7 @@ class _TimezoneScreenState extends State<TimezoneScreen> {
                   itemBuilder: (context, i) => ListTile(
                     title: Text(list[i]),
                     trailing: list[i] == current
-                        ? const Icon(
+                        ? Icon(
                             Icons.check_circle,
                             color: AppColors.success,
                           )
@@ -976,15 +973,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     bottom: 0,
                     child: Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.navy,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        size: 16,
-                        color: Colors.white,
-                      ),
+                      child: Icon(Icons.camera_alt, size: 16, color: AppColors.onNavy),
                     ),
                   ),
                 ],
@@ -992,7 +985,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const Gap(8),
-          const Center(
+          Center(
             child: Text(
               'Add your photo',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
@@ -1046,7 +1039,7 @@ class _Contact extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                 ),
@@ -1152,12 +1145,12 @@ class _UpiScreenState extends State<UpiScreen> {
             const Gap(10),
             Text(
               'UPI payment QR for ${g.name}',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
               ),
             ),
-            const Text(
+            Text(
               'Shown to members when they renew. Check the amount in your UPI app before confirming a payment.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textMuted, fontSize: 11),
@@ -1209,6 +1202,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     }
   }
 
+  int _polls = 0;
+
   Future<void> _checkOrder() async {
     final id = _pendingOrder;
     if (id == null) return;
@@ -1221,6 +1216,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         _usage.refresh();
         _history.refresh();
         if (mounted) showToast(context, 'Membership Renewal Success');
+      } else if (o.status == 'created' && _polls < 6) {
+        // paid at the bank but the payment provider has not confirmed yet: look again in a few seconds
+        _polls++;
+        Future<void>.delayed(const Duration(seconds: 3), () { if (mounted) _checkOrder(); });
       } else if (o.status == 'failed') {
         _pendingOrder = null;
         if (mounted) {
@@ -1249,6 +1248,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     );
     if (o == null || o.paymentUrl == null || !mounted) return;
     _pendingOrder = o.id;
+    _polls = 0;
     await Launch.url(context, o.paymentUrl!);
   }
 
@@ -1298,7 +1298,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                       sub!.expired
                           ? 'Expired on ${Fmt.date(sub.endsAt)}'
                           : 'Valid until ${Fmt.date(sub.endsAt)}',
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                 ],
               ),
@@ -1370,7 +1370,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               'Plans',
               padding: EdgeInsets.fromLTRB(2, 20, 2, 4),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(bottom: 8),
               child: Text(
                 'Development catalogue and a simulated payment provider. Prices are placeholders.',
@@ -1412,7 +1412,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                                           ),
                                           Text(
                                             '${p.limits['members'] ?? '-'} members · ${p.limits['staff'] ?? '-'} staff · ${p.limits['plans'] ?? '-'} plans',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
                                               color: AppColors.textSecondary,
                                             ),
@@ -1465,7 +1465,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     builder: (context, st) {
                       final h = st.data ?? const [];
                       if (h.isEmpty) {
-                        return const AppCard(
+                        return AppCard(
                           child: Text(
                             'No payments yet.',
                             style: TextStyle(color: AppColors.textSecondary),
@@ -1492,7 +1492,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                                           Text(o.description ?? 'Subscription'),
                                           Text(
                                             Fmt.dateTime(o.createdAt),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 11,
                                               color: AppColors.textSecondary,
                                             ),
@@ -1572,6 +1572,11 @@ class SupportScreen extends StatelessWidget {
                 title: 'Refund and Cancellation',
                 onTap: () =>
                     Launch.url(context, AppConfig.supportUrls['refund']!),
+              ),
+              MenuTile(
+                icon: Icons.gavel_outlined,
+                title: 'Open-source licences',
+                onTap: () => showNotices(context),
               ),
               MenuTile(
                 icon: Icons.new_releases_outlined,
@@ -1783,7 +1788,7 @@ class _BloodDonorsScreenState extends State<BloodDonorsScreen> {
                                     ),
                                     Text(
                                       '${m['phone']}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
                                         color: AppColors.textSecondary,
                                       ),

@@ -2,7 +2,8 @@
 import { randomUUID } from 'node:crypto';
 import { S, validate } from '../validate.js';
 import { conflict, invalid, notFound } from '../errors.js';
-import { created, noContent } from '../http.js';
+import { created, list, noContent } from '../http.js';
+import { OPENGYM_EXERCISES, withImage } from '../domain/library.js';
 import { ensureFeature } from '../helpers.js';
 import { EXERCISE_CATEGORIES, EXERCISE_LIBRARY, EQUIPMENT, GOALS, LEVELS, DIET_PREFERENCES, estimateCalories, generateDiet, generateWorkout } from '../domain/generators.js';
 import { HEALTH_CONDITIONS } from './members.js';
@@ -32,16 +33,21 @@ export function registerFitnessRoutes({ router }) {
   // ---- exercise library -------------------------------------------------------------------------------------------
   router.get('/v5/exercises/categories', { perm: 'plansets.read' }, () => EXERCISE_CATEGORIES);
   router.get('/v5/exercises/meta', { perm: 'plansets.read' }, () => ({ categories: EXERCISE_CATEGORIES, equipment: EQUIPMENT, goals: GOALS, levels: LEVELS, dietaryPreferences: DIET_PREFERENCES, conditions: HEALTH_CONDITIONS }));
+  // The built-in library is Gymmie's curated set plus openGym's catalogue. It is paged: with ~5,700 entries a
+  // client narrows by `q` / `category` and reads `limit` (default 300, max 1000) per `page`.
   router.get('/v5/exercises', { perm: 'plansets.read' }, (ctx) => {
-    const q = (ctx.query.q ?? '').toLowerCase();
+    const q = (ctx.query.q ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+    const base = ctx.config.exerciseMediaLicensed ? ctx.config.openGym?.publicUrl : null;
     const custom = ctx.col('exercises').all().map((e) => ({ ...e, builtIn: false }));
-    return [...EXERCISE_LIBRARY, ...custom].filter((e) => (!ctx.query.category || e.category === ctx.query.category) && (!q || e.name.toLowerCase().includes(q)))
+    const items = [...EXERCISE_LIBRARY, ...custom, ...OPENGYM_EXERCISES]
+      .filter((e) => (!ctx.query.category || e.category === ctx.query.category) && q.every((w) => e.name.toLowerCase().includes(w)))
       .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+    return list(items.map((e) => withImage(e, base)), { page: ctx.query.page, limit: ctx.query.limit ?? '300' }, { maxLimit: 1000, defaultLimit: 300 });
   });
   const EXC = { name: S.str({ required: true, min: 1, max: 100 }), category: S.oneOf(EXERCISE_CATEGORIES, { required: true }), equipment: S.list(S.oneOf(EQUIPMENT), { max: 6 }), instructions: S.str({ max: 1000 }), videoUrl: S.str({ max: 300, pattern: /^https?:\/\/.+/, patternMessage: 'Please enter a valid URL' }) };
   router.post('/v5/exercises', { perm: 'plansets.write' }, (ctx) => {
     const b = validate(EXC, ctx.body);
-    if (ctx.col('exercises').findOne((e) => e.name.toLowerCase() === b.name.toLowerCase()) || EXERCISE_LIBRARY.some((e) => e.name.toLowerCase() === b.name.toLowerCase())) throw conflict('An exercise with this name already exists');
+    if (ctx.col('exercises').findOne((e) => e.name.toLowerCase() === b.name.toLowerCase()) || [...EXERCISE_LIBRARY, ...OPENGYM_EXERCISES].some((e) => e.name.toLowerCase() === b.name.toLowerCase())) throw conflict('An exercise with this name already exists');
     return created({ ...ctx.col('exercises').insert(b), builtIn: false });
   });
   router.patch('/v5/exercises/:id', { perm: 'plansets.write' }, (ctx) => {

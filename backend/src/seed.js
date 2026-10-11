@@ -48,7 +48,7 @@ export async function seed({ reset = false } = {}) {
     // demo gym is on a paid-up subscription with all visible features on (an admin would do this in the original product)
     const g = loadGym(srv.store, gym);
     saveGym(srv.store, gym, {
-      features: { ...g.features, WHATSAPP_INTEGRATION: true, SALES: true, GYM_UPI_QR: true, AI_INSIGHTS: true, AI_WORKOUTS: true, DIET_PLANS: true, WORKOUT_PLANS: true, RISK_MEMBERS: true, QUICK_REPORTS: true, MEMBER_HEALTH: true, TAX_INFORMATION: true, POSTER_TEMPLATE: true, RENEWAL_SOUND: true, SIMPLE_MEMBER_CARD: true, LOCALIZATION: true },
+      features: { ...g.features, WHATSAPP_INTEGRATION: true, SALES: true, GYM_UPI_QR: true, AI_INSIGHTS: true, AI_WORKOUTS: true, DIET_PLANS: true, WORKOUT_PLANS: true, RISK_MEMBERS: true, QUICK_REPORTS: true, MEMBER_HEALTH: true, TAX_INFORMATION: true, POSTER_TEMPLATE: true, RENEWAL_SOUND: true, SIMPLE_MEMBER_CARD: true, LOCALIZATION: true, MEMBER_APP: true },
       subscription: { plan: 'GROWTH', startsAt: addDays(today, -60), endsAt: addDays(today, 300), limits: { plans: 30, staff: 10, members: 800 } }, upiId: 'irontemple@okbank', onboardingCompleted: true,
     });
     // ---- staff ----
@@ -157,6 +157,7 @@ export async function seed({ reset = false } = {}) {
     await login('+919000000003');
     console.log(`Seeded gym "Iron Temple Fitness" (code ${code}): ${members.length} members, ${marks} attendance marks, ${leadNames.length} leads, ${Object.keys(prods).length} products.`);
     console.log('Demo logins (DEV, OTP 123456): owner +919000000001 · manager +919000000002 · trainer +919000000003 · staff +919000000004');
+    console.log(`Demo MEMBER login (DEV, OTP 123456, "For gym members" on the login screen): ${members[0].phone}  (gym code ${code})`);
   } finally {
     await srv.close();
   }

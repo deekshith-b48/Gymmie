@@ -37,7 +37,7 @@ Future<String?> promptText(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
                   message,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
@@ -60,7 +60,7 @@ Future<String?> promptText(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text(
+          child: Text(
             'Cancel',
             style: TextStyle(color: AppColors.textSecondary),
           ),
@@ -126,7 +126,7 @@ Future<T?> chooseOne<T>(
               children: [
                 Expanded(child: Text(labelOf(i))),
                 if (i == selected)
-                  const Icon(Icons.check, color: AppColors.success, size: 18),
+                  Icon(Icons.check, color: AppColors.success, size: 18),
               ],
             ),
           ),

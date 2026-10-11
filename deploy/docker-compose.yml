@@ -1,0 +1,45 @@
+# One small server: docker compose --env-file .env up -d
+services:
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DB_FILE: /data/gymmie.sqlite
+      TRUST_PROXY: "1"
+    volumes:
+      - gymmie-data:/data
+    expose: ["8787"]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [backend]
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  # nightly consistent backup (VACUUM INTO + integrity check), newest 14 kept; copy /backups off the machine (docs/DEPLOY.md)
+  backup:
+    build: ../backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_FILE: /data/gymmie.sqlite
+      BACKUP_DIR: /backups
+      KEEP: "14"
+    volumes:
+      - gymmie-data:/data
+      - ./backups:/backups
+    user: root
+    entrypoint: ["sh", "-c", "while true; do node scripts/backup.js || true; sleep 86400; done"]
+
+volumes:
+  gymmie-data:
+  caddy-data:
+  caddy-config:

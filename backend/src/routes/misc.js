@@ -9,6 +9,7 @@ import { COUNTRIES } from './config.js';
 
 const URL_RE = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
 export const ANNOUNCEMENTS = [
+  { id: 'ann-2-0-0', title: "Gymmie 2.0", body: 'A member app with access codes, a 14-day free trial, online fee collection with your own Razorpay account, and a new look.', kind: 'major', createdAt: '2026-10-11T00:00:00.000Z', catalog: 'dev' },
   { id: 'ann-1-9-4', title: "What's New in 1.9.4", body: 'Trainer session bookings, PAR-Q forms and balance reminders are now available.', kind: 'major', createdAt: '2026-09-01T00:00:00.000Z', catalog: 'dev' },
   { id: 'ann-1-9-0', title: 'AI diet and workout plans', body: 'Generate plans for members from their goals and health profile.', kind: 'minor', createdAt: '2026-07-01T00:00:00.000Z', catalog: 'dev' },
 ];

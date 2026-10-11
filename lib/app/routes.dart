@@ -12,6 +12,9 @@ abstract final class R {
   static const gymSelection = '/gym-selection';
   static const expiredGym = '/expired-gym';
   static const unauthorized = '/unauthorized';
+  static const walkthrough = '/walkthrough';
+  static const paymentIntro = '/payment-intro';
+  static const memberLogin = '/member-login';
 
   static const home = '/home';
   static const members = '/members';

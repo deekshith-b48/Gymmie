@@ -89,7 +89,7 @@ export function registerAttendanceRoutes({ router }) {
   // QR attendance: the scanned payload identifies the member and must belong to this gym.
   router.post('/v5/attendance/mark-by-qr', { perm: 'attendance.write' }, (ctx) => {
     const b = validate({ payload: S.str({ required: true, max: 300 }) }, ctx.body);
-    const m = /^dgymbook:\/\/member\/(\d{6})\/([A-Za-z0-9-]{8,64})$/.exec(b.payload);
+    const m = /^(?:gymmie|dgymbook):\/\/member\/(\d{6})\/([A-Za-z0-9-]{8,64})$/.exec(b.payload);
     if (!m) throw invalid('This QR code is not a Gymmie member code');
     if (m[1] !== ctx.gym.code) throw forbidden('This member belongs to a different gym');
     return created(row(checkIn(ctx, { memberId: m[2], source: 'qr' }), members(ctx)));

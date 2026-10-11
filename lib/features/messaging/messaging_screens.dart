@@ -73,7 +73,7 @@ class _MessageTemplatesScreenState extends State<MessageTemplatesScreen>
             children: [
               Text(
                 t.title,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               const Gap(8),
               AppTextField(
@@ -268,7 +268,7 @@ class _MessageTemplatesScreenState extends State<MessageTemplatesScreen>
                             t.body,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                               height: 1.4,
@@ -313,7 +313,7 @@ class _MessageTemplatesScreenState extends State<MessageTemplatesScreen>
                               t.body,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -323,7 +323,7 @@ class _MessageTemplatesScreenState extends State<MessageTemplatesScreen>
                       ),
                       if (canWrite)
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.delete_outline,
                             color: AppColors.danger,
                           ),
@@ -401,12 +401,18 @@ class _CreditsScreenState extends State<CreditsScreen>
     }
   }
 
+  int _polls = 0;
+
   Future<void> _checkOrder() async {
     final id = _pendingOrder;
     if (id == null) return;
     try {
       final o = await _repo.order(id);
-      if (o.status == 'created') return;
+      if (o.status == 'created') {
+        // paid at the bank but the provider has not confirmed yet: look again in a few seconds
+        if (_polls++ < 6) Future<void>.delayed(const Duration(seconds: 3), () { if (mounted) _checkOrder(); });
+        return;
+      }
       _pendingOrder = null;
       if (!mounted) return;
       if (o.status == 'paid') {
@@ -428,6 +434,7 @@ class _CreditsScreenState extends State<CreditsScreen>
     final o = await runWithProgress(context, () => _repo.orderCredits(p.id));
     if (o?.paymentUrl == null || !mounted) return;
     _pendingOrder = o!.id;
+    _polls = 0;
     await Launch.url(context, o.paymentUrl!);
   }
 
@@ -509,7 +516,7 @@ class _CreditsScreenState extends State<CreditsScreen>
                       const SizedBox(height: 4),
                       Text(
                         'Credits work across WhatsApp messages, bulk SMS, and more. 1 credit / message.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
                         ),
@@ -541,7 +548,7 @@ class _CreditsScreenState extends State<CreditsScreen>
                 'Recharge your credits',
                 padding: EdgeInsets.fromLTRB(2, 20, 2, 4),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text(
                   'Development catalogue + simulated payment page. No real money moves.',
@@ -573,7 +580,7 @@ class _CreditsScreenState extends State<CreditsScreen>
                                     ),
                                     Text(
                                       p.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
                                         color: AppColors.textSecondary,
                                       ),
@@ -628,7 +635,7 @@ class _CreditsScreenState extends State<CreditsScreen>
                     child: Center(
                       child: Text(
                         st.isLoading ? 'Loading…' : 'No credit activity yet',
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
                   );
@@ -663,7 +670,7 @@ class _CreditsScreenState extends State<CreditsScreen>
                                       '${Fmt.dateTime(e.createdAt)}${e.reference == null ? '' : ' · ${e.reference}'}',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
                                         color: AppColors.textSecondary,
                                       ),
@@ -683,7 +690,7 @@ class _CreditsScreenState extends State<CreditsScreen>
                               const SizedBox(width: 10),
                               Text(
                                 '${e.balanceAfter}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textMuted,
                                 ),
@@ -722,7 +729,7 @@ class _Mini extends StatelessWidget {
       ),
       Text(
         label,
-        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
       ),
     ],
   );
@@ -827,7 +834,7 @@ class _MessageHistoryScreenState extends State<MessageHistoryScreen> {
                       m.body,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -835,7 +842,7 @@ class _MessageHistoryScreenState extends State<MessageHistoryScreen> {
                     const SizedBox(height: 4),
                     Text(
                       '${Fmt.dateTime(m.createdAt)} · ${m.key} · ${m.credits} credit',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: AppColors.textMuted,
                       ),
@@ -889,7 +896,7 @@ class _WhatsappIntegrationScreenState extends State<WhatsappIntegrationScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.chat,
                           color: AppColors.success,
                           size: 32,
@@ -911,7 +918,7 @@ class _WhatsappIntegrationScreenState extends State<WhatsappIntegrationScreen> {
                       ],
                     ),
                     const Gap(8),
-                    const Text(
+                    Text(
                       'Send smart automated WhatsApp messages to your members for renewals, reminders, and important updates.',
                       style: TextStyle(
                         color: AppColors.textSecondary,
@@ -954,7 +961,7 @@ class _WhatsappIntegrationScreenState extends State<WhatsappIntegrationScreen> {
                               },
                       ),
                     if (!w.available)
-                      const Text(
+                      Text(
                         'Not available for this gym yet.',
                         style: TextStyle(
                           fontSize: 12,
@@ -965,12 +972,14 @@ class _WhatsappIntegrationScreenState extends State<WhatsappIntegrationScreen> {
                 ),
               ),
               const Gap(12),
-              InfoBanner(
-                'Provider: ${w.provider}. This reconstruction records messages in a development outbox; plug a real provider into the backend to deliver them.',
-                icon: Icons.developer_mode,
-                warning: true,
-              ),
-              const Gap(12),
+              if (w.provider == 'dev-outbox') ...[
+                const InfoBanner(
+                  'No WhatsApp provider is set up on this server, so messages are recorded in an outbox and not sent. Set the WhatsApp variables on the backend to deliver them (docs/DEPLOY.md).',
+                  icon: Icons.developer_mode,
+                  warning: true,
+                ),
+                const Gap(12),
+              ],
               MenuGroup(
                 children: [
                   MenuTile(

@@ -238,7 +238,7 @@ class _PlansScreenState extends State<PlansScreen> {
                                             : 'Enable plan',
                                       ),
                                     ),
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: 'del',
                                       child: Text(
                                         'Delete plan',
@@ -280,13 +280,31 @@ class _PlansScreenState extends State<PlansScreen> {
                               ),
                             ],
                           ),
+                          if (p.benefits.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 2,
+                                children: [
+                                  for (final b in p.benefits)
+                                    Text(
+                                      '✓ $b',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
                           if (p.description != null &&
                               p.description!.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 p.description!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textSecondary,
                                 ),
@@ -319,6 +337,7 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
   final _price = TextEditingController();
   final _days = TextEditingController();
   final _desc = TextEditingController();
+  final _benefits = TextEditingController();
   final _sessions = TextEditingController(text: '10');
   bool _sessionPlan = false;
   String? _groupId;
@@ -350,6 +369,7 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
             : '${p.price}';
         _days.text = '${p.durationDays}';
         _desc.text = p.description ?? '';
+        _benefits.text = p.benefits.join('\n');
         _groupId = p.groupId;
         _sessionPlan = p.hasSessions;
         if (p.hasSessions) _sessions.text = '${p.sessionCount}';
@@ -363,7 +383,7 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
 
   @override
   void dispose() {
-    for (final c in [_name, _price, _days, _desc, _sessions]) {
+    for (final c in [_name, _price, _days, _desc, _benefits, _sessions]) {
       c.dispose();
     }
     super.dispose();
@@ -399,6 +419,10 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
         'price': double.parse(_price.text.trim()),
         'durationDays': int.parse(_days.text.trim()),
         'description': _desc.text.trim().isEmpty ? null : _desc.text.trim(),
+        'benefits': [
+          for (final l in _benefits.text.split('\n'))
+            if (l.trim().isNotEmpty) l.trim(),
+        ],
         'groupId': _groupId,
         'sessions': _sessionPlan
             ? {'enabled': true, 'count': int.parse(_sessions.text.trim())}
@@ -492,6 +516,19 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
             hint: 'Enter a short description',
             maxLines: 2,
             maxLength: 300,
+          ),
+          const Gap(16),
+          AppTextField(
+            controller: _benefits,
+            label: 'Benefits (optional, one per line)',
+            hint: 'Free towel\nSteam room access',
+            maxLines: 4,
+            validator: (v) {
+              final lines = (v ?? '').split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+              if (lines.length > 12) return 'At most 12 benefits';
+              if (lines.any((l) => l.length > 80)) return 'Keep each benefit under 80 characters';
+              return null;
+            },
           ),
           const Gap(16),
           Row(
@@ -667,7 +704,7 @@ class _PlanGroupsScreenState extends State<PlanGroupsScreen> {
                       ),
                       Text(
                         '${g.planCount} plan${g.planCount == 1 ? '' : 's'}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
                         ),
@@ -698,7 +735,7 @@ class _PlanGroupsScreenState extends State<PlanGroupsScreen> {
                   },
                 ),
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.delete_outline,
                     color: AppColors.danger,
                   ),

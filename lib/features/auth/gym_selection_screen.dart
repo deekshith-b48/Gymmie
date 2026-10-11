@@ -49,7 +49,7 @@ class GymSelectionScreen extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
                             s.profileError!.message,
-                            style: const TextStyle(color: AppColors.danger),
+                            style: TextStyle(color: AppColors.danger),
                           ),
                         ),
                       for (final g in s.gyms)
@@ -85,7 +85,7 @@ class GymSelectionScreen extends StatelessWidget {
                                       if (g.city != null)
                                         Text(
                                           g.city!,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: AppColors.textSecondary,
                                             fontSize: 12,
                                           ),
@@ -110,12 +110,12 @@ class GymSelectionScreen extends StatelessWidget {
                                   ),
                                 ),
                                 if (g.id == s.profile?.id)
-                                  const Icon(
+                                  Icon(
                                     Icons.check_circle,
                                     color: AppColors.success,
                                   )
                                 else
-                                  const Icon(
+                                  Icon(
                                     Icons.chevron_right,
                                     color: AppColors.textMuted,
                                   ),

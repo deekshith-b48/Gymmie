@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/l10n/l10n.dart';
 
 class AppPrefs extends Equatable {
-  const AppPrefs({this.themeMode = ThemeMode.system, this.language = 'en'});
+  const AppPrefs({this.themeMode = ThemeMode.dark, this.language = 'en'});
   final ThemeMode themeMode;
   final String language;
 
@@ -20,7 +20,8 @@ class SettingsCubit extends Cubit<AppPrefs> {
     final theme = switch (_prefs.getString(_kTheme)) {
       'light' => ThemeMode.light,
       'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
+      'system' => ThemeMode.system,
+      _ => ThemeMode.dark,
     };
     final lang = _prefs.getString(_kLang) ?? 'en';
     L10n.code = L10n.supported.containsKey(lang) ? lang : 'en';

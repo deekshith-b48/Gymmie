@@ -10,6 +10,7 @@ export function registerPlanRoutes({ router }) {
     price: S.num({ required: true, min: 0, max: 10_000_000 }),
     durationDays: S.int({ required: true, min: 1, max: 3650 }),
     description: S.str({ max: 300 }),
+    benefits: S.list(S.str({ min: 1, max: 80 }), { max: 12 }),
     groupId: S.str({ max: 64 }),
     sessions: S.obj({ enabled: S.bool({ default: true }), count: S.int({ required: true, min: 1, max: 1000 }) }, { nullable: true }),
   };

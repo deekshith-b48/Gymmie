@@ -1,4 +1,4 @@
-# Source this file to get the toolchain used to build DGymBook Partner.
+# Source this file to get the toolchain used to build Gymmie.
 #   source tool/env.sh
 export DEV_ROOT="${DEV_ROOT:-$HOME/development}"
 export JAVA_HOME="$DEV_ROOT/jdk-21/Contents/Home"

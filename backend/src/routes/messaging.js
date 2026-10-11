@@ -3,30 +3,24 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { S, validate } from '../validate.js';
 import { ApiError, conflict, forbidden, invalid, notFound } from '../errors.js';
 import { created, noContent, raw } from '../http.js';
-import { addDays, inRange } from '../domain/dates.js';
+import { addDays, diffDays, inRange, todayIn } from '../domain/dates.js';
+import { membershipStatus } from '../domain/membership.js';
 import {
-  COMMON_VARIABLES, CREDIT_COST, DEFAULT_TEMPLATES, MEMBER_VARIABLES, addCredits, debitCredits, getTemplate, gymVars, renderTemplate,
+  COMMON_VARIABLES, CREDIT_COST, DEFAULT_TEMPLATES, MEMBER_VARIABLES, addCredits, debitCredits, getTemplate, gymVars, renderTemplate, sendAutomated,
 } from '../domain/notify.js';
 import { ensureFeature, loadGym, saveGym, toCsv } from '../helpers.js';
 import { listMembers } from './members.js';
 import { resolveRange } from './finance.js';
 import { round2 } from '../domain/pricing.js';
 import { nowIso } from '../db.js';
+import { CREDIT_PACKS, SUBSCRIPTION_PLANS } from '../domain/catalog.js';
+import { fulfilOrder } from '../domain/fulfilment.js';
+import { PaymentGateway, paidEvent } from '../payments.js';
+import { subscriptionState } from '../domain/billing.js';
 
 const MAX_RECIPIENTS = 5000;
 
-// DEV catalogs: the real price list is server-side in the original product and was not recovered.
-export const CREDIT_PACKS = [
-  { id: 'pack-500', name: 'Starter', credits: 500, bonusCredits: 0, price: 500, currency: 'INR' },
-  { id: 'pack-1000', name: 'Growth', credits: 1000, bonusCredits: 100, price: 900, currency: 'INR' },
-  { id: 'pack-5000', name: 'Pro', credits: 5000, bonusCredits: 750, price: 4000, currency: 'INR' },
-];
-export const SUBSCRIPTION_PLANS = [
-  { id: 'STARTER_30', plan: 'STARTER', name: 'Starter (monthly)', price: 499, currency: 'INR', durationDays: 30, limits: { plans: 10, staff: 3, members: 150 } },
-  { id: 'GROWTH_30', plan: 'GROWTH', name: 'Growth (monthly)', price: 999, currency: 'INR', durationDays: 30, limits: { plans: 30, staff: 10, members: 800 } },
-  { id: 'GROWTH_365', plan: 'GROWTH', name: 'Growth (yearly)', price: 9990, currency: 'INR', durationDays: 365, limits: { plans: 30, staff: 10, members: 800 } },
-  { id: 'PRO_365', plan: 'PRO', name: 'Pro (yearly)', price: 19990, currency: 'INR', durationDays: 365, limits: { plans: 100, staff: 50, members: 5000 } },
-];
+export { CREDIT_PACKS, SUBSCRIPTION_PLANS };
 
 const memberVars = (ctx, member) => {
   const cur = ctx.col('memberships').find((m) => m.memberId === member.id).sort((a, b) => b.endDate.localeCompare(a.endDate))[0];
@@ -46,6 +40,36 @@ export function deliverBroadcast(ctx, b) {
   return ctx.col('broadcasts').update(b.id, { status: 'sent', sentAt: nowIso(), deliveredCount: sent });
 }
 
+/**
+ * Membership expiry alerts: one message per membership, `daysBefore` days ahead (each member's own choice, 7 by default,
+ * and off when they switched it off in the member app). Gyms with WhatsApp messaging switched on, through the usual outbox.
+ */
+export function processExpiryReminders(store, now = new Date()) {
+  const gymIds = store.all("SELECT id FROM gyms").map((g) => g.id);
+  let sent = 0;
+  for (const gymId of gymIds) {
+    const gym = loadGym(store, gymId);
+    if (!gym?.whatsapp?.enabled) continue;
+    const ctx = { store, gymId, gym, col: (name) => store.col(gymId, name), user: { id: null }, today: () => todayIn(gym.timezone, now) };
+    const today = ctx.today();
+    const members = new Map(ctx.col('members').all().map((m) => [m.id, m]));
+    for (const ms of ctx.col('memberships').all()) {
+      const m = members.get(ms.memberId);
+      if (!m || m.blocked || ms.expiryReminderSentAt || membershipStatus(ms, today) !== 'active') continue;
+      const pref = m.notifications?.membershipExpiry;
+      if (pref?.on === false) continue;
+      const before = Math.min(30, Math.max(1, pref?.daysBefore ?? 7));
+      const left = diffDays(today, ms.endDate);
+      if (left < 0 || left > before) continue;
+      const row = sendAutomated(ctx, 'MEMBERSHIP_EXPIRING_REMINDER_SMS', m, { planName: ms.planName, endDate: ms.endDate });
+      // marked even when the gym is out of credits, so a recharge later does not send an old warning
+      ctx.col('memberships').update(ms.id, { expiryReminderSentAt: nowIso() });
+      if (row) sent++;
+    }
+  }
+  return sent;
+}
+
 export function processDueBroadcasts(store, now = new Date()) {
   const rows = store.all(
     `SELECT DISTINCT gym_id FROM docs WHERE collection = 'broadcasts' AND deleted_at IS NULL AND json_extract(data, '$.status') = 'scheduled' AND json_extract(data, '$.scheduleAt') <= ?`,
@@ -59,7 +83,9 @@ export function processDueBroadcasts(store, now = new Date()) {
   return n;
 }
 
-export function registerMessagingRoutes({ router, store, config }) {
+export function registerMessagingRoutes({ router, store, config, limiter, messenger }) {
+  // What actually carries a gym's WhatsApp messages: the Cloud API when configured, otherwise the development outbox.
+  const whatsappProvider = () => (messenger?.canSendText('whatsapp') ? 'whatsapp-cloud' : 'dev-outbox');
   const needWhatsapp = (ctx) => { ensureFeature(ctx.gym, 'WHATSAPP_INTEGRATION'); };
   const credits = (ctx) => ({ balance: ctx.gym.creditBalance ?? 0, costPerMessage: CREDIT_COST });
 
@@ -122,13 +148,19 @@ export function registerMessagingRoutes({ router, store, config }) {
   function resolveRecipients(ctx, filter = {}, exclude = []) {
     const { filtered } = listMembers({ ...ctx, query: { ...filter, sort: 'nameAsc' } });
     const ex = new Set(exclude);
-    return filtered.filter((m) => !ex.has(m.id) && !m.blocked);
+    return filtered.filter((m) => !ex.has(m.id) && !m.blocked && !m.broadcastOptOut);
+  }
+  /** Members the same filter would reach if they had not opted out of broadcasts in the member app. */
+  function optedOutCount(ctx, filter = {}, exclude = []) {
+    const { filtered } = listMembers({ ...ctx, query: { ...filter, sort: 'nameAsc' } });
+    const ex = new Set(exclude);
+    return filtered.filter((m) => !ex.has(m.id) && !m.blocked && m.broadcastOptOut).length;
   }
 
   router.post('/v5/broadcasts/recipients/preview', { perm: 'broadcasts.read' }, (ctx) => {
     const b = validate({ filter: FILTER, excludeMemberIds: S.list(S.str({ max: 64 }), { max: 5000 }) }, ctx.body);
     const r = resolveRecipients(ctx, b.filter, b.excludeMemberIds);
-    return { count: r.length, creditsRequired: r.length * CREDIT_COST, balance: ctx.gym.creditBalance ?? 0, tooMany: r.length > MAX_RECIPIENTS, sample: r.slice(0, 5).map((m) => ({ id: m.id, name: m.name, phone: m.phone })) };
+    return { count: r.length, optedOut: optedOutCount(ctx, b.filter, b.excludeMemberIds), creditsRequired: r.length * CREDIT_COST, balance: ctx.gym.creditBalance ?? 0, tooMany: r.length > MAX_RECIPIENTS, sample: r.slice(0, 5).map((m) => ({ id: m.id, name: m.name, phone: m.phone })) };
   });
 
   const bcView = (b) => ({ ...b, recipientIds: undefined });
@@ -217,25 +249,46 @@ export function registerMessagingRoutes({ router, store, config }) {
     { header: 'Balance After', value: (l) => l.balanceAfter }, { header: 'Reference', value: (l) => l.reference },
   ]), { 'content-disposition': `attachment; filename="credits-${ctx.today()}.csv"` }));
 
-  // ---- payment orders (DEV provider) ------------------------------------------------------------------------------------
+  // ---- payment orders ------------------------------------------------------------------------------------------------------
+  // Real money goes through Razorpay (hosted checkout + signed webhook, payments.js). The development provider below is only
+  // available when config.devPayments is on, which production refuses. Either way the SAME fulfilment runs, once per order.
+  const gateway = new PaymentGateway(config);
   const baseUrl = (ctx) => config.publicBaseUrl || `http://${ctx.req.headers.host}`;
-  function createOrder(ctx, { type, amount, ref, description }) {
-    if (!config.devPayments) throw new ApiError(501, 'PAYMENT_PROVIDER_NOT_CONFIGURED', 'No payment provider is configured on this server');
+  async function createOrder(ctx, { type, amount, ref, description }) {
+    const provider = gateway.provider;
+    if (!provider) throw new ApiError(501, 'PAYMENT_PROVIDER_NOT_CONFIGURED', 'No payment provider is configured on this server');
     const token = randomBytes(24).toString('base64url');
-    const order = ctx.col('orders').insert({ type, amount, currency: 'INR', ref, description, token, status: 'created', createdById: ctx.user.id, provider: 'dev' });
-    return { ...order, token: undefined, paymentUrl: `${baseUrl(ctx)}/dev/pay/${token}` };
+    const order = ctx.col('orders').insert({ type, amount, currency: 'INR', ref, description, token, status: 'created', createdById: ctx.user.id, provider });
+    if (provider === 'dev') return { ...order, token: undefined, paymentUrl: `${baseUrl(ctx)}/dev/pay/${token}` };
+    const checkout = await gateway.createCheckout({
+      orderId: order.id, amount, description: `${description} (${ctx.gym.name})`, callbackUrl: `${baseUrl(ctx)}/pay/return/${token}`,
+      notes: { orderId: order.id, gymId: ctx.gymId, type },
+    });
+    const saved = ctx.col('orders').update(order.id, { providerRef: checkout.providerRef });
+    return { ...saved, token: undefined, paymentUrl: checkout.url };
   }
-  router.post('/v5/payments/orders/credit-packs', { perm: 'broadcasts.write' }, (ctx) => {
+  router.post('/v5/payments/orders/credit-packs', { perm: 'broadcasts.write' }, async (ctx) => {
     const b = validate({ packId: S.str({ required: true }) }, ctx.body);
+    limiter.check(`order:${ctx.gymId}`, 20, 600);
     const pack = CREDIT_PACKS.find((p) => p.id === b.packId);
     if (!pack) throw invalid('Unknown credit pack');
-    return created(createOrder(ctx, { type: 'credits', amount: pack.price, ref: pack.id, description: `${pack.credits + pack.bonusCredits} WhatsApp credits` }));
+    return created(await createOrder(ctx, { type: 'credits', amount: pack.price, ref: pack.id, description: `${pack.credits + pack.bonusCredits} WhatsApp credits` }));
   });
-  router.post('/v5/payments/orders/renewal-link', { perm: 'settings.write' }, (ctx) => {
+  router.post('/v5/payments/orders/renewal-link', { perm: 'settings.write' }, async (ctx) => {
     const b = validate({ planId: S.str({ required: true }) }, ctx.body);
+    limiter.check(`order:${ctx.gymId}`, 20, 600);
     const plan = SUBSCRIPTION_PLANS.find((p) => p.id === b.planId);
     if (!plan) throw invalid('Unknown subscription plan');
-    return created(createOrder(ctx, { type: 'subscription', amount: plan.price, ref: plan.id, description: `${plan.name} subscription` }));
+    // A smaller plan cannot be bought while the gym is over its limits: the owner must trim first (nothing is cut automatically).
+    const over = [];
+    const staff = ctx.store.get('SELECT COUNT(*) c FROM gym_users WHERE gym_id = ?', ctx.gymId).c;
+    const members = ctx.col('members').count();
+    const plans = ctx.col('plans').count((p) => p.active !== false);
+    if (plan.limits.members && members > plan.limits.members) over.push(`${members} members (limit ${plan.limits.members})`);
+    if (plan.limits.staff && staff > plan.limits.staff) over.push(`${staff} staff (limit ${plan.limits.staff})`);
+    if (plan.limits.plans && plans > plan.limits.plans) over.push(`${plans} membership plans (limit ${plan.limits.plans})`);
+    if (over.length) throw conflict(`You are over this plan's limits: ${over.join(', ')}. Choose a bigger plan or remove some first.`, { over });
+    return created(await createOrder(ctx, { type: 'subscription', amount: plan.price, ref: plan.id, description: `${plan.name} subscription` }));
   });
   router.get('/v5/payments/orders/:id', { perm: 'broadcasts.read' }, (ctx) => {
     const o = ctx.col('orders').get(ctx.params.id);
@@ -246,46 +299,65 @@ export function registerMessagingRoutes({ router, store, config }) {
   const orderByToken = (token) => {
     const row = store.get(`SELECT id, gym_id FROM docs WHERE collection = 'orders' AND deleted_at IS NULL AND json_extract(data, '$.token') = ?`, String(token));
     if (!row) throw notFound('Payment link not found');
-    const gym = loadGym(store, row.gym_id);
-    const col = (n) => store.col(row.gym_id, n);
-    return { ctx: { store, gymId: row.gym_id, gym, col, user: { id: null } }, order: col('orders').get(row.id) };
+    return { gymId: row.gym_id, order: store.col(row.gym_id, 'orders').get(row.id) };
   };
-  const html = (body, status = 200) => raw(status, 'text/html; charset=utf-8', `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DGymBook dev payment</title><style>body{font-family:system-ui;margin:0;padding:24px;background:#f8f9fc;color:#061750}.c{max-width:420px;margin:0 auto;background:#fff;border:1px solid #e5e9f2;border-radius:12px;padding:24px}button{width:100%;padding:14px;border-radius:10px;border:0;font-size:16px;margin-top:12px}.p{background:#061750;color:#fff}.s{background:#f1f4f9}small{color:#667}</style><div class="c">${body}</div>`, { 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'" });
+  const html = (body, status = 200) => raw(status, 'text/html; charset=utf-8', `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gymmie payment</title><style>body{font-family:system-ui;margin:0;padding:24px;background:#0c0e12;color:#fff}.c{max-width:420px;margin:0 auto;background:#16181d;border:1px solid #2a2d34;border-radius:16px;padding:24px}button,a.b{display:block;text-align:center;box-sizing:border-box;width:100%;padding:14px;border-radius:12px;border:0;font-size:16px;margin-top:12px;text-decoration:none}.p{background:#30d158;color:#000;font-weight:700}.s{background:#1f2228;color:#fff}small{color:#8e939c}</style><div class="c">${body}</div>`, { 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'" });
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  const appLink = (order, status) => `gymmie://payments?status=${status}&orderId=${encodeURIComponent(order.id)}&type=${order.type}`;
+
+  // Where Razorpay sends the person's browser after paying. It only SHOWS the result; the webhook is what delivers the order.
+  router.get('/pay/return/:token', { auth: 'none' }, (ctx) => {
+    const { order } = orderByToken(ctx.params.token);
+    const status = order.status === 'paid' ? 'success' : order.status === 'created' ? 'pending' : 'failed';
+    const title = { success: 'Payment successful', pending: 'Payment received. Confirming...', failed: 'Payment failed' }[status];
+    return html(`<h2>${title}</h2><p>Return to the Gymmie app.</p><a class="b p" href="${esc(appLink(order, status))}">Open the app</a><meta http-equiv="refresh" content="2;url=${esc(appLink(order, status))}">`);
+  });
+
+  // Razorpay's server tells ours the payment was captured. The signature is checked against the exact bytes received; the
+  // amount must match the order; settled orders are ignored, so a replayed or duplicate event changes nothing.
+  router.post('/v5/payments/webhooks/razorpay', { auth: 'none', maxBody: 256 * 1024 }, (ctx) => {
+    const sig = ctx.req.headers['x-razorpay-signature'];
+    if (!gateway.verifyWebhook(ctx.req.rawBody ?? Buffer.alloc(0), sig)) throw new ApiError(401, 'BAD_SIGNATURE', 'Invalid signature');
+    const ev = paidEvent(ctx.body);
+    if (!ev) return { received: true };
+    const row = store.get(`SELECT gym_id FROM docs WHERE collection = 'orders' AND deleted_at IS NULL AND id = ?`, ev.orderId);
+    if (!row) return { received: true };
+    const order = store.col(row.gym_id, 'orders').get(ev.orderId);
+    if (!order) return { received: true };
+    if (ev.currency !== 'INR' || ev.amountPaise !== Math.round(order.amount * 100)) {
+      store.col(row.gym_id, 'orders').update(order.id, { status: 'mismatch', failureReason: `paid ${ev.amountPaise} ${ev.currency}` });
+      return { received: true };
+    }
+    fulfilOrder(store, row.gym_id, order.id, { paymentId: ev.paymentId, provider: 'razorpay' });
+    return { received: true };
+  });
 
   router.get('/dev/pay/:token', { auth: 'none' }, (ctx) => {
     if (!config.devPayments) throw notFound('Not found');
     const { order } = orderByToken(ctx.params.token);
     if (order.status !== 'created') return html(`<h2>Order ${esc(order.status)}</h2><p>This payment link has already been used.</p>`);
-    return html(`<small>DEVELOPMENT PAYMENT PROVIDER — no real money moves</small><h2>${esc(order.description)}</h2><p style="font-size:28px;margin:8px 0">₹${esc(order.amount)}</p>
+    return html(`<small>DEVELOPMENT PAYMENT PROVIDER - no real money moves</small><h2>${esc(order.description)}</h2><p style="font-size:28px;margin:8px 0">₹${esc(order.amount)}</p>
       <form method="post" action="/dev/pay/${esc(ctx.params.token)}/complete"><input type="hidden" name="result" value="success"><button class="p">Pay (simulate success)</button></form>
       <form method="post" action="/dev/pay/${esc(ctx.params.token)}/complete"><input type="hidden" name="result" value="failed"><button class="s">Simulate failure</button></form>`);
   });
   router.post('/dev/pay/:token/complete', { auth: 'none' }, (ctx) => {
     if (!config.devPayments) throw notFound('Not found');
-    const { ctx: g, order } = orderByToken(ctx.params.token);
+    const { gymId, order } = orderByToken(ctx.params.token);
     const result = ctx.body.result === 'success' ? 'success' : 'failed';
     if (order.status === 'created') {
-      store.tx(() => {
-        if (result === 'success') {
-          if (order.type === 'credits') { const p = CREDIT_PACKS.find((x) => x.id === order.ref); addCredits(g, p.credits + p.bonusCredits, `order:${order.id}`); }
-          else {
-            const plan = SUBSCRIPTION_PLANS.find((x) => x.id === order.ref);
-            const sub = g.gym.subscription ?? {};
-            const base = sub.endsAt && sub.endsAt >= new Date().toISOString().slice(0, 10) ? sub.endsAt : new Date().toISOString().slice(0, 10);
-            saveGym(store, g.gymId, { subscription: { ...sub, plan: plan.plan, startsAt: sub.startsAt ?? base, endsAt: addDays(base, plan.durationDays), limits: plan.limits } });
-          }
-        }
-        g.col('orders').update(order.id, { status: result === 'success' ? 'paid' : 'failed', completedAt: nowIso() });
-      });
+      if (result === 'success') fulfilOrder(store, gymId, order.id, { provider: 'dev' });
+      else store.col(gymId, 'orders').update(order.id, { status: 'failed', completedAt: nowIso() });
     }
-    const status = order.status === 'created' ? result : order.status === 'paid' ? 'success' : 'failed';
-    const link = `dgymbook://payments?status=${status}&orderId=${encodeURIComponent(order.id)}&type=${order.type}`;
-    return html(`<h2>${status === 'success' ? 'Payment successful' : 'Payment failed'}</h2><p>Return to the Gymmie app.</p><p><a href="${esc(link)}">Open the app</a></p><meta http-equiv="refresh" content="1;url=${esc(link)}">`);
+    const fresh = store.col(gymId, 'orders').get(order.id);
+    const status = fresh.status === 'paid' ? 'success' : 'failed';
+    return html(`<h2>${status === 'success' ? 'Payment successful' : 'Payment failed'}</h2><p>Return to the Gymmie app.</p><a class="b p" href="${esc(appLink(order, status))}">Open the app</a><meta http-equiv="refresh" content="1;url=${esc(appLink(order, status))}">`);
   });
 
   // ---- subscription billing ----------------------------------------------------------------------------------------------
-  router.get('/v5/billings/subscriptions', { perm: 'settings.read' }, (ctx) => ({ current: ctx.gym.subscription, plans: SUBSCRIPTION_PLANS.map((p) => ({ ...p, catalog: 'dev' })) }));
+  router.get('/v5/billings/subscriptions', { perm: 'settings.read' }, (ctx) => ({
+    current: ctx.gym.subscription, state: subscriptionState(ctx.gym, { graceDays: config.billing.graceDays }), provider: gateway.provider,
+    plans: SUBSCRIPTION_PLANS,
+  }));
   router.get('/v5/billings/subscriptions/usage', { perm: 'settings.read' }, (ctx) => {
     const lim = ctx.gym.subscription?.limits ?? {};
     const staff = ctx.store.get('SELECT COUNT(*) c FROM gym_users WHERE gym_id = ?', ctx.gymId).c;
@@ -294,17 +366,28 @@ export function registerMessagingRoutes({ router, store, config }) {
       staff: { used: staff, limit: lim.staff ?? null }, members: { used: ctx.col('members').count(), limit: lim.members ?? null },
     };
   });
+  // The tax invoice Gymmie issues to the gym for a paid order (GST-inclusive price split into taxable value and GST).
+  router.get('/v5/billings/invoices/:orderId', { perm: 'settings.read' }, (ctx) => {
+    const o = ctx.col('orders').get(ctx.params.orderId);
+    if (!o || o.status !== 'paid') throw notFound('Invoice not found');
+    return {
+      invoiceNo: o.invoiceNo, date: (o.completedAt ?? o.createdAt).slice(0, 10), description: o.description, amount: o.amount, currency: o.currency,
+      taxable: o.tax?.taxable ?? o.amount, gst: o.tax?.gst ?? 0, gstRate: o.tax?.rate ?? 0, paymentId: o.paymentId ?? null,
+      seller: { name: config.seller.name, gstin: config.seller.gstin, address: config.seller.address },
+      buyer: { name: ctx.gym.name, gstin: ctx.gym.taxNumber ?? null, address: [ctx.gym.address, ctx.gym.city, ctx.gym.state, ctx.gym.pincode].filter(Boolean).join(', ') },
+    };
+  });
   router.get('/v5/billings/subscriptions/history', { perm: 'settings.read' }, (ctx) =>
     ctx.col('orders').find((o) => o.type === 'subscription').map((o) => ({ ...o, token: undefined })).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
 
   // ---- integrations ----------------------------------------------------------------------------------------------------------
   router.get('/v5/integrations', { perm: 'settings.read' }, (ctx) => ([
-    { key: 'whatsapp', name: 'WhatsApp Integration', enabled: !!ctx.gym.whatsapp?.enabled, status: ctx.gym.whatsapp?.status ?? 'disconnected', provider: 'dev-outbox', available: !!ctx.gym.features?.WHATSAPP_INTEGRATION },
+    { key: 'whatsapp', name: 'WhatsApp Integration', enabled: !!ctx.gym.whatsapp?.enabled, status: ctx.gym.whatsapp?.status ?? 'disconnected', provider: whatsappProvider(), available: !!ctx.gym.features?.WHATSAPP_INTEGRATION },
     { key: 'biometrics', name: 'Biometric devices', enabled: ctx.col('devices').count() > 0, status: ctx.col('devices').count((d) => d.status === 'connected') > 0 ? 'connected' : 'disconnected', provider: 'device-callback', available: true },
   ]));
   router.post('/v5/integrations/whatsapp/enable', { perm: 'settings.write' }, (ctx) => {
     needWhatsapp(ctx);
-    return saveGym(store, ctx.gymId, { whatsapp: { enabled: true, status: 'connected', provider: 'dev-outbox', enabledAt: nowIso() } }).whatsapp;
+    return saveGym(store, ctx.gymId, { whatsapp: { enabled: true, status: 'connected', provider: whatsappProvider(), enabledAt: nowIso() } }).whatsapp;
   });
   router.post('/v5/integrations/whatsapp/disable', { perm: 'settings.write' }, (ctx) => saveGym(store, ctx.gymId, { whatsapp: { ...ctx.gym.whatsapp, enabled: false, status: 'disconnected' } }).whatsapp);
 

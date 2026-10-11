@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Recovered from the original app (res/values/colors.xml: splash_background). -->
-    <color name="splash_background">#061750</color>
+    <!-- The logo is drawn on black; the splash and the icon background match it. -->
+    <color name="splash_background">#0C0E12</color>
+    <color name="icon_background">#000000</color>
 </resources>

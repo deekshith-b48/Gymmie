@@ -126,7 +126,7 @@ class _ListToolbarState extends State<ListToolbar> {
                     decoration: BoxDecoration(
                       color: AppColors.danger,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: AppColors.background, width: 2),
                     ),
                   ),
                 ),
@@ -179,7 +179,7 @@ class CountLine extends StatelessWidget {
     padding: const EdgeInsets.fromLTRB(2, 12, 0, 4),
     child: Text(
       text,
-      style: const TextStyle(color: AppColors.info, fontSize: 14),
+      style: TextStyle(color: AppColors.info, fontSize: 14),
     ),
   );
 }

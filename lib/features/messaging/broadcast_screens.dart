@@ -48,7 +48,6 @@ class _BroadcastsScreenState extends State<BroadcastsScreen> {
   Widget build(BuildContext context) {
     final s = getIt<SessionCubit>().state;
     final canWrite = s.can(Perm.broadcastsWrite);
-    final dark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Broadcasts'),
@@ -79,9 +78,7 @@ class _BroadcastsScreenState extends State<BroadcastsScreen> {
         cubit: _cubit,
         isEmpty: (d) => d.isEmpty,
         empty: EmptyState(
-          asset: dark
-              ? 'assets/no-broadcasts-dark.svg'
-              : 'assets/no-broadcasts-light.svg',
+          icon: Icons.campaign_outlined,
           title: 'Bulk / Broadcast messages',
           message: 'Create your first broadcast to start messaging your members via WhatsApp. Reach everyone instantly with updates and news.',
           actionLabel: canWrite ? 'Create new broadcast' : null,
@@ -126,7 +123,7 @@ class _BroadcastsScreenState extends State<BroadcastsScreen> {
                     b.body,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
@@ -202,7 +199,7 @@ class _BroadcastDetailScreenState extends State<BroadcastDetailScreen> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.cancel_outlined,
                       color: AppColors.danger,
                     ),
@@ -612,7 +609,7 @@ class _BroadcastFormScreenState extends State<BroadcastFormScreen> {
                   _exclude.isEmpty
                       ? 'No members excluded'
                       : 'Excluded members: ${_exclude.map((i) => _excludeNames[i] ?? 'member').join(', ')}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -658,7 +655,7 @@ class _BroadcastFormScreenState extends State<BroadcastFormScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '${_preview!.count} recipients · Credits required ${_preview!.creditsRequired} · Credits left ${_preview!.balance}',
+                      '${_preview!.count} recipients · Credits required ${_preview!.creditsRequired} · Credits left ${_preview!.balance}${_preview!.optedOut > 0 ? '\n${_preview!.optedOut} member${_preview!.optedOut == 1 ? '' : 's'} turned promotions off in the app and ${_preview!.optedOut == 1 ? 'is' : 'are'} left out.' : ''}',
                       style: TextStyle(
                         color: low ? AppColors.danger : AppColors.success,
                         fontWeight: FontWeight.w500,
@@ -670,7 +667,7 @@ class _BroadcastFormScreenState extends State<BroadcastFormScreen> {
               ),
             ),
           const Gap(16),
-          const Text(
+          Text(
             'SENDING OPTION',
             style: TextStyle(
               fontSize: 12,

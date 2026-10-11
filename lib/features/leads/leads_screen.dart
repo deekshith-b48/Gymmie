@@ -44,7 +44,7 @@ Tone chanceTone(String c) => switch (c) {
 };
 
 /// "Potential Leads" (route /lead-member-list). Layout, chips and filter options follow the
-/// original screenshots recovered from the app (assets/leads1.png, leads2.png).
+/// the empty state and list layout of the leads screen.
 class LeadsScreen extends StatefulWidget {
   const LeadsScreen({super.key});
   @override
@@ -223,7 +223,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                     cubit: _cubit,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                     empty: EmptyState(
-                      asset: 'assets/leads1.png',
+                      icon: Icons.contact_phone_outlined,
                       title: 'You have not added any leads',
                       message: 'Please create a new lead to track your potential customers.',
                       actionLabel: s.can(Perm.leadsWrite)
@@ -281,7 +281,7 @@ class _LeadCard extends StatelessWidget {
                     ),
                     Text(
                       l.phone,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         color: AppColors.textSecondary,
                       ),

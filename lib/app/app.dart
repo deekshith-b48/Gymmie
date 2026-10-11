@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +20,24 @@ class GymmieApp extends StatefulWidget {
 
 class _GymmieAppState extends State<GymmieApp> {
   late final GoRouter _router = buildRouter();
+  bool? _dark;
+
+  /// The palette follows the theme in force (the setting, or the phone's). When it flips, colours that screens read
+  /// at build time must be read again, so everything is marked for rebuild.
+  void _syncPalette(bool dark) {
+    if (_dark == dark) return;
+    final first = _dark == null;
+    _dark = dark;
+    AppColors.apply(dark);
+    if (first) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      void visit(Element e) {
+        e.markNeedsBuild();
+        e.visitChildren(visit);
+      }
+      if (mounted) (context as Element).visitChildren(visit);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,10 +62,20 @@ class _GymmieAppState extends State<GymmieApp> {
           ],
           routerConfig: _router,
           // Rebuilding the whole tree on language change re-evaluates every `.tr` string.
-          builder: (context, child) => KeyedSubtree(
-            key: ValueKey(prefs.language),
-            child: child ?? const SizedBox.shrink(),
-          ),
+          builder: (context, child) {
+            final dark = Theme.of(context).brightness == Brightness.dark;
+            _syncPalette(dark);
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: (dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark).copyWith(
+                statusBarColor: Colors.transparent,
+                systemNavigationBarColor: Colors.transparent,
+              ),
+              child: KeyedSubtree(
+                key: ValueKey(prefs.language),
+                child: child ?? const SizedBox.shrink(),
+              ),
+            );
+          },
         ),
       ),
     );

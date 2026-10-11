@@ -278,7 +278,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               child: p.photoUrl == null
                                   ? Container(
                                       color: AppColors.chip,
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.inventory_2_outlined,
                                         color: AppColors.textMuted,
                                       ),
@@ -299,7 +299,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 ),
                                 Text(
                                   '${p.category} · ${p.unitsSold} sold',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
                                   ),
@@ -479,7 +479,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                         ),
                 ),
                 child: _photo == null
-                    ? const Column(
+                    ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
@@ -935,7 +935,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               cubit: _history,
               refreshable: false,
               isEmpty: (d) => d.isEmpty,
-              empty: const Text(
+              empty: Text(
                 'No stock activity yet.',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
@@ -972,7 +972,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ),
                                   Text(
                                     '${Fmt.dateTime(e.createdAt)}${e.reason == null ? '' : ' · ${e.reason}'}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
                                       color: AppColors.textSecondary,
                                     ),
@@ -992,7 +992,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             const SizedBox(width: 10),
                             Text(
                               '→ ${e.balanceAfter}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textMuted,
                               ),

@@ -5,7 +5,8 @@ import '../../core/util/format.dart';
 import '../../core/widgets/common.dart';
 import '../../data/models/members.dart';
 
-Color parseHex(String hex, [Color fallback = AppColors.navy]) {
+Color parseHex(String hex, [Color? fallbackColor]) {
+  final fallback = fallbackColor ?? AppColors.navy;
   final h = hex.replaceFirst('#', '');
   if (h.length != 6) return fallback;
   final v = int.tryParse(h, radix: 16);
@@ -94,7 +95,7 @@ class MemberCard extends StatelessWidget {
                           ),
                         ),
                         if (member.blocked)
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.only(left: 6),
                             child: Icon(
                               Icons.block,
@@ -107,7 +108,7 @@ class MemberCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '#${member.admissionNo}  ·  ${member.phone}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
                       ),

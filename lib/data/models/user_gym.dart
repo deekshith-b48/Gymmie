@@ -85,6 +85,17 @@ class GymBrief {
   }
 }
 
+/// The 14-day free trial, as the server keeps it: `pending` (registered, setup not finished), `active`, or `unavailable` (this owner had one already).
+class TrialInfo {
+  const TrialInfo({required this.status, this.startedAt, this.endsAt});
+  final String status;
+  final String? startedAt;
+  final String? endsAt;
+  bool get active => status == 'active';
+  bool get unavailable => status == 'unavailable';
+  factory TrialInfo.fromJson(Json j) => TrialInfo(status: j.s('status', 'pending'), startedAt: j.str('startedAt'), endsAt: j.str('endsAt'));
+}
+
 class Subscription {
   const Subscription({
     required this.plan,
@@ -212,6 +223,8 @@ class GymProfile {
     required this.role,
     this.onboardingCompleted = false,
     this.subscription,
+    this.trial,
+    this.paymentSetup = 'none',
     this.whatsappEnabled = false,
     this.whatsappStatus = 'disconnected',
     this.creditBalance = 0,
@@ -240,6 +253,10 @@ class GymProfile {
   final String role;
   final bool onboardingCompleted;
   final Subscription? subscription;
+  final TrialInfo? trial;
+
+  /// 'none' (not decided), 'skipped' or 'active' (the gym's own payment account is connected).
+  final String paymentSetup;
   final bool whatsappEnabled;
   final String whatsappStatus;
   final int creditBalance;
@@ -279,6 +296,8 @@ class GymProfile {
       role: j.s('role', 'staff'),
       onboardingCompleted: j.b('onboardingCompleted'),
       subscription: sub == null ? null : Subscription.fromJson(sub),
+      trial: j.obj('trial') == null ? null : TrialInfo.fromJson(j.obj('trial')!),
+      paymentSetup: j.s('paymentSetup', 'none'),
       whatsappEnabled: wa.b('enabled'),
       whatsappStatus: wa.s('status', 'disconnected'),
       creditBalance: j.i('creditBalance'),
@@ -334,6 +353,8 @@ class AppSettings {
     this.minimumSuggestedAppVersion = '0.0.0',
     this.helpCenterUrl,
     this.companyWhatsappNumber,
+    this.supportEmail,
+    this.supportName,
     this.devOtpEnabled = false,
     this.environment,
   });
@@ -343,6 +364,8 @@ class AppSettings {
   final String minimumSuggestedAppVersion;
   final String? helpCenterUrl;
   final String? companyWhatsappNumber;
+  final String? supportEmail;
+  final String? supportName;
   final bool devOtpEnabled;
   final String? environment;
 
@@ -354,6 +377,8 @@ class AppSettings {
       minimumSuggestedAppVersion: j.s('minimumSuggestedAppVersion', '0.0.0'),
       helpCenterUrl: j.str('helpCenterUrl'),
       companyWhatsappNumber: j.str('companyWhatsappNumber'),
+      supportEmail: j.str('supportEmail'),
+      supportName: j.str('supportName'),
       devOtpEnabled: be.b('devOtpEnabled'),
       environment: be.str('environment'),
     );

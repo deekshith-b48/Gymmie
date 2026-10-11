@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:device_info_plus/device_info_plus.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/network/api_client.dart';
 import '../../core/storage/token_store.dart';
 import '../../core/util/json.dart';
@@ -65,6 +66,7 @@ class AuthRepository {
         'email': email,
         'referralCode': referralCode,
         'channel': channel,
+        'consentVersion': AppConfig.consentVersion,
       }),
       auth: false,
       gym: false,
@@ -168,6 +170,43 @@ class AuthRepository {
       await _tokens.clear();
     }
   }
+
+  // ---- closing the account ----------------------------------------------------------------------------------------
+
+  /// Sends a code to the account's own phone (or email) to confirm closing it. The server refuses owners of a gym.
+  Future<OtpChallenge> requestAccountDeletion() async =>
+      OtpChallenge.fromJson((await _api.post('/v5/users/self/delete-otp', gym: false)).map);
+
+  Future<void> deleteAccount({required String requestId, required String otp}) async {
+    await _api.delete('/v5/users/self', body: {'requestId': requestId, 'otp': otp, 'confirm': 'DELETE'}, gym: false);
+    await _tokens.clear();
+  }
+
+  // ---- one sign-in for owners, staff and members --------------------------------------------------------------
+
+  /// Sends one code to the phone. The answer is the same whether or not the number belongs to anyone.
+  Future<OtpChallenge> requestSignin({required String phone, String channel = 'sms'}) async =>
+      OtpChallenge.fromJson(
+        (await _api.post('/v5/auth/signin/otp', body: {'phone': phone, 'channel': channel}, auth: false, gym: false)).map,
+      );
+
+  /// What the proven number is: `{status:'signed_in', kind:'staff'|'member', ...tokens}` or `{status:'choose', options, selectionToken}`.
+  Future<Json> verifySignin(String requestId, String otp) async => (await _api.post(
+    '/v5/auth/signin/verify',
+    body: {'requestId': requestId, 'otp': otp, 'device': await _deviceName()},
+    auth: false,
+    gym: false,
+  )).map;
+
+  Future<Json> chooseSignin(String selectionToken, String option) async => (await _api.post(
+    '/v5/auth/signin/choose',
+    body: {'selectionToken': selectionToken, 'option': option, 'device': await _deviceName()},
+    auth: false,
+    gym: false,
+  )).map;
+
+  /// Stores the staff tokens of a sign-in bundle and returns who signed in.
+  Future<AuthResult> acceptStaff(Json d) => _accept(d);
 
   Future<AuthResult> _accept(Json d) async {
     await _tokens.saveTokens(

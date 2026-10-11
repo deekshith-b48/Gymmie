@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -145,23 +146,26 @@ class _BackendSetupScreenState extends State<BackendSetupScreen> {
                 ),
               ],
             ),
-            const SectionTitle(
-              'Presets',
-              padding: EdgeInsets.fromLTRB(0, 24, 0, 8),
-            ),
-            for (final e in AppConfig.presets.entries)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  e.key,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-                subtitle: Text(e.value),
-                onTap: () => setState(() => _url.text = e.value),
+            if (kDebugMode)
+              const SectionTitle(
+                'Presets',
+                padding: EdgeInsets.fromLTRB(0, 24, 0, 8),
               ),
+            // the preset is plain HTTP, which release builds refuse
+            if (kDebugMode)
+              for (final e in AppConfig.presets.entries)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    e.key,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(e.value),
+                  onTap: () => setState(() => _url.text = e.value),
+                ),
             const Gap(8),
-            const Text(
-              'The "Original" hosts were found in the app binary. This reconstruction implements its own API contract (docs/API_CONTRACT.md); it is only guaranteed to match the bundled development backend.',
+            Text(
+              'Enter the HTTPS address of the Gymmie backend you run (see docs/DEPLOY.md). Plain HTTP is only accepted in debug builds.',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textSecondary,

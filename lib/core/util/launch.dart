@@ -43,6 +43,10 @@ class Launch {
     String url, {
     bool external = true,
   }) async {
+    if (url.isEmpty) {
+      showToast(context, 'This page is not available yet', error: true);
+      return;
+    }
     final u = Uri.tryParse(url);
     if (u == null || !(u.scheme == 'http' || u.scheme == 'https')) {
       showToast(context, 'Please enter a valid URL', error: true);

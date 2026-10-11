@@ -5,19 +5,25 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
-import 'app/app.dart';
+import 'app/app_root.dart';
+import 'features/member/member_session_cubit.dart';
 import 'app/di.dart';
 import 'app/session_cubit.dart';
 import 'core/config/app_config.dart';
+import 'core/legal/notices.dart';
+import 'core/widgets/brand_splash.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  registerNotices();
   await configureDependencies();
 
   Future<void> start() async {
     await _initFirebase();
-    runApp(const GymmieApp());
+    SplashClock.start();
+    runApp(const AppRoot());
     unawaited(getIt<SessionCubit>().boot());
+    unawaited(getIt<MemberSessionCubit>().boot());
   }
 
   // Crash reporting is opt-in: only when a DSN is provided at build time.

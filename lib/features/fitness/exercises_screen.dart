@@ -11,6 +11,7 @@ import '../../core/widgets/common.dart';
 import '../../core/widgets/feedback.dart';
 import '../../core/widgets/forms.dart';
 import '../../core/widgets/list_toolbar.dart';
+import '../../core/widgets/exercise_animation.dart';
 import '../../core/widgets/sheets.dart';
 import '../../core/widgets/states.dart';
 import '../../data/models/fitness.dart';
@@ -49,6 +50,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     _cubit.close();
     super.dispose();
   }
+
+  /// The exercise's animation, as in openGym: the still, then the clip plays over it (tap to pause).
+  Future<void> _preview(ExerciseDef e) => showExerciseAnimation(
+    context,
+    e.name,
+    ExerciseMediaUrls(e.imageUrl, e.clipUrl),
+    subtitle: '${e.category}${e.equipment.isEmpty ? '' : ' · ${e.equipment.take(3).join(', ')}'}',
+  );
 
   Future<void> _edit([ExerciseDef? e]) async {
     final name = TextEditingController(text: e?.name);
@@ -202,20 +211,24 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                       ),
                       onTap: widget.selectMode
                           ? () => context.pop(e)
-                          : (!e.builtIn && canWrite ? () => _edit(e) : null),
+                          : (!e.builtIn && canWrite
+                              ? () => _edit(e)
+                              : (e.clipUrl != null ? () => _preview(e) : null)),
                       child: Row(
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              width: 40,
+                              height: 40,
                               color: AppColors.chip,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.fitness_center,
-                              size: 20,
-                              color: AppColors.navy,
+                              child: e.imageUrl == null
+                                  ? Icon(Icons.fitness_center, size: 20, color: AppColors.navy)
+                                  : Image.network(
+                                      e.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, _, _) => Icon(Icons.fitness_center, size: 20, color: AppColors.navy),
+                                    ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -231,7 +244,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                                 ),
                                 Text(
                                   '${e.category}${e.equipment.isEmpty ? '' : ' · ${e.equipment.take(2).join(', ')}'}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
                                   ),
@@ -239,6 +252,12 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                               ],
                             ),
                           ),
+                          if (e.clipUrl != null)
+                            IconButton(
+                              tooltip: 'Watch the exercise',
+                              icon: const Icon(Icons.play_circle_fill_rounded),
+                              onPressed: () => _preview(e),
+                            ),
                           if (e.videoUrl != null)
                             IconButton(
                               icon: const Icon(Icons.play_circle_outline),
@@ -247,7 +266,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                           if (!e.builtIn) const Tag('Custom', tone: Tone.info),
                           if (!e.builtIn && canWrite && !widget.selectMode)
                             IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.delete_outline,
                                 color: AppColors.danger,
                                 size: 20,

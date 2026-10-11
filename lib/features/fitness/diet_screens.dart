@@ -108,7 +108,7 @@ class _DietPlansScreenState extends State<DietPlansScreen> {
                       color: AppColors.successTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.restaurant_menu,
                       color: AppColors.success,
                     ),
@@ -618,13 +618,13 @@ class _DietEditorScreenState extends State<DietEditorScreen> {
                                           if (meal.time != null)
                                             Text(
                                               '  ${meal.time}',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 color: AppColors.textSecondary,
                                                 fontSize: 12,
                                               ),
                                             ),
                                           const SizedBox(width: 6),
-                                          const Icon(
+                                          Icon(
                                             Icons.edit_outlined,
                                             size: 14,
                                             color: AppColors.textMuted,
@@ -636,7 +636,7 @@ class _DietEditorScreenState extends State<DietEditorScreen> {
                                 ),
                                 Text(
                                   '${meal.kcal.round()} kcal',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
                                   ),

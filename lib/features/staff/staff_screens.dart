@@ -79,7 +79,7 @@ class _StaffScreenState extends State<StaffScreen> {
                         ),
                         Text(
                           m.phone ?? m.email ?? '',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
@@ -146,8 +146,8 @@ class _StaffScreenState extends State<StaffScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.delete_outline, color: AppColors.danger),
-            title: const Text(
+            leading: Icon(Icons.delete_outline, color: AppColors.danger),
+            title: Text(
               'Delete Staff',
               style: TextStyle(color: AppColors.danger),
             ),

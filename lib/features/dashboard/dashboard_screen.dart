@@ -81,7 +81,7 @@ class _DashboardView extends StatelessWidget {
                         ),
                         Text(
                           '${roleLabel(s.role)} · Code ${gym?.code ?? ''}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.w400,
@@ -162,6 +162,12 @@ class _DashboardView extends StatelessWidget {
         s.can(Perm.expensesWrite) && s.feature(Feat.sales),
       ),
       (
+        Icons.inbox_outlined,
+        'Member requests',
+        '/membership-requests',
+        s.can(Perm.requestsRead),
+      ),
+      (
         Icons.qr_code_scanner,
         'Scan member QR',
         '/attendance/scan',
@@ -216,7 +222,28 @@ class _Body extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
         children: [
-          if (d.subscriptionDaysLeft != null &&
+          if (gym.subscription?.plan == 'TRIAL' && d.subscriptionDaysLeft != null && !d.subscriptionExpired)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: AppCard(
+                color: AppColors.info.withValues(alpha: 0.14),
+                onTap: () => context.push('/settings/subscription'),
+                child: Row(
+                  children: [
+                    Icon(Icons.hourglass_top_rounded, color: AppColors.info),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Free trial: ${d.subscriptionDaysLeft} day${d.subscriptionDaysLeft == 1 ? '' : 's'} left. Tap to see plans.',
+                        style: TextStyle(color: AppColors.info, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: AppColors.info),
+                  ],
+                ),
+              ),
+            )
+          else if (d.subscriptionDaysLeft != null &&
               d.subscriptionDaysLeft! <= 7 &&
               !d.subscriptionExpired)
             Padding(
@@ -226,7 +253,7 @@ class _Body extends StatelessWidget {
                 onTap: () => context.push('/settings/subscription'),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.warning_amber_rounded,
                       color: AppColors.warning,
                     ),
@@ -234,14 +261,14 @@ class _Body extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Your Subscription will expire soon. ${d.subscriptionDaysLeft} day${d.subscriptionDaysLeft == 1 ? '' : 's'} left.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.warning,
                           fontWeight: FontWeight.w500,
                           fontSize: 13,
                         ),
                       ),
                     ),
-                    const Text(
+                    Text(
                       'Renew Now',
                       style: TextStyle(
                         color: AppColors.warning,
@@ -364,7 +391,7 @@ class _OnboardingCard extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Plans hold your price and duration. Members get assigned to them.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
@@ -443,7 +470,7 @@ class _Section extends StatelessWidget {
                   onTap: onAction,
                   child: Text(
                     action!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.info,
                       fontWeight: FontWeight.w500,
@@ -505,7 +532,7 @@ class _LiveCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       o.liveCount > 0 ? 'Live now' : 'No one checked in',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -515,7 +542,7 @@ class _LiveCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${o.todayCount} check-ins today',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -523,13 +550,13 @@ class _LiveCard extends StatelessWidget {
                 if (peak != null)
                   Text(
                     'PEAK TODAY  $peak',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       color: AppColors.textMuted,
                     ),
                   ),
                 if (!o.hasDevice)
-                  const Text(
+                  Text(
                     'No biometric device: counts include manual and QR check-ins',
                     style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
@@ -589,7 +616,7 @@ class _AttendanceCardState extends State<_AttendanceCard> {
             '$total',
             style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
           ),
-          const Text(
+          Text(
             'check-ins',
             style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
@@ -633,7 +660,7 @@ class _AttendanceCardState extends State<_AttendanceCard> {
                                       'S',
                                       'S',
                                     ][(dt.weekday - 1) % 7],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
                                 color: AppColors.textMuted,
                               ),
@@ -653,7 +680,7 @@ class _AttendanceCardState extends State<_AttendanceCard> {
                             width: _mode == 2 ? 5 : 14,
                             color: e.date == d.summary.today
                                 ? AppColors.navy
-                                : const Color(0xFF9AA6D6),
+                                : AppColors.textMuted,
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ],
@@ -682,7 +709,7 @@ class _BalanceCard extends StatelessWidget {
       children: [
         Text(
           Fmt.money(d.balanceTotal),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w600,
             color: AppColors.danger,
@@ -691,7 +718,7 @@ class _BalanceCard extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           'from ${Fmt.plural(d.balanceMembers, 'member')}',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
         ),
       ],
     ),
@@ -715,7 +742,7 @@ class _RemindersCard extends StatelessWidget {
           ListTile(
             contentPadding: EdgeInsets.zero,
             dense: true,
-            leading: const CircleAvatar(
+            leading: CircleAvatar(
               radius: 18,
               backgroundColor: AppColors.warningTint,
               child: Icon(
@@ -733,7 +760,7 @@ class _RemindersCard extends StatelessWidget {
               style: const TextStyle(fontSize: 12),
             ),
             trailing: IconButton(
-              icon: const Icon(Icons.chat_outlined, color: AppColors.success),
+              icon: Icon(Icons.chat_outlined, color: AppColors.success),
               tooltip: 'Send Balance Reminder',
               onPressed: () => Launch.whatsApp(
                 context,
@@ -770,7 +797,7 @@ class _BirthdaysCard extends StatelessWidget {
             ),
             subtitle: b.age == null ? null : Text('Turns ${b.age}'),
             trailing: IconButton(
-              icon: const Icon(Icons.cake, color: AppColors.warning),
+              icon: Icon(Icons.cake, color: AppColors.warning),
               tooltip: 'Send Birthday Message?',
               onPressed: () => Launch.whatsApp(
                 context,
@@ -809,7 +836,7 @@ class _QuickReportCard extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Reports unavailable right now',
                           style: TextStyle(color: AppColors.textSecondary),
                         ))
@@ -864,7 +891,7 @@ class _Kpi extends StatelessWidget {
       ),
       Text(
         label,
-        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
       ),
     ],
   );
@@ -908,7 +935,7 @@ class _InsightsCard extends StatelessWidget {
                       ),
                       Text(
                         i.detail,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
                           height: 1.4,
@@ -920,7 +947,7 @@ class _InsightsCard extends StatelessWidget {
               ],
             ),
           ),
-        const Text(
+        Text(
           'Rule-based insights computed from your data.',
           style: TextStyle(fontSize: 11, color: AppColors.textMuted),
         ),
@@ -956,7 +983,7 @@ class _CreditsCard extends StatelessWidget {
               d.whatsappEnabled
                   ? (low ? 'Credits left - low balance' : 'Credits left')
                   : 'WhatsApp integration is off',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
               ),

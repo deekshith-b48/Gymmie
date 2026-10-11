@@ -46,14 +46,40 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
-build/
-dist/
-.dart_tool/
-node_modules/
-local.properties
-key.properties
+
+# Secrets and release artifacts: never commit
 *.jks
 *.keystore
-backend/data/*
-!backend/data/.gitkeep
-.gradle/
+android/key.properties
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+deploy/.env
+deploy/backups/
+backend/data/
+*.apk
+*.aab
+*.tar.gz
+build/
+
+# Dependencies and build output of the bundled openGym copy
+**/node_modules/
+member-app/opengym/frontend/dist/
+member-app/.env
+
+# Exercise pictures and clips: licensed to openGym only, never redistributed (see NOTICE.md)
+member-app/opengym/catalogue/media/clip/
+member-app/opengym/catalogue/media/still/
+exercise-media/
+
+# Source artwork (large originals; the processed brand assets live in assets/brand/)
+/logo-title.png
+/loogo.png
+/gymmie_logo_square.png
+
+# Local working evidence and scratch
+docs/evidence/
+tool/evidence/
+.env
+.env.*
+!.env.example
+!deploy/.env.example

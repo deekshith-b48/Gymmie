@@ -207,7 +207,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           children: [
                             Text(
                               Fmt.money(total),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.success,
@@ -215,7 +215,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             ),
                             Text(
                               '${st.total} transactions',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 color: AppColors.textSecondary,
                               ),
@@ -286,7 +286,7 @@ class _TxnCard extends StatelessWidget {
                   t.description ?? t.kindLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),

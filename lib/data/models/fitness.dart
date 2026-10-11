@@ -14,6 +14,8 @@ class ExerciseDef {
     this.builtIn = false,
     this.instructions,
     this.videoUrl,
+    this.imageUrl,
+    this.clipUrl,
   });
   final String id;
   final String name;
@@ -22,6 +24,12 @@ class ExerciseDef {
   final bool builtIn;
   final String? instructions;
   final String? videoUrl;
+
+  /// A picture, for exercises of the built-in (openGym) catalogue when its host is configured.
+  final String? imageUrl;
+
+  /// The looping animation (mp4) of the same exercise.
+  final String? clipUrl;
   factory ExerciseDef.fromJson(Json j) => ExerciseDef(
     id: j.s('id'),
     name: j.s('name'),
@@ -30,6 +38,8 @@ class ExerciseDef {
     builtIn: j.b('builtIn'),
     instructions: j.str('instructions'),
     videoUrl: j.str('videoUrl'),
+    imageUrl: j.str('imageUrl'),
+    clipUrl: j.str('clipUrl'),
   );
 }
 

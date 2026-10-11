@@ -471,7 +471,7 @@ class _MemberParqScreenState extends State<MemberParqScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.verified_outlined,
                           color: AppColors.success,
                         ),
@@ -498,7 +498,7 @@ class _MemberParqScreenState extends State<MemberParqScreen> {
                     const SizedBox(height: 6),
                     Text(
                       'Version ${latest.s('version')} · ${Fmt.dateTime(latest.str('signedAt'))}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -669,7 +669,7 @@ class _SignFormState extends State<_SignForm> {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
                       w.s('text'),
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
                   'question' => _question(w),

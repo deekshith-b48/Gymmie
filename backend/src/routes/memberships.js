@@ -86,14 +86,23 @@ export function registerMembershipRoutes({ router }) {
     sendAutomated(ctx, key, member, { planName: m.planName, endDate: m.endDate, ...vars });
   };
 
+  // A trainer only reads the memberships of the members assigned to them.
+  const trainerMembers = (ctx) => (ctx.role === 'trainer' ? new Set(ctx.col('members').find((x) => x.trainerId === ctx.user.id).map((x) => x.id)) : null);
+
   router.get('/v5/memberships', { perm: 'members.read' }, (ctx) => {
     const today = ctx.today();
-    return ctx.col('memberships').find((m) => (!ctx.query.memberId || m.memberId === ctx.query.memberId))
+    const mine = trainerMembers(ctx);
+    return ctx.col('memberships').find((m) => (!mine || mine.has(m.memberId)) && (!ctx.query.memberId || m.memberId === ctx.query.memberId))
       .map((m) => view(m, today)).filter((m) => !ctx.query.status || m.status === ctx.query.status)
       .sort((a, b) => b.startDate.localeCompare(a.startDate));
   });
 
-  router.get('/v5/memberships/:id', { perm: 'members.read' }, (ctx) => view(find(ctx, ctx.params.id), ctx.today()));
+  router.get('/v5/memberships/:id', { perm: 'members.read' }, (ctx) => {
+    const m = find(ctx, ctx.params.id);
+    const mine = trainerMembers(ctx);
+    if (mine && !mine.has(m.memberId)) throw notFound('Membership not found');
+    return view(m, ctx.today());
+  });
 
   // Pricing preview used by the renew/add-membership screens ("Price Breakdown", "Tax Breakdown").
   router.post('/v5/memberships/quote', { perm: 'members.read' }, (ctx) => {

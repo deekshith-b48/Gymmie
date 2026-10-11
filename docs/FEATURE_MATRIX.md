@@ -24,7 +24,7 @@ Legend: ✅ implemented and exercised · 🟡 implemented, not exercised on devi
 | Biometric devices | 🟡 | off by default; admin enables in App Features |
 | Settings hub and pages | ✅ | |
 | Report-schedule settings page | ❌ | |
-| Payment deep link (`dgymbook://payments`) handler | ❌ | manifest filter present |
+| Payment return link (`gymmie://payments`) handled in the app | 🟡 | the manifest filter exists; the app opens the pay page and the billing screens re-read the order when you come back |
 | FCM push registration | ❌ | endpoint exists in backend; needs a real Firebase project |
 | `view-photo` route | ❌ | |
 | Localisation | 🟡 | English + partial Hindi |

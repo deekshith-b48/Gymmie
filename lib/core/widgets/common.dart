@@ -40,32 +40,14 @@ class AppCard extends StatelessWidget {
 
 enum Tone { neutral, success, warning, danger, info, navy }
 
-({Color bg, Color fg}) toneColors(BuildContext context, Tone t) {
-  final dark = Theme.of(context).brightness == Brightness.dark;
-  return switch (t) {
-    Tone.success => (
-      bg: dark ? const Color(0xFF123A28) : AppColors.successTint,
-      fg: dark ? const Color(0xFF7BE0A8) : AppColors.success,
-    ),
-    Tone.warning => (
-      bg: dark ? const Color(0xFF44300F) : AppColors.warningTint,
-      fg: dark ? const Color(0xFFFFC27A) : AppColors.warning,
-    ),
-    Tone.danger => (
-      bg: dark ? const Color(0xFF4A1A1C) : AppColors.dangerTint,
-      fg: dark ? const Color(0xFFFF9A9D) : AppColors.danger,
-    ),
-    Tone.info => (
-      bg: dark ? const Color(0xFF1D2A5A) : const Color(0xFFE8ECFB),
-      fg: dark ? const Color(0xFFA9B8FF) : AppColors.info,
-    ),
-    Tone.navy => (bg: AppColors.navy, fg: Colors.white),
-    Tone.neutral => (
-      bg: dark ? AppColors.darkChip : AppColors.neutralTint,
-      fg: dark ? const Color(0xFFC9D2F0) : AppColors.textSecondary,
-    ),
-  };
-}
+({Color bg, Color fg}) toneColors(BuildContext context, Tone t) => switch (t) {
+  Tone.success => (bg: AppColors.successTint, fg: AppColors.success),
+  Tone.warning => (bg: AppColors.warningTint, fg: AppColors.warning),
+  Tone.danger => (bg: AppColors.dangerTint, fg: AppColors.danger),
+  Tone.info => (bg: AppColors.info.withValues(alpha: 0.16), fg: AppColors.info),
+  Tone.navy => (bg: AppColors.navy, fg: AppColors.onNavy),
+  Tone.neutral => (bg: AppColors.neutralTint, fg: AppColors.textSecondary),
+};
 
 /// Small coloured label ("Medium", "Walk-in", "Follow up on: 03 Jan 2025").
 class Tag extends StatelessWidget {
@@ -269,7 +251,7 @@ class InfoRow extends StatelessWidget {
           flex: 4,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
             ),
@@ -313,7 +295,7 @@ class UserAvatar extends StatelessWidget {
     );
     return CircleAvatar(
       radius: radius,
-      backgroundColor: const Color(0xFFDDE3F7),
+      backgroundColor: AppColors.accent.withValues(alpha: 0.18),
       child: url == null
           ? initials
           : ClipOval(
@@ -372,7 +354,7 @@ class StatTile extends StatelessWidget {
                 ),
               const Spacer(),
               if (onTap != null)
-                const Icon(
+                Icon(
                   Icons.chevron_right,
                   size: 18,
                   color: AppColors.textMuted,
@@ -391,7 +373,7 @@ class StatTile extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
             ),
@@ -399,7 +381,7 @@ class StatTile extends StatelessWidget {
           if (caption != null)
             Text(
               caption!,
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
             ),
         ],
       ),
@@ -442,7 +424,7 @@ class MenuTile extends StatelessWidget {
           trailing ??
           (onTap == null
               ? null
-              : const Icon(Icons.chevron_right, color: AppColors.textMuted)),
+              : Icon(Icons.chevron_right, color: AppColors.textMuted)),
       onTap: onTap,
     );
   }
@@ -464,7 +446,7 @@ class MenuGroup extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 16, 16, 8),
           child: Text(
             title!,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,

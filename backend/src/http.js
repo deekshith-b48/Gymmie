@@ -1,5 +1,6 @@
 // Minimal router + JSON HTTP plumbing (no external dependencies).
 import { createServer } from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { ApiError, badRequest, tooMany } from './errors.js';
 
 const MAX_BODY = 12 * 1024 * 1024; // photo uploads arrive as base64 JSON
@@ -42,15 +43,16 @@ export class Router {
   }
 }
 
-export async function readJson(req) {
+export async function readJson(req, limit = MAX_BODY) {
   const chunks = [];
   let size = 0;
   for await (const c of req) {
     size += c.length;
-    if (size > MAX_BODY) throw new ApiError(413, 'PAYLOAD_TOO_LARGE', 'Request body too large');
+    if (size > limit) throw new ApiError(413, 'PAYLOAD_TOO_LARGE', 'Request body too large');
     chunks.push(c);
   }
   if (size === 0) return {};
+  req.rawBody = Buffer.concat(chunks); // kept as received: webhook signatures are checked against these exact bytes
   const ct = req.headers['content-type'] ?? '';
   if (ct.includes('application/x-www-form-urlencoded')) {
     return Object.fromEntries(new URLSearchParams(Buffer.concat(chunks).toString('utf8')));
@@ -61,6 +63,17 @@ export async function readJson(req) {
   } catch {
     throw badRequest('Request body is not valid JSON');
   }
+}
+
+/**
+ * The caller's address. Behind a reverse proxy (TRUST_PROXY=1) the socket is the proxy, so the real address is the one the
+ * proxy appended to X-Forwarded-For; entries the client wrote itself (further left) are never trusted.
+ */
+export function clientIp(req, trustProxyHops = 0) {
+  const socket = req.socket.remoteAddress ?? 'unknown';
+  if (!trustProxyHops) return socket;
+  const parts = String(req.headers['x-forwarded-for'] ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+  return parts.length >= trustProxyHops ? parts[parts.length - trustProxyHops] : socket;
 }
 
 export class RateLimiter {
@@ -113,21 +126,28 @@ export const noContent = () => ({ __envelope: true, status: 204 });
 export const raw = (status, contentType, body, headers = {}) => ({ __raw: true, status, contentType, body, headers });
 
 export function createHttpServer(handle, config) {
-  return createServer(async (req, res) => {
+  const server = createServer(async (req, res) => {
     const started = Date.now();
+    const id = randomUUID();
+    // CORS only when an allow-list is configured (the mobile app does not need it; a browser client would).
     const cors = {
-      'access-control-allow-origin': config.corsOrigin,
-      'access-control-allow-headers': 'authorization, content-type, x-gym-id, x-app-version, x-device-id',
-      'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-      'access-control-max-age': '600',
+      ...(config.corsOrigin ? {
+        'access-control-allow-origin': config.corsOrigin,
+        'access-control-allow-headers': 'authorization, content-type, x-gym-id, x-app-version, x-device-id',
+        'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+        'access-control-max-age': '600',
+        vary: 'origin',
+      } : {}),
       'x-content-type-options': 'nosniff',
+      'x-request-id': id,
+      ...(config.production ? { 'strict-transport-security': 'max-age=31536000; includeSubDomains' } : {}),
     };
     try {
       if (req.method === 'OPTIONS') { res.writeHead(204, cors); return res.end(); }
       const url = new URL(req.url, 'http://localhost');
       const out = await handle(req, url);
       if (out?.__raw) {
-        res.writeHead(out.status, { 'content-type': out.contentType, 'x-content-type-options': 'nosniff', ...cors, ...out.headers });
+        res.writeHead(out.status, { 'content-type': out.contentType, ...cors, ...out.headers });
         res.end(out.body);
       } else if (out?.__envelope) {
         if (out.status === 204) { res.writeHead(204, cors); res.end(); }
@@ -142,11 +162,21 @@ export function createHttpServer(handle, config) {
           ...(err.status === 429 && err.details?.retryAfterSec ? { 'retry-after': String(err.details.retryAfterSec) } : {}),
         });
       } else {
-        console.error('[unhandled]', err);
-        send(res, 500, { error: { code: 'INTERNAL', message: 'Something went wrong' } }, cors);
+        console.error(JSON.stringify({ level: 'error', id, method: req.method, path: req.url?.split('?')[0], error: String(err?.stack ?? err) }));
+        send(res, 500, { error: { code: 'INTERNAL', message: 'Something went wrong', requestId: id } }, cors);
       }
     } finally {
-      if (config.logRequests) console.log(`${req.method} ${req.url} ${res.statusCode} ${Date.now() - started}ms`);
+      if (config.logRequests) {
+        const path = String(req.url).split('?')[0]; // never log query strings (they can carry tokens)
+        console.log(config.production
+          ? JSON.stringify({ level: 'info', id, method: req.method, path, status: res.statusCode, ms: Date.now() - started })
+          : `${req.method} ${path} ${res.statusCode} ${Date.now() - started}ms`);
+      }
     }
   });
+  // Behind a proxy: slow or stalled clients must not hold connections open forever.
+  server.requestTimeout = 60_000;
+  server.headersTimeout = 20_000;
+  server.keepAliveTimeout = 65_000;
+  return server;
 }

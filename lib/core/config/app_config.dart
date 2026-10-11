@@ -42,24 +42,29 @@ class AppConfig {
   /// Android emulator -> host loopback, where `backend/` listens by default.
   static const emulatorLocalUrl = 'http://10.0.2.2:8787';
 
-  /// Hosts found in the original app's string table. Shown as presets in Developer tools only;
-  /// the reconstructed app never selects one of them by itself.
+  /// Server addresses offered in Developer tools (debug use). Production builds get theirs from --dart-define=API_BASE_URL.
   static const presets = <String, String>{
     'Local development (Android emulator)': emulatorLocalUrl,
-    'Original production host': 'https://api.dgymbook.com',
-    'Original staging host': 'https://api.staging.dgymbook.com',
-    'Original dev host 1': 'https://api1.dev.dgymbook.com',
-    'Original dev host 2': 'https://api2.dev.dgymbook.com',
   };
 
-  /// Public pages linked from the app's support menu (URLs recovered from the original app).
-  static const supportUrls = <String, String>{
-    'about': 'https://dgymbook.com/about',
-    'faq': 'https://dgymbook.com/faq',
-    'privacy': 'https://dgymbook.com/privacy',
-    'terms': 'https://dgymbook.com/terms',
-    'refund': 'https://dgymbook.com/refund-and-cancellation',
-    'changelogs': 'https://dgymbook.com/changelogs',
+  /// The version of the terms and privacy policy a person accepts when they sign up; change it when those documents change.
+  static const consentVersion = String.fromEnvironment('CONSENT_VERSION', defaultValue: '2026-10');
+
+  /// Your website: privacy policy, terms, help and the page where people delete their account. Set it at build time with
+  /// --dart-define=SITE_URL=https://example.com (no trailing slash). Without it the links say they are not set up yet.
+  static const siteUrl = String.fromEnvironment('SITE_URL');
+
+  static String _page(String path) => siteUrl.isEmpty ? '' : '${siteUrl.replaceAll(RegExp(r'/+$'), '')}$path';
+
+  /// Public pages linked from the support menu.
+  static Map<String, String> get supportUrls => {
+    'about': _page('/about'),
+    'faq': _page('/faq'),
+    'privacy': _page('/privacy'),
+    'terms': _page('/terms'),
+    'refund': _page('/refund-and-cancellation'),
+    'changelogs': _page('/changelog'),
+    'delete': _page('/delete-account'),
   };
 
   static const pincodeLookupUrl = 'https://api.postalpincode.in/pincode/';

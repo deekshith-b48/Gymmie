@@ -4,6 +4,8 @@
 | POST | `/dev/pay/:token/complete` | none |  |
 | GET | `/health` | none |  |
 | GET | `/healthcheck` | none |  |
+| GET | `/pay/return/:token` | none |  |
+| GET | `/ready` | none |  |
 | POST | `/v3/auth/logout` | user |  |
 | GET | `/v3/biohub/devices` | gym | devices.read |
 | POST | `/v3/biohub/devices` | gym | devices.write |
@@ -27,12 +29,16 @@
 | POST | `/v5/auth/login/otp` | none |  |
 | POST | `/v5/auth/login/otp/verify` | none |  |
 | POST | `/v5/auth/refresh` | none |  |
+| POST | `/v5/auth/signin/choose` | none |  |
+| POST | `/v5/auth/signin/otp` | none |  |
+| POST | `/v5/auth/signin/verify` | none |  |
 | GET | `/v5/balance-reminder` | gym | finance.read |
 | POST | `/v5/balance-reminder` | gym | finance.write |
 | DELETE | `/v5/balance-reminder/:id` | gym | finance.write |
 | PATCH | `/v5/balance-reminder/:id` | gym | finance.write |
 | POST | `/v5/balance-reminder/:id/done` | gym | finance.write |
 | GET | `/v5/balance-reminder/member/:memberId` | gym | finance.read |
+| GET | `/v5/billings/invoices/:orderId` | gym | settings.read |
 | GET | `/v5/billings/subscriptions` | gym | settings.read |
 | GET | `/v5/billings/subscriptions/history` | gym | settings.read |
 | GET | `/v5/billings/subscriptions/usage` | gym | settings.read |
@@ -108,6 +114,10 @@
 | PUT | `/v5/gyms/features/:key` | gym | settings.write |
 | GET | `/v5/gyms/payment-methods` | gym | finance.read |
 | PUT | `/v5/gyms/payment-methods` | gym | settings.write |
+| DELETE | `/v5/gyms/payment-setup` | gym | settings.write |
+| GET | `/v5/gyms/payment-setup` | gym | settings.read |
+| PUT | `/v5/gyms/payment-setup` | gym | settings.write |
+| POST | `/v5/gyms/payment-setup/skip` | gym | settings.write |
 | GET | `/v5/gyms/portal/qr` | gym | settings.read |
 | POST | `/v5/gyms/portal/qr/regenerate` | gym | settings.write |
 | GET | `/v5/gyms/preferences` | gym | settings.read |
@@ -136,11 +146,52 @@
 | GET | `/v5/masters/timezones` | none |  |
 | GET | `/v5/me/feature-announcements` | user |  |
 | POST | `/v5/me/feature-announcements/:id/seen` | user |  |
+| POST | `/v5/member/auth/code` | none |  |
+| POST | `/v5/member/auth/logout` | member |  |
+| POST | `/v5/member/auth/logout-all` | member |  |
+| POST | `/v5/member/auth/otp` | none |  |
+| POST | `/v5/member/auth/otp/verify` | none |  |
+| POST | `/v5/member/auth/refresh` | none |  |
+| POST | `/v5/member/auth/select-gym` | none |  |
+| DELETE | `/v5/member/data` | member |  |
+| GET | `/v5/member/data` | member |  |
+| PUT | `/v5/member/data` | member |  |
+| GET | `/v5/member/me` | member |  |
+| DELETE | `/v5/member/me/account` | member |  |
+| GET | `/v5/member/me/account` | member |  |
+| PATCH | `/v5/member/me/account` | member |  |
+| POST | `/v5/member/me/account/delete-otp` | member |  |
+| GET | `/v5/member/me/attendance` | member |  |
+| GET | `/v5/member/me/notifications` | member |  |
+| PUT | `/v5/member/me/notifications` | member |  |
+| POST | `/v5/member/me/payment-link` | member |  |
+| GET | `/v5/member/me/payment-options` | member |  |
+| POST | `/v5/member/me/phone/otp` | member |  |
+| POST | `/v5/member/me/phone/verify` | member |  |
+| DELETE | `/v5/member/me/photo` | member |  |
+| GET | `/v5/member/me/photo` | member |  |
+| PUT | `/v5/member/me/photo` | member |  |
+| GET | `/v5/member/me/plans` | member |  |
+| GET | `/v5/member/me/preferences` | member |  |
+| PUT | `/v5/member/me/preferences` | member |  |
+| GET | `/v5/member/me/privacy` | member |  |
+| PUT | `/v5/member/me/privacy` | member |  |
+| GET | `/v5/member/me/profile` | member |  |
+| GET | `/v5/member/me/requests` | member |  |
+| POST | `/v5/member/me/requests` | member |  |
+| DELETE | `/v5/member/me/requests/:id` | member |  |
+| GET | `/v5/member/me/sessions` | member |  |
+| DELETE | `/v5/member/me/sessions/:id` | member |  |
+| POST | `/v5/member/me/sessions/revoke-others` | member |  |
+| POST | `/v5/member/opengym/launch` | member |  |
 | GET | `/v5/members` | gym | members.read |
 | POST | `/v5/members` | gym | members.write |
 | DELETE | `/v5/members/:id` | gym | settings.write |
 | GET | `/v5/members/:id` | gym | members.read |
 | PATCH | `/v5/members/:id` | gym | members.write |
+| DELETE | `/v5/members/:id/access-code` | gym | members.write |
+| POST | `/v5/members/:id/access-code` | gym | members.write |
+| POST | `/v5/members/:id/app-invite` | gym | members.write |
 | POST | `/v5/members/:id/block` | gym | members.write |
 | POST | `/v5/members/:id/conditions` | gym | members.write |
 | DELETE | `/v5/members/:id/conditions/:cid` | gym | members.write |
@@ -151,8 +202,11 @@
 | GET | `/v5/members/:id/health` | gym | members.read |
 | POST | `/v5/members/:id/health` | gym | members.write |
 | PUT | `/v5/members/:id/labels` | gym | members.write |
+| POST | `/v5/members/:id/member-app/reopen` | gym | members.write |
 | POST | `/v5/members/:id/parq/sign` | gym | members.write | plansets.write |
+| POST | `/v5/members/:id/payment-link` | gym | finance.write |
 | PUT | `/v5/members/:id/trainer` | gym | members.write |
+| GET | `/v5/members/:id/training` | gym | members.read |
 | POST | `/v5/members/:id/unblock` | gym | members.write |
 | GET | `/v5/members/export` | gym | members.read |
 | GET | `/v5/members/insights/at-risk` | gym | members.read |
@@ -163,6 +217,9 @@
 | GET | `/v5/members/transactions/export` | gym | finance.read |
 | POST | `/v5/members/transactions/settle` | gym | finance.write |
 | POST | `/v5/members/transactions/write-off` | gym | finance.write |
+| GET | `/v5/membership-requests` | gym | requests.read |
+| GET | `/v5/membership-requests/:id` | gym | requests.read |
+| POST | `/v5/membership-requests/:id/decision` | gym | requests.write |
 | GET | `/v5/memberships` | gym | members.read |
 | POST | `/v5/memberships` | gym | members.write |
 | GET | `/v5/memberships/:id` | gym | members.read |
@@ -210,6 +267,8 @@
 | GET | `/v5/payments/orders/:id` | gym | broadcasts.read |
 | POST | `/v5/payments/orders/credit-packs` | gym | broadcasts.write |
 | POST | `/v5/payments/orders/renewal-link` | gym | settings.write |
+| POST | `/v5/payments/webhooks/gym/:gymId/razorpay` | none |  |
+| POST | `/v5/payments/webhooks/razorpay` | none |  |
 | GET | `/v5/portal/:code` | none |  |
 | POST | `/v5/portal/:code/feedback` | none |  |
 | POST | `/v5/portal/:code/otp` | none |  |
@@ -259,8 +318,10 @@
 | POST | `/v5/trainers/me/bookings/preview` | gym | trainer.self | trainers.write |
 | GET | `/v5/trainers/me/work-hours` | gym | trainer.self |
 | PUT | `/v5/trainers/me/work-hours` | gym | trainer.self |
+| DELETE | `/v5/users/self` | user |  |
 | GET | `/v5/users/self` | user |  |
 | PATCH | `/v5/users/self` | user |  |
+| POST | `/v5/users/self/delete-otp` | user |  |
 | DELETE | `/v5/users/self/photo` | user |  |
 | POST | `/v5/users/self/photo` | user |  |
 | POST | `/v5/users/self/revoke-sessions` | user |  |

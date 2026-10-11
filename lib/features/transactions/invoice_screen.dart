@@ -60,7 +60,7 @@ class InvoiceScreen extends StatelessWidget {
                           if (inv.gym['address'] != null)
                             Text(
                               '${inv.gym['address']}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -68,7 +68,7 @@ class InvoiceScreen extends StatelessWidget {
                           if (inv.gym['taxNumber'] != null)
                             Text(
                               'Tax No: ${inv.gym['taxNumber']}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -110,14 +110,14 @@ class InvoiceScreen extends StatelessWidget {
                                         if (i['detail'] != null)
                                           Text(
                                             '${i['detail']}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
                                               color: AppColors.textSecondary,
                                             ),
                                           ),
                                         Text(
                                           '${i['quantity']} × ${m((i['unitPrice'] as num?) ?? 0)}',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 12,
                                             color: AppColors.textSecondary,
                                           ),
@@ -177,7 +177,7 @@ class InvoiceScreen extends StatelessWidget {
                                 ),
                                 Text(
                                   m((p['amount'] as num?) ?? 0),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.success,
                                   ),

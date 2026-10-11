@@ -39,7 +39,7 @@ Future<bool> confirmDialog(
           onPressed: () => Navigator.pop(ctx, false),
           child: Text(
             cancelLabel,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
         ),
         FilledButton(
@@ -98,7 +98,7 @@ class InfoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = warning ? AppColors.warningTint : const Color(0xFFE8ECFB);
+    final bg = warning ? AppColors.warningTint : AppColors.info.withValues(alpha: 0.16);
     final fg = warning ? AppColors.warning : AppColors.info;
     return Container(
       padding: const EdgeInsets.all(12),

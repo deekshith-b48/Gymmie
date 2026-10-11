@@ -353,7 +353,7 @@ class DropdownField<T> extends StatelessWidget {
           ],
           onChanged: onChanged,
           validator: validator,
-          hint: Text(hint, style: const TextStyle(color: AppColors.textMuted)),
+          hint: Text(hint, style: TextStyle(color: AppColors.textMuted)),
           decoration: const InputDecoration(),
           borderRadius: BorderRadius.circular(12),
         ),
@@ -409,7 +409,7 @@ class LoadingButton extends StatelessWidget {
         style: destructive
             ? OutlinedButton.styleFrom(
                 foregroundColor: AppColors.danger,
-                side: const BorderSide(color: AppColors.danger),
+                side: BorderSide(color: AppColors.danger),
               )
             : null,
         child: child,

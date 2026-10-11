@@ -31,6 +31,8 @@ class Perm {
   static const videosWrite = 'videos.write';
   static const trainersWrite = 'trainers.write';
   static const trainerSelf = 'trainer.self';
+  static const requestsRead = 'requests.read';
+  static const requestsWrite = 'requests.write';
 }
 
 const _matrix = <String, Set<String>>{
@@ -63,6 +65,8 @@ const _matrix = <String, Set<String>>{
     Perm.videosWrite,
     Perm.trainersWrite,
     Perm.settingsWrite,
+    Perm.requestsRead,
+    Perm.requestsWrite,
   },
   'staff': {
     Perm.membersRead,
@@ -80,6 +84,7 @@ const _matrix = <String, Set<String>>{
     Perm.reportsRead,
     Perm.settingsRead,
     Perm.feedbackRead,
+    Perm.requestsRead,
   },
   'trainer': {
     Perm.membersRead,

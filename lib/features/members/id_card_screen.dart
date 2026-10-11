@@ -20,7 +20,8 @@ import '../../core/widgets/states.dart';
 import '../../data/models/members.dart';
 import '../../data/repositories/members_repository.dart';
 
-Color _hex(String s, [Color fallback = AppColors.navy]) {
+Color _hex(String s, [Color? fallbackColor]) {
+  final fallback = fallbackColor ?? AppColors.navy;
   final h = s.replaceFirst('#', '');
   final v = int.tryParse(h.length == 6 ? 'FF$h' : h, radix: 16);
   return v == null ? fallback : Color(v);
@@ -315,7 +316,7 @@ class _MemberIdCardScreenState extends State<MemberIdCardScreen> {
                                       padding: const EdgeInsets.all(4),
                                       child: QrImageView(
                                         data:
-                                            'dgymbook://member/${gym.code}/${m.id}',
+                                            'gymmie://member/${gym.code}/${m.id}',
                                         size: 72,
                                         padding: EdgeInsets.zero,
                                       ),
@@ -373,7 +374,7 @@ class _MemberIdCardScreenState extends State<MemberIdCardScreen> {
                     ),
                     const SizedBox(height: 8),
                     if (all.isEmpty)
-                      const Text(
+                      Text(
                         'No labels yet. Create one to tag this member (for example VIP or Student).',
                         style: TextStyle(color: AppColors.textSecondary),
                       )

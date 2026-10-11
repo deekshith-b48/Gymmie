@@ -16,6 +16,8 @@ import '../data/repositories/members_repository.dart';
 import '../data/repositories/messaging_repository.dart';
 import '../data/repositories/products_repository.dart';
 import '../data/repositories/trainer_repository.dart';
+import '../features/member/member_repository.dart';
+import '../features/member/member_session_cubit.dart';
 import 'session_cubit.dart';
 import 'settings_cubit.dart';
 
@@ -27,6 +29,20 @@ Future<void> configureDependencies() async {
   final config = AppConfig(prefs);
   final tokens = TokenStore(const FlutterSecureStorage(), prefs);
   final api = ApiClient(config: config, tokens: tokens);
+
+  // Gym members are a separate principal: own keys, own client, own refresh endpoint.
+  final memberTokens = TokenStore(
+    const FlutterSecureStorage(),
+    prefs,
+    prefix: 'member_',
+  );
+  await memberTokens.load(); // before the first frame, so AppRoot knows which app to show
+  final memberApi = ApiClient(
+    config: config,
+    tokens: memberTokens,
+    refreshPath: '/v5/member/auth/refresh',
+  );
+  final memberRepo = MemberRepository(memberApi, memberTokens, prefs);
 
   getIt
     ..registerSingleton<SharedPreferences>(prefs)
@@ -51,7 +67,9 @@ Future<void> configureDependencies() async {
     ..registerSingleton<SettingsCubit>(SettingsCubit(prefs))
     ..registerSingleton<SessionCubit>(
       SessionCubit(getIt<AuthRepository>(), tokens, api),
-    );
+    )
+    ..registerSingleton<MemberRepository>(memberRepo)
+    ..registerSingleton<MemberSessionCubit>(MemberSessionCubit(memberRepo));
 }
 
 Future<void> resetDependencies() => getIt.reset();

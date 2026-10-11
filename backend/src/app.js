@@ -1,8 +1,9 @@
 // Application composition: request context (auth → gym tenancy → role permission) + route registration.
-import { Router, RateLimiter, readJson, raw } from './http.js';
+import { Router, RateLimiter, clientIp, readJson, raw } from './http.js';
 import { AuthService, can } from './auth.js';
-import { ApiError, badRequest, forbidden, notFound, unauthorized } from './errors.js';
-import { loadGym } from './helpers.js';
+import { ApiError, badRequest, forbidden, notFound, paymentRequired, unauthorized } from './errors.js';
+import { FEATURE_ROUTES, allowedWhileLapsed, subscriptionState } from './domain/billing.js';
+import { ensureFeature, loadGym } from './helpers.js';
 import { todayIn } from './domain/dates.js';
 
 import { registerConfigRoutes } from './routes/config.js';
@@ -22,12 +23,25 @@ import { registerParqRoutes } from './routes/parq.js';
 import { registerDeviceRoutes } from './routes/devices.js';
 import { registerMiscRoutes } from './routes/misc.js';
 import { registerDashboardRoutes } from './routes/dashboards.js';
+import { registerMemberAppRoutes } from './routes/member_app.js';
+import { registerSigninRoutes } from './routes/signin.js';
+import { registerAccessRoutes } from './routes/access.js';
+import { registerGymPaymentRoutes } from './routes/gym_payments.js';
+import { registerMemberAccountRoutes } from './routes/member_account.js';
+import { registerMemberStaffRoutes } from './routes/member_staff.js';
+import { MemberSessions, memberContext } from './member_auth.js';
+import { Messenger } from './messenger.js';
+import { loadPricing } from './domain/catalog.js';
 
 export function createApp({ store, config }) {
+  loadPricing(config.pricingFile);
   const router = new Router();
   const auth = new AuthService(store, config);
+  const messenger = new Messenger(config);
+  auth.messenger = messenger;
   const limiter = new RateLimiter(config.rateLimitScale);
-  const deps = { store, config, auth, limiter, router };
+  const memberSessions = new MemberSessions(store, auth, config);
+  const deps = { store, config, auth, limiter, router, memberSessions, messenger };
 
   registerConfigRoutes(deps);
   registerAuthRoutes(deps);
@@ -46,6 +60,12 @@ export function createApp({ store, config }) {
   registerDeviceRoutes(deps);
   registerMiscRoutes(deps);
   registerDashboardRoutes(deps);
+  registerMemberAppRoutes(deps);
+  registerSigninRoutes(deps);
+  registerAccessRoutes(deps);
+  registerGymPaymentRoutes(deps);
+  registerMemberAccountRoutes(deps);
+  registerMemberStaffRoutes(deps);
 
   async function handle(req, url) {
     const { route, params, pathMatched } = router.match(req.method, url.pathname);
@@ -57,21 +77,28 @@ export function createApp({ store, config }) {
     const ctx = {
       req, url, params, store, config, auth, limiter,
       query: Object.fromEntries(url.searchParams),
-      ip: req.socket.remoteAddress ?? 'unknown',
+      ip: clientIp(req, config.trustProxy),
       body: {},
     };
-    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) ctx.body = await readJson(req);
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) ctx.body = await readJson(req, opts.maxBody);
 
     if (opts.auth !== 'none') {
       const header = req.headers.authorization ?? '';
       if (!header.startsWith('Bearer ')) throw unauthorized();
       const payload = auth.verifyAccess(header.slice(7));
-      if (!auth.sessionActive(payload.sid)) throw unauthorized('Session ended. Please sign in again.');
-      const user = store.get('SELECT * FROM users WHERE id = ?', payload.sub);
-      if (!user) throw unauthorized();
-      if (user.disabled) throw forbidden('Your account is disabled.');
-      ctx.user = user;
-      ctx.sessionId = payload.sid;
+      if (opts.auth === 'member') {
+        // Gym members: their own principal, tables and token type (member_auth.js).
+        memberContext(ctx, payload);
+      } else {
+        // A member token never reaches a staff route, even one that forgot to declare a permission.
+        if (payload.typ === 'member') throw forbidden('Gym member sessions cannot use this endpoint.');
+        if (!auth.sessionActive(payload.sid)) throw unauthorized('Session ended. Please sign in again.');
+        const user = store.get('SELECT * FROM users WHERE id = ?', payload.sub);
+        if (!user) throw unauthorized();
+        if (user.disabled) throw forbidden('Your account is disabled.');
+        ctx.user = user;
+        ctx.sessionId = payload.sid;
+      }
     }
 
     if (opts.auth === 'gym') {
@@ -93,9 +120,20 @@ export function createApp({ store, config }) {
         const perms = Array.isArray(opts.perm) ? opts.perm : [opts.perm];
         if (!perms.some((p) => can(ctx.role, p))) throw forbidden('You do not have sufficient permissions to access this');
       }
+      // The subscription is enforced here, on the server: an ended plan is read-only for a week, then only billing works.
+      const state = subscriptionState(ctx.gym, { graceDays: config.billing.graceDays });
+      if (!allowedWhileLapsed(state, req.method, url.pathname)) {
+        throw paymentRequired(
+          state.status === 'grace' ? 'SUBSCRIPTION_READ_ONLY' : 'SUBSCRIPTION_EXPIRED',
+          state.status === 'grace' ? 'Your subscription has ended. Renew to make changes.' : 'Your subscription has expired. Renew to continue.',
+          { endsAt: ctx.gym.subscription.endsAt, status: state.status },
+        );
+      }
+      const paid = FEATURE_ROUTES.find(([re]) => re.test(url.pathname));
+      if (paid) ensureFeature(ctx.gym, paid[1]);
     }
     const out = await route.handler(ctx);
     return out === undefined ? { __envelope: true, status: 204 } : out;
   }
-  return { handle, router, auth, store, config, raw };
+  return { handle, router, auth, store, config, raw, messenger };
 }

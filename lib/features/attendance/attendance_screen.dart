@@ -266,7 +266,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           if (_isToday)
                             Text(
                               Fmt.dateLong(Fmt.ymd(_day)),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -317,7 +317,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     '${st.total} check-in${st.total == 1 ? '' : 's'}',
-                    style: const TextStyle(color: AppColors.info),
+                    style: TextStyle(color: AppColors.info),
                   ),
                 ),
               ),
@@ -327,7 +327,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 cubit: _cubit,
                 separator: 8,
                 empty: EmptyState(
-                  asset: 'assets/empty_days.svg',
+                  icon: Icons.event_available_outlined,
                   title: _isToday
                       ? 'No one has checked in yet'
                       : 'No attendance on this day',
@@ -361,7 +361,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             ),
                             Text(
                               'In ${Fmt.time(a.checkIn)}${a.checkOut == null ? '' : ' · Out ${Fmt.time(a.checkOut)}'}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -391,7 +391,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         ),
                       if (canDelete)
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.delete_outline,
                             size: 20,
                             color: AppColors.danger,

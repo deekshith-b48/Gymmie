@@ -86,11 +86,11 @@ class _LeadConvertScreenState extends State<LeadConvertScreen> {
                       ),
                       Text(
                         l.phone,
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                       Text(
                         'Enquired ${Fmt.date(l.createdAt)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textMuted,
                         ),

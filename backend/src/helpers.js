@@ -2,7 +2,8 @@ import { randomInt } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { forbidden, notFound, invalid } from './errors.js';
+import { forbidden, notFound, invalid, paymentRequired } from './errors.js';
+import { planAllows, requiredPlanFor } from './domain/billing.js';
 import { nowIso } from './db.js';
 import { todayIn } from './domain/dates.js';
 
@@ -54,6 +55,8 @@ export function gymBrief(store, g, role, status = 'active') {
     id: g.id, code: g.code, name: g.name, city: g.city ?? null, logoUrl: g.logoFileId ? `/v5/files/${g.logoFileId}` : null,
     timezone: g.timezone, currencySymbol: g.currencySymbol, role, status,
     subscription: g.subscription ? { plan: g.subscription.plan, status: subscriptionStatus(g, g.timezone), endsAt: g.subscription.endsAt } : null,
+    trial: g.trial ? { status: g.trial.status, startedAt: g.trial.startedAt ?? null, endsAt: g.trial.endsAt ?? null } : null,
+    paymentSetup: g.paymentSetup?.status ?? 'none',
   };
 }
 
@@ -74,6 +77,9 @@ export function ensureFeature(gym, key) {
   const def = FEATURE_CATALOG.find((f) => f.key === key);
   const on = gym.features?.[key] ?? def?.defaultEnabled ?? false;
   if (!on) throw forbidden('This feature is not included in your current subscription');
+  if (!planAllows(gym, key)) {
+    throw paymentRequired('PLAN_UPGRADE_REQUIRED', `This feature needs the ${requiredPlanFor(key)} plan or higher. Upgrade in Settings > Subscription.`, { feature: key, requiredPlan: requiredPlanFor(key) });
+  }
 }
 
 export const requireFields = (obj, fields) => {

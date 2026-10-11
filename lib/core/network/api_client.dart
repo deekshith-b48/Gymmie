@@ -42,6 +42,7 @@ class ApiClient {
   ApiClient({
     required this.config,
     required this.tokens,
+    this.refreshPath = '/v5/auth/refresh',
     Dio? dio,
     Dio? refreshDio,
   }) : _dio = dio ?? Dio(_baseOptions()),
@@ -49,6 +50,9 @@ class ApiClient {
 
   final AppConfig config;
   final TokenStore tokens;
+
+  /// Where an expired access token is exchanged (the member API has its own).
+  final String refreshPath;
   final Dio _dio;
   final Dio _refreshDio;
 
@@ -90,8 +94,12 @@ class ApiClient {
       _send('PUT', path, body: body ?? const <String, dynamic>{}, gym: gym);
   Future<ApiResponse> patch(String path, {Object? body, bool gym = true}) =>
       _send('PATCH', path, body: body ?? const <String, dynamic>{}, gym: gym);
-  Future<ApiResponse> delete(String path, {Json? query, bool gym = true}) =>
-      _send('DELETE', path, query: query, gym: gym);
+  Future<ApiResponse> delete(
+    String path, {
+    Json? query,
+    Object? body,
+    bool gym = true,
+  }) => _send('DELETE', path, query: query, body: body, gym: gym);
 
   /// Raw bytes with auth (CSV exports, images).
   Future<Uint8List> bytes(
@@ -207,7 +215,7 @@ class ApiClient {
     if (rt == null) return false;
     try {
       final r = await _refreshDio.post<dynamic>(
-        config.absolute('/v5/auth/refresh'),
+        config.absolute(refreshPath),
         data: {'refreshToken': rt},
         options: Options(contentType: Headers.jsonContentType),
       );

@@ -83,6 +83,9 @@ class MemberSummary {
     this.balanceReminder,
     this.lastAttendedAt,
     this.parqSigned = false,
+    this.hasAccessCode = false,
+    this.accessCodeIssuedAt,
+    this.accessCode,
   });
 
   final String id;
@@ -105,6 +108,11 @@ class MemberSummary {
   final String? balanceReminder;
   final String? lastAttendedAt;
   final bool parqSigned;
+
+  /// Whether the member has a working access code, and when it was issued. The code itself is only in the answer to creating a member.
+  final bool hasAccessCode;
+  final String? accessCodeIssuedAt;
+  final String? accessCode;
 
   factory MemberSummary.fromJson(Json j) {
     final tr = j.obj('trainer');
@@ -130,6 +138,9 @@ class MemberSummary {
       balanceReminder: j.str('balanceReminder'),
       lastAttendedAt: j.str('lastAttendedAt'),
       parqSigned: j.b('parqSigned'),
+      hasAccessCode: j.b('hasAccessCode'),
+      accessCodeIssuedAt: j.str('accessCodeIssuedAt'),
+      accessCode: j.str('accessCode'),
     );
   }
 }
@@ -302,6 +313,13 @@ class MemberDetail {
     this.atRisk = const [],
     this.heightCm,
     this.weightKg,
+    this.appEnabled = false,
+    this.appLastSeenAt,
+    this.appSignIns = 0,
+    this.appBroadcasts = true,
+    this.appClosedAt,
+    this.appInvitedAt,
+    this.pendingRequests = 0,
   });
 
   final MemberSummary summary;
@@ -319,6 +337,20 @@ class MemberDetail {
   final double? heightCm;
   final double? weightKg;
 
+  /// Whether the member app is switched on for this gym, when this member last opened it, and how often.
+  final bool appEnabled;
+  final String? appLastSeenAt;
+  final int appSignIns;
+
+  /// The member's own choice in the app: whether the gym's promotional broadcasts may reach them.
+  final bool appBroadcasts;
+
+  /// Set when the member closed their own app account (the gym can reopen it); when they were last invited; and how
+  /// many renewal / plan-change / cancellation requests wait for a decision.
+  final String? appClosedAt;
+  final String? appInvitedAt;
+  final int pendingRequests;
+
   factory MemberDetail.fromJson(Json j) {
     final em = j.obj('emergencyContact');
     final att = j.obj('attendance') ?? const {};
@@ -335,6 +367,69 @@ class MemberDetail {
       visitsLast30: att.i('last30Days'),
       visitsTotal: att.i('total'),
       atRisk: j.list('atRisk').map(RiskReason.fromJson).toList(),
+      appEnabled: (j.obj('memberApp') ?? const {}).b('enabled'),
+      appLastSeenAt: (j.obj('memberApp') ?? const {}).str('lastSeenAt'),
+      appSignIns: (j.obj('memberApp') ?? const {}).i('signIns'),
+      appBroadcasts: (j.obj('memberApp') ?? const {}).b('broadcasts', true),
+      appClosedAt: (j.obj('memberApp') ?? const {}).str('closedAt'),
+      appInvitedAt: (j.obj('memberApp') ?? const {}).str('invitedAt'),
+      pendingRequests: (j.obj('memberApp') ?? const {}).i('pendingRequests'),
+    );
+  }
+}
+
+/// A member's request to renew, change plan or cancel, as the gym sees it.
+class MembershipRequestRow {
+  const MembershipRequestRow({
+    required this.id,
+    required this.type,
+    required this.status,
+    required this.createdAt,
+    required this.memberId,
+    required this.memberName,
+    this.memberPhone,
+    this.planName,
+    this.note,
+    this.decisionNote,
+    this.currentPlan,
+    this.currentEnd,
+  });
+  final String id;
+  final String type;
+  final String status;
+  final String createdAt;
+  final String memberId;
+  final String memberName;
+  final String? memberPhone;
+  final String? planName;
+  final String? note;
+  final String? decisionNote;
+  final String? currentPlan;
+  final String? currentEnd;
+  bool get pending => status == 'pending';
+  String get typeLabel => switch (type) {
+    'renew' => 'Renewal',
+    'change_plan' => 'Plan change',
+    'cancel' => 'Cancellation',
+    _ => type,
+  };
+
+  factory MembershipRequestRow.fromJson(Json j) {
+    final m = j.obj('member') ?? const <String, dynamic>{};
+    final c = j.obj('currentMembership');
+    return MembershipRequestRow(
+      id: j.s('id'),
+      type: j.s('type'),
+      status: j.s('status'),
+      createdAt: j.s('createdAt'),
+      memberId: m.s('id'),
+      memberName: m.s('name', 'Member'),
+      memberPhone: m.str('phone'),
+      planName: j.str('planName'),
+      note: j.str('note'),
+      decisionNote: j.str('decisionNote'),
+      currentPlan: c?.str('planName'),
+      currentEnd: c?.str('endDate'),
     );
   }
 }

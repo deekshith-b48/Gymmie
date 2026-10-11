@@ -216,7 +216,7 @@ class MembershipSectionState extends State<MembershipSection> {
         if (_loadError != null)
           Text(
             'Failed to load plans',
-            style: const TextStyle(color: AppColors.danger),
+            style: TextStyle(color: AppColors.danger),
           )
         else if (_list == null)
           const LinearProgressIndicator()
@@ -235,7 +235,7 @@ class MembershipSectionState extends State<MembershipSection> {
                 suffixIcon: const Icon(Icons.keyboard_arrow_down),
               ),
               child: _plan == null
-                  ? const Text(
+                  ? Text(
                       'Select the plan you created.',
                       style: TextStyle(color: AppColors.textMuted),
                     )
@@ -249,7 +249,7 @@ class MembershipSectionState extends State<MembershipSection> {
                         ),
                         Text(
                           Fmt.money(_plan!.price),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -384,7 +384,7 @@ class MembershipSectionState extends State<MembershipSection> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Balance after this payment',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
@@ -466,7 +466,7 @@ class _PriceBreakdown extends StatelessWidget {
     return AppCard(
       color: Theme.of(context).brightness == Brightness.dark
           ? null
-          : const Color(0xFFF3F5FC),
+          : AppColors.chip,
       child: Column(
         children: [
           Row(

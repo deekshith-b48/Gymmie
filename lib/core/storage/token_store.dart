@@ -3,15 +3,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Holds the auth tokens (in the platform keystore) and the selected gym id.
 /// Tokens are cached in memory so the HTTP layer never awaits storage on the hot path.
+///
+/// A second instance with a different [prefix] (the gym-member session) keeps its own keys, so a member
+/// and a staff sign-in can never read or clear each other's tokens.
 class TokenStore {
-  TokenStore(this._secure, this._prefs);
+  TokenStore(this._secure, this._prefs, {String prefix = ''})
+    : _kAccess = '${prefix}access_token',
+      _kRefresh = '${prefix}refresh_token',
+      _kGym = '${prefix}current_gym_id';
 
   final FlutterSecureStorage _secure;
   final SharedPreferences _prefs;
 
-  static const _kAccess = 'access_token';
-  static const _kRefresh = 'refresh_token';
-  static const _kGym = 'current_gym_id';
+  final String _kAccess;
+  final String _kRefresh;
+  final String _kGym;
 
   String? access;
   String? refresh;

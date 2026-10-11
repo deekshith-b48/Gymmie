@@ -118,7 +118,7 @@ class _Content extends StatelessWidget {
       children: [
         Text(
           '${Fmt.date(r.from)} – ${Fmt.date(r.to)}',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 10),
         AppCard(
@@ -126,7 +126,7 @@ class _Content extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Total Revenue',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
@@ -146,7 +146,7 @@ class _Content extends StatelessWidget {
                       : AppColors.danger,
                 ),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(top: 6),
                 child: Text(
                   'Total Revenue breaks down memberships, sales, and expenses.',
@@ -289,7 +289,7 @@ class _Mini extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               color: AppColors.textSecondary,
             ),
@@ -441,7 +441,7 @@ class _Breakdown extends StatelessWidget {
                         if (e.sub != null)
                           Text(
                             '${e.sub}  ',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               color: AppColors.textMuted,
                             ),

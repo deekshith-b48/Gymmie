@@ -7,6 +7,7 @@ class Plan {
     required this.price,
     required this.durationDays,
     this.description,
+    this.benefits = const [],
     this.groupId,
     this.groupName,
     this.sessionCount,
@@ -19,6 +20,7 @@ class Plan {
   final double price;
   final int durationDays;
   final String? description;
+  final List<String> benefits;
   final String? groupId;
   final String? groupName;
   final int? sessionCount;
@@ -33,6 +35,7 @@ class Plan {
     price: j.d('price'),
     durationDays: j.i('durationDays'),
     description: j.str('description'),
+    benefits: [for (final b in (j['benefits'] as List? ?? const [])) '$b'],
     groupId: j.str('groupId'),
     groupName: j.str('groupName'),
     sessionCount: j.obj('sessions')?.intOrNull('count'),

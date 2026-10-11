@@ -6,7 +6,7 @@
 // parameterised by gym_id).
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 const SCHEMA = `
@@ -95,10 +95,116 @@ CREATE TABLE IF NOT EXISTS counters (
 
 export const nowIso = () => new Date().toISOString();
 
+/**
+ * Versioned migrations on top of the idempotent base SCHEMA (PRAGMA user_version).
+ * A database created before this runner existed reports 0 and already has the base schema, so
+ * version 1 is simply "the base schema". Each later step is additive and runs in one transaction.
+ */
+export const MIGRATIONS = [
+  {
+    version: 2, // member app: member sessions + a fast phone lookup over `members` documents
+    up: `
+      CREATE TABLE IF NOT EXISTS member_sessions (
+        id TEXT PRIMARY KEY,
+        gym_id TEXT NOT NULL REFERENCES gyms(id),
+        member_id TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        family_id TEXT NOT NULL,
+        token_hash TEXT NOT NULL UNIQUE,
+        device TEXT,
+        expires_at INTEGER NOT NULL,
+        revoked INTEGER NOT NULL DEFAULT 0,
+        replaced INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_member_sessions_member ON member_sessions(gym_id, member_id);
+      CREATE INDEX IF NOT EXISTS idx_docs_member_phone
+        ON docs(json_extract(data, '$.phone')) WHERE collection = 'members' AND deleted_at IS NULL;
+    `,
+  },
+  {
+    version: 3, // member training data: one versioned JSON document per member
+    up: `
+      CREATE TABLE IF NOT EXISTS member_state (
+        gym_id TEXT NOT NULL REFERENCES gyms(id),
+        member_id TEXT NOT NULL,
+        rev INTEGER NOT NULL DEFAULT 0,
+        wid TEXT NOT NULL,
+        data TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (gym_id, member_id)
+      );
+    `,
+  },
+  {
+    version: 4, // consent evidence: which terms/privacy version a person accepted, and when
+    up: `
+      CREATE TABLE IF NOT EXISTS consents (
+        user_id TEXT NOT NULL REFERENCES users(id),
+        version TEXT NOT NULL,
+        accepted_at TEXT NOT NULL,
+        ip TEXT,
+        PRIMARY KEY (user_id, version)
+      );
+    `,
+  },
+  {
+    version: 5, // one free trial per owner identity; a gym's own payment-gateway account (keys sealed, see secrets.js)
+    up: `
+      CREATE TABLE IF NOT EXISTS trial_grants (
+        identity TEXT PRIMARY KEY,
+        gym_id TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        ends_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS gym_payment_accounts (
+        gym_id TEXT PRIMARY KEY REFERENCES gyms(id),
+        provider TEXT NOT NULL,
+        key_id TEXT NOT NULL,
+        secret_sealed TEXT NOT NULL,
+        webhook_secret_sealed TEXT NOT NULL,
+        status TEXT NOT NULL,
+        verified_at TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_docs_member_access
+        ON docs(gym_id, json_extract(data, '$.accessCodeHash')) WHERE collection = 'members' AND deleted_at IS NULL;
+    `,
+  },
+];
+export const SCHEMA_VERSION = MIGRATIONS.at(-1).version;
+
+export function migrate(db, { file } = {}) {
+  let current = db.prepare('PRAGMA user_version').get().user_version;
+  if (current > SCHEMA_VERSION) throw new Error(`database schema v${current} is newer than this server (v${SCHEMA_VERSION})`);
+  if (current < 1) { db.exec('PRAGMA user_version = 1'); current = 1; }
+  // A copy of the database before any pending migration runs, so an upgrade can always be undone.
+  if (file && file !== ':memory:' && MIGRATIONS.some((m) => m.version > current) && current >= 1 && db.prepare('SELECT COUNT(*) c FROM gyms').get().c) {
+    const bak = `${file}.pre-v${current}.bak`;
+    if (!existsSync(bak)) db.exec(`VACUUM INTO '${bak.replaceAll("'", "''")}'`);
+  }
+  for (const m of MIGRATIONS) {
+    if (m.version <= current) continue;
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      db.exec(m.up);
+      db.exec(`PRAGMA user_version = ${m.version}`);
+      db.exec('COMMIT');
+    } catch (e) {
+      db.exec('ROLLBACK');
+      throw e;
+    }
+    current = m.version;
+  }
+  return current;
+}
+
 export function openDb(file) {
   if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
   db.exec(SCHEMA);
+  migrate(db, { file });
   return new Store(db);
 }
 

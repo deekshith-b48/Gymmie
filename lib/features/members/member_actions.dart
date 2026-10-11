@@ -207,7 +207,7 @@ class MemberActions {
             children: [
               Text(
                 'Balance due: ${Fmt.money(m.balance)}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.danger,
                   fontWeight: FontWeight.w600,
                 ),
@@ -242,7 +242,7 @@ class MemberActions {
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.danger,
-                  side: const BorderSide(color: AppColors.danger),
+                  side: BorderSide(color: AppColors.danger),
                 ),
                 onPressed: () => Navigator.pop(ctx, {'writeOff': true}),
                 child: const Text('Write-off Balance'),
@@ -330,7 +330,7 @@ class MemberActions {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (all.isEmpty)
-              const Text(
+              Text(
                 'No labels yet. Create one below.',
                 style: TextStyle(color: AppColors.textSecondary),
               ),

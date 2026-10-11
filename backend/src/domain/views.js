@@ -57,11 +57,14 @@ export function memberSummary(member, idx) {
     balanceReminder: idx.reminders.get(member.id)?.reminderDate ?? null,
     lastAttendedAt: idx.lastAttended.get(member.id) ?? null,
     parqSigned: !!member.parqSignedAt,
+    hasAccessCode: !!member.accessCodeHash, accessCodeIssuedAt: member.accessCodeIssuedAt ?? null,
+    // The member turned promotional broadcasts off in the member app (their own setting).
+    broadcastOptOut: member.communication?.broadcasts === false,
     createdAt: member.createdAt,
   };
 }
 
-/** Rule-based churn insights (reconstruction of the "At-risk Members" / "AI Insights" cards). */
+/** Rule-based churn insights (the "At-risk Members" / "AI Insights" cards). */
 export function atRiskReasons(member, idx) {
   const cur = currentSummary(idx, member.id);
   if (!cur || cur.status !== 'active') return [];

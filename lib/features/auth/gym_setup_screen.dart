@@ -167,7 +167,7 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
                     ?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 "Your gym name can't be changed later without contacting support.",
                 style: TextStyle(color: AppColors.textSecondary),
               ),
@@ -234,7 +234,7 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     _pinNote!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.warning,
                     ),

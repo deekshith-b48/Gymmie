@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'access_code_widgets.dart';
+
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
@@ -202,6 +204,12 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
         final saved = await _repo.create(compact(body));
         if (!mounted) return;
         showToast(context, 'Added successfully');
+        // the member's access code is in this answer only: show it now, with copy and share
+        final code = saved.accessCode;
+        if (code != null) {
+          await showAccessCodeDialog(context, memberName: saved.name, gymName: getIt<SessionCubit>().state.profile?.name ?? 'your gym', code: code);
+        }
+        if (!mounted) return;
         context.pushReplacement('/members/${saved.id}');
       }
     } catch (e) {
@@ -259,7 +267,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
                                     radius: 46,
                                   ),
                                 )
-                              : const Icon(
+                              : Icon(
                                   Icons.person_outline,
                                   size: 40,
                                   color: AppColors.textMuted,
@@ -270,15 +278,11 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
                     bottom: 0,
                     child: Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.navy,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        size: 16,
-                        color: Colors.white,
-                      ),
+                      child: Icon(Icons.camera_alt, size: 16, color: AppColors.onNavy),
                     ),
                   ),
                 ],
@@ -286,7 +290,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
             ),
           ),
           const Gap(8),
-          const Center(
+          Center(
             child: Text(
               'Add profile image',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),

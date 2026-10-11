@@ -1,7 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import '../../core/util/launch.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/di.dart';
 import '../../app/routes.dart';
@@ -89,10 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _open(String key) => launchUrl(
-    Uri.parse(AppConfig.supportUrls[key]!),
-    mode: LaunchMode.externalApplication,
-  );
+  void _open(String key) => Launch.url(context, AppConfig.supportUrls[key] ?? '');
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Create your Gymmie account, then set up your gym.',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
@@ -157,7 +154,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       padding: const EdgeInsets.only(top: 12),
                       child: Text.rich(
                         TextSpan(
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
                             height: 1.5,
@@ -166,7 +163,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const TextSpan(text: 'I agree to the '),
                             TextSpan(
                               text: 'Terms & conditions',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.info,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -176,7 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const TextSpan(text: ' and '),
                             TextSpan(
                               text: 'Privacy Policy',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.info,
                                 fontWeight: FontWeight.w500,
                               ),

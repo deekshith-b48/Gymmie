@@ -6,7 +6,7 @@ import '../../core/network/api_exception.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/repositories/finance_repository.dart';
 
-/// QR attendance: scans a member's QR (`dgymbook://member/<gymCode>/<memberId>`), shows the verdict, keeps scanning.
+/// QR attendance: scans a member's QR (`gymmie://member/<gymCode>/<memberId>`, or the older `dgymbook://` ID cards), shows the verdict, keeps scanning.
 class QrAttendanceScreen extends StatefulWidget {
   const QrAttendanceScreen({super.key});
   @override

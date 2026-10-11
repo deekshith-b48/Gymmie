@@ -23,7 +23,7 @@ export async function boot(overrides = {}) {
     if (features) {
       const gs = s.store.get('SELECT data FROM gyms WHERE id = ?', gym);
       const d = JSON.parse(gs.data);
-      d.features = { ...d.features, WHATSAPP_INTEGRATION: true, SALES: true, AI_INSIGHTS: true, AI_WORKOUTS: true, DIET_PLANS: true, WORKOUT_PLANS: true, RISK_MEMBERS: true, QUICK_REPORTS: true, MEMBER_HEALTH: true };
+      d.features = { ...d.features, WHATSAPP_INTEGRATION: true, SALES: true, BIOMETRICS: true, AI_INSIGHTS: true, AI_WORKOUTS: true, DIET_PLANS: true, WORKOUT_PLANS: true, RISK_MEMBERS: true, QUICK_REPORTS: true, MEMBER_HEALTH: true };
       s.store.run('UPDATE gyms SET data = ? WHERE id = ?', JSON.stringify(d), gym);
     }
     const as = (method, path, body, extra = {}) => call(method, path, { body, token, gym, ...extra });

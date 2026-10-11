@@ -101,7 +101,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                           const SizedBox(height: 4),
                           Text(
                             '${stats.i('total')} reviews · ${stats.i('unseen')} new',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
                             ),
@@ -166,7 +166,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                             const Spacer(),
                             Text(
                               Fmt.date(f.str('createdAt')),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -202,7 +202,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
                               '— ${f.s('memberName')}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -325,7 +325,7 @@ class _VideoLinksScreenState extends State<VideoLinksScreen> {
               onTap: () => Launch.url(context, v.s('url')),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.play_circle_fill,
                     color: AppColors.navy,
                     size: 36,
@@ -343,7 +343,7 @@ class _VideoLinksScreenState extends State<VideoLinksScreen> {
                           v.s('url'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
@@ -579,7 +579,7 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.fingerprint, color: AppColors.navy),
+                      Icon(Icons.fingerprint, color: AppColors.navy),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -604,7 +604,7 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
                   const SizedBox(height: 6),
                   Text(
                     'S/N ${d.s('serialNumber')}${d.str('ip') == null ? '' : ' · ${d.s('ip')}'}${d.str('location') == null ? '' : ' · ${d.s('location')}'}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
@@ -612,7 +612,7 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
                   if (d.str('lastPingAt') != null)
                     Text(
                       'Last seen ${Fmt.dateTime(d.str('lastPingAt'))}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -660,7 +660,7 @@ class _BiometricsScreenState extends State<BiometricsScreen> {
                               _cubit.refresh();
                             }
                           },
-                          child: const Text(
+                          child: Text(
                             'Remove',
                             style: TextStyle(color: AppColors.danger),
                           ),

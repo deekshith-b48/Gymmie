@@ -22,12 +22,39 @@ export function resolveRange(ctx) {
 }
 
 /** Open (unpaid) receivables for a member, oldest first. */
-function openDues(ctx, memberId) {
+export function openDues(ctx, memberId) {
   const parents = [
     ...ctx.col('memberships').find((m) => m.memberId === memberId).map((d) => ({ ...d, collection: 'memberships' })),
     ...ctx.col('productSales').find((s) => s.memberId === memberId).map((d) => ({ ...d, collection: 'productSales' })),
   ].filter((d) => balanceOf(d) > 0);
   return parents.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+/**
+ * Spreads [payments] over the member's open dues, oldest first, recording each part against the membership or sale it settles.
+ * Shared by the front desk (settle) and by online payments confirmed by the gym's own payment gateway.
+ */
+export function allocateSettlement(ctx, member, dues, payments, today, notes = null) {
+  // Allocate oldest-first; split payments are consumed in order.
+  const queue = payments.map((p) => ({ ...p }));
+  for (const due of dues) {
+    let need = balanceOf(due);
+    const slice = [];
+    while (need > 0 && queue.length) {
+      const take = round2(Math.min(need, queue[0].amount));
+      slice.push({ paymentType: queue[0].paymentType, amount: take });
+      queue[0].amount = round2(queue[0].amount - take);
+      need = round2(need - take);
+      if (queue[0].amount <= 0) queue.shift();
+    }
+    if (slice.length) {
+      const parent = ctx.col(due.collection).get(due.id);
+      recordPayments(ctx, { kind: 'settlement', parentCollection: due.collection, parent, memberId: member.id, payments: slice, date: today, invoiceNo: parent.invoiceNo, notes });
+    }
+    if (!queue.length) break;
+  }
+  const left = openDues(ctx, member.id).reduce((s, d) => s + balanceOf(d), 0);
+  if (left <= 0) for (const r of ctx.col('balanceReminders').find((x) => x.memberId === member.id && !x.done)) ctx.col('balanceReminders').update(r.id, { done: true, doneAt: new Date().toISOString() });
 }
 
 export function enrichTransaction(ctx, t, caches) {
@@ -141,28 +168,7 @@ export function registerFinanceRoutes({ router, store }) {
     const paid = round2(payments.reduce((s, p) => s + p.amount, 0));
     if (paid > totalDue) throw invalid(`Payment received cannot exceed total (${totalDue})`);
     const today = ctx.today();
-    store.tx(() => {
-      // Allocate oldest-first; split payments are consumed in order.
-      const queue = payments.map((p) => ({ ...p }));
-      for (const due of dues) {
-        let need = balanceOf(due);
-        const slice = [];
-        while (need > 0 && queue.length) {
-          const take = round2(Math.min(need, queue[0].amount));
-          slice.push({ paymentType: queue[0].paymentType, amount: take });
-          queue[0].amount = round2(queue[0].amount - take);
-          need = round2(need - take);
-          if (queue[0].amount <= 0) queue.shift();
-        }
-        if (slice.length) {
-          const parent = ctx.col(due.collection).get(due.id);
-          recordPayments(ctx, { kind: 'settlement', parentCollection: due.collection, parent, memberId: member.id, payments: slice, date: today, invoiceNo: parent.invoiceNo, notes: b.notes });
-        }
-        if (!queue.length) break;
-      }
-      const left = openDues(ctx, member.id).reduce((s, d) => s + balanceOf(d), 0);
-      if (left <= 0) for (const r of ctx.col('balanceReminders').find((x) => x.memberId === member.id && !x.done)) ctx.col('balanceReminders').update(r.id, { done: true, doneAt: new Date().toISOString() });
-    });
+    store.tx(() => allocateSettlement(ctx, member, dues, payments, ctx.today(), b.notes));
     const remaining = round2(totalDue - paid);
     sendAutomated(ctx, 'MEMBER_SETTLEMENT_SUCCESS_SMS', member, { amount: paid, balance: remaining });
     return { settled: paid, remainingBalance: remaining };

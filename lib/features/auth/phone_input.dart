@@ -52,7 +52,7 @@ class PhoneInput extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(dial, style: const TextStyle(fontWeight: FontWeight.w500)),
-              const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
+              Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
               Container(
                 width: 1,
                 height: 22,

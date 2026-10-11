@@ -107,7 +107,7 @@ class _WorkoutPlansScreenState extends State<WorkoutPlansScreen> {
                       color: AppColors.chip,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.fitness_center,
                       color: AppColors.navy,
                     ),
@@ -583,7 +583,7 @@ class _WorkoutEditorScreenState extends State<WorkoutEditorScreen> {
                                             ),
                                           ),
                                           const SizedBox(width: 6),
-                                          const Icon(
+                                          Icon(
                                             Icons.edit_outlined,
                                             size: 14,
                                             color: AppColors.textMuted,
@@ -615,7 +615,7 @@ class _WorkoutEditorScreenState extends State<WorkoutEditorScreen> {
                               ],
                             ),
                             if (day.exercises.isEmpty)
-                              const Padding(
+                              Padding(
                                 padding: EdgeInsets.only(bottom: 8),
                                 child: Text(
                                   'No exercises yet',
@@ -646,7 +646,7 @@ class _WorkoutEditorScreenState extends State<WorkoutEditorScreen> {
                                     dense: true,
                                     leading: ReorderableDragStartListener(
                                       index: ei,
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.drag_indicator,
                                         color: AppColors.textMuted,
                                       ),

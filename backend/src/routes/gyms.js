@@ -2,6 +2,8 @@
 import { S, validate } from '../validate.js';
 import { conflict, forbidden, invalid, notFound } from '../errors.js';
 import { created, noContent } from '../http.js';
+import { paymentRequired } from '../errors.js';
+import { planAllows, requiredPlanFor } from '../domain/billing.js';
 import { FEATURE_CATALOG, PAYMENT_TYPES, gymBrief, loadGym, saveGym, userGyms, subscriptionStatus } from '../helpers.js';
 import { createGym, storeFile } from './auth.js';
 import { COUNTRIES } from './config.js';
@@ -16,6 +18,8 @@ export function gymProfile(store, g, role) {
     preferences: g.preferences, paymentMethods: g.paymentMethods, features: g.features, role,
     onboardingCompleted: !!g.onboardingCompleted,
     subscription: g.subscription ? { ...g.subscription, status: subscriptionStatus(g) } : null,
+    trial: g.trial ? { status: g.trial.status, startedAt: g.trial.startedAt ?? null, endsAt: g.trial.endsAt ?? null } : null,
+    paymentSetup: g.paymentSetup?.status ?? 'none',
     whatsapp: g.whatsapp, creditBalance: g.creditBalance ?? 0,
   };
 }
@@ -139,6 +143,7 @@ export function registerGymRoutes({ router, store }) {
   const featureView = (g) => FEATURE_CATALOG.filter((f) => f.visible).map((f) => ({
     key: f.key, name: f.name, description: f.description, category: f.category,
     enabled: g.features?.[f.key] ?? f.defaultEnabled, adminEnabled: f.adminEnabled,
+    requiredPlan: requiredPlanFor(f.key), locked: !planAllows(g, f.key),
   }));
   router.get('/v5/gyms/features', { perm: 'settings.read' }, (ctx) => featureView(ctx.gym));
   router.put('/v5/gyms/features/:key', { perm: 'settings.write' }, (ctx) => {
@@ -146,6 +151,9 @@ export function registerGymRoutes({ router, store }) {
     if (!def) throw notFound('Unknown feature');
     if (!def.adminEnabled) throw forbidden('This feature is not available for your gym yet');
     const b = validate({ enabled: S.bool({ required: true }) }, ctx.body);
+    if (b.enabled && !planAllows(ctx.gym, def.key)) {
+      throw paymentRequired('PLAN_UPGRADE_REQUIRED', `${def.name} is part of the ${requiredPlanFor(def.key)} plan. Upgrade in Settings > Subscription.`, { feature: def.key, requiredPlan: requiredPlanFor(def.key) });
+    }
     const g = saveGym(store, ctx.gymId, { features: { ...ctx.gym.features, [def.key]: b.enabled } });
     return featureView(g);
   });
@@ -158,7 +166,7 @@ export function registerGymRoutes({ router, store }) {
   });
 
   // ---- portal QR (self registration / feedback) ------------------------------------------------------
-  const qrView = (g) => ({ gymCode: g.code, version: g.portalQrVersion, payload: `dgymbook://portal/${g.code}?v=${g.portalQrVersion}` });
+  const qrView = (g) => ({ gymCode: g.code, version: g.portalQrVersion, payload: `gymmie://portal/${g.code}?v=${g.portalQrVersion}` });
   router.get('/v5/gyms/portal/qr', { perm: 'settings.read' }, (ctx) => qrView(ctx.gym));
   router.post('/v5/gyms/portal/qr/regenerate', { perm: 'settings.write' }, (ctx) => qrView(saveGym(store, ctx.gymId, { portalQrVersion: (ctx.gym.portalQrVersion ?? 1) + 1 })));
 }

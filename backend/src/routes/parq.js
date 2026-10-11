@@ -5,6 +5,7 @@ import { invalid, notFound } from '../errors.js';
 import { created } from '../http.js';
 import { ensureFeature } from '../helpers.js';
 import { storeFile } from './auth.js';
+import { mayReadHealth } from '../domain/privacy.js';
 
 const q = (text, critical = false) => ({ id: randomUUID(), type: 'question', text, answerType: 'yesno', required: true, critical });
 export const STANDARD_QUESTIONS = [
@@ -117,14 +118,17 @@ export function registerParqRoutes({ router, store }) {
     return created({ ...sub, signatureUrl: `/v5/files/${sig.id}`, version: versionLabel(form) });
   });
 
+  // Health answers: a trainer reads them only for their own members, and not when the member keeps health private.
+  const mayRead = (ctx, memberId) => mayReadHealth(ctx, ctx.col('members').get(memberId));
+
   router.get('/v5/parq/submissions', { perm: 'members.read' }, (ctx) => {
     gate(ctx);
-    return ctx.col('parqSubmissions').find((s) => !ctx.query.memberId || s.memberId === ctx.query.memberId).map((s) => ({ ...s, signatureUrl: `/v5/files/${s.signatureFileId}`, version: `${s.formMajor}.${s.formMinor}` })).sort((a, b) => b.signedAt.localeCompare(a.signedAt));
+    return ctx.col('parqSubmissions').find((s) => (!ctx.query.memberId || s.memberId === ctx.query.memberId) && mayRead(ctx, s.memberId)).map((s) => ({ ...s, signatureUrl: `/v5/files/${s.signatureFileId}`, version: `${s.formMajor}.${s.formMinor}` })).sort((a, b) => b.signedAt.localeCompare(a.signedAt));
   });
   router.get('/v5/parq/submissions/:id', { perm: 'members.read' }, (ctx) => {
     gate(ctx);
     const s = ctx.col('parqSubmissions').get(ctx.params.id);
-    if (!s) throw notFound('Submission not found');
+    if (!s || !mayRead(ctx, s.memberId)) throw notFound('Submission not found');
     const form = ctx.col('parqForms').get(s.formId);
     return { ...s, signatureUrl: `/v5/files/${s.signatureFileId}`, version: `${s.formMajor}.${s.formMinor}`, form: form ? formView(form) : null };
   });

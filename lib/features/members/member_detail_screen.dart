@@ -24,6 +24,7 @@ import '../../data/models/members.dart';
 import '../../data/models/user_gym.dart';
 import '../../data/repositories/finance_repository.dart';
 import '../../data/repositories/members_repository.dart';
+import 'access_code_widgets.dart';
 import 'member_actions.dart';
 import 'member_widgets.dart';
 
@@ -160,7 +161,7 @@ class _Menu extends StatelessWidget {
         const PopupMenuItem(value: 'qr', child: Text('Show member QR')),
         const PopupMenuItem(value: 'idcard', child: Text('Generate ID card')),
         if (getIt<SessionCubit>().state.can(Perm.settingsWrite))
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'delete',
             child: Text(
               'Delete member',
@@ -215,7 +216,7 @@ class _Menu extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               color: Colors.white,
               child: QrImageView(
-                data: 'dgymbook://member/${gym.code}/${m.id}',
+                data: 'gymmie://member/${gym.code}/${m.id}',
                 size: 220,
               ),
             ),
@@ -223,10 +224,10 @@ class _Menu extends StatelessWidget {
             Text(m.name, style: const TextStyle(fontWeight: FontWeight.w600)),
             Text(
               '#${m.admissionNo}',
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
             const Gap(6),
-            const Text(
+            Text(
               'Scan with "Scan member QR" to mark attendance.',
               style: TextStyle(fontSize: 12, color: AppColors.textMuted),
             ),
@@ -297,14 +298,14 @@ class _Overview extends StatelessWidget {
                           ),
                           Text(
                             'Member ID #${m.admissionNo}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
                           ),
                           Text(
                             m.phone,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
@@ -379,6 +380,64 @@ class _Overview extends StatelessWidget {
                 warning: true,
               ),
             ),
+          if (detail.pendingRequests > 0 && getIt<SessionCubit>().state.can(Perm.requestsRead))
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: GestureDetector(
+                onTap: () => context.push('/membership-requests'),
+                child: InfoBanner(
+                  '${detail.pendingRequests} request${detail.pendingRequests == 1 ? '' : 's'} from this member waiting for you. Tap to review.',
+                  icon: Icons.inbox_outlined,
+                  warning: true,
+                ),
+              ),
+            ),
+          if (detail.appEnabled && detail.appClosedAt != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const InfoBanner(
+                  'This member closed their app account. Their training log was erased; their membership and payment records here are untouched.',
+                  icon: Icons.person_off_outlined,
+                  warning: true,
+                ),
+                if (getIt<SessionCubit>().state.can(Perm.membersWrite))
+                  TextButton(
+                    onPressed: () async {
+                      final done = await runWithProgress(context, () async {
+                        await getIt<MembersRepository>().reopenApp(m.id);
+                        return true;
+                      }, success: 'App account reopened');
+                      if (done == true && context.mounted) context.read<AsyncCubit<MemberDetail>>().refresh();
+                    },
+                    child: const Text('Reopen their app account'),
+                  ),
+              ]),
+            )
+          else if (detail.appEnabled && detail.appSignIns == 0 && getIt<SessionCubit>().state.can(Perm.membersWrite))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.send_outlined, size: 18),
+                label: Text(detail.appInvitedAt == null ? 'Invite to the app (WhatsApp)' : 'Invite again (last sent ${detail.appInvitedAt!.split('T').first})'),
+                onPressed: () async {
+                  final done = await runWithProgress(context, () async {
+                    await getIt<MembersRepository>().inviteToApp(m.id);
+                    return true;
+                  }, success: 'Invitation sent');
+                  if (done == true && context.mounted) context.read<AsyncCubit<MemberDetail>>().refresh();
+                },
+              ),
+            ),
+          if (detail.appEnabled)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: InfoBanner(
+                '${detail.appSignIns == 0 ? 'Member app: not used yet. They sign in with ${m.phone}.' : 'Member app: last opened ${(detail.appLastSeenAt ?? '').split('T').first} · ${detail.appSignIns} sign-in${detail.appSignIns == 1 ? '' : 's'}'}'
+                '${detail.appBroadcasts ? '' : '\nPromotions: off (their choice in the app). Notices about their membership still reach them.'}',
+                icon: Icons.smartphone,
+              ),
+            ),
           for (final r in detail.atRisk)
             Padding(
               padding: const EdgeInsets.only(top: 12),
@@ -405,7 +464,7 @@ class _Overview extends StatelessWidget {
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Assign a plan to start tracking attendance and payments.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -432,7 +491,7 @@ class _Overview extends StatelessWidget {
                 color: AppColors.dangerTint,
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.account_balance_wallet_outlined,
                       color: AppColors.danger,
                     ),
@@ -443,7 +502,7 @@ class _Overview extends StatelessWidget {
                         children: [
                           Text(
                             'Balance Due ${Fmt.money(m.balance)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: AppColors.danger,
                             ),
@@ -451,7 +510,7 @@ class _Overview extends StatelessWidget {
                           if (m.balanceReminder != null)
                             Text(
                               'Reminder on ${Fmt.date(m.balanceReminder)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.danger,
                               ),
@@ -459,6 +518,11 @@ class _Overview extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (session.profile?.paymentSetup == 'active')
+                      TextButton(
+                        onPressed: () => collectOnline(context, m),
+                        child: const Text('Collect online'),
+                      ),
                     TextButton(
                       onPressed: () async {
                         if (await MemberActions(context).settle(m)) {
@@ -470,6 +534,11 @@ class _Overview extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
+          if (session.can(Perm.membersWrite) && !m.blocked)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: AccessCodeCard(member: m, gymName: session.profile?.name ?? 'your gym', onChanged: onChanged),
             ),
           const SectionTitle(
             'Member Info',
@@ -544,7 +613,7 @@ class _Overview extends StatelessWidget {
                             ),
                             Text(
                               '${Fmt.date(t['date'] as String?)} · ${paymentTypeLabel('${t['paymentType']}')}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -709,7 +778,7 @@ class _CurrentMembership extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               '${Fmt.date(m.startDate)}  →  ${Fmt.date(m.endDate)}',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
               ),
@@ -734,7 +803,7 @@ class _CurrentMembership extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.fitness_center,
                     size: 16,
                     color: AppColors.textSecondary,
@@ -830,7 +899,7 @@ class _CurrentMembership extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 40),
                         foregroundColor: AppColors.danger,
-                        side: const BorderSide(color: AppColors.danger),
+                        side: BorderSide(color: AppColors.danger),
                       ),
                       onPressed: () => run(a.end(m)),
                       icon: const Icon(Icons.stop_circle_outlined, size: 18),
@@ -908,7 +977,7 @@ class _MembershipsTab extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${Fmt.date(m.startDate)} → ${Fmt.date(m.endDate)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                   ),
@@ -916,12 +985,12 @@ class _MembershipsTab extends StatelessWidget {
                 if (m.kind == 'upgrade' && m.previousPlanName != null)
                   Text(
                     'Upgraded from ${m.previousPlanName}',
-                    style: const TextStyle(fontSize: 12, color: AppColors.info),
+                    style: TextStyle(fontSize: 12, color: AppColors.info),
                   ),
                 if (m.pausedDays > 0)
                   Text(
                     'Paused for ${m.pausedDays} days',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textMuted,
                     ),
@@ -929,7 +998,7 @@ class _MembershipsTab extends StatelessWidget {
                 for (final e in m.extensions)
                   Text(
                     'Extended ${e['days']} day(s) · ${Fmt.dateShort(e['at'] as String?)}${e['reason'] == null ? '' : ' · ${e['reason']}'}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textMuted,
                     ),
@@ -946,7 +1015,7 @@ class _MembershipsTab extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Paid ${Fmt.money(m.amountReceived)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           color: AppColors.success,
                         ),
@@ -955,7 +1024,7 @@ class _MembershipsTab extends StatelessWidget {
                     if (m.balance > 0)
                       Text(
                         'Due ${Fmt.money(m.balance)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           color: AppColors.danger,
                           fontWeight: FontWeight.w500,
@@ -1120,7 +1189,7 @@ class _HealthTab extends StatelessWidget {
                 ),
                 if (h.weightTrend.length >= 2) ...[
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Weight Trend',
                     style: TextStyle(
                       fontSize: 12,
@@ -1170,7 +1239,7 @@ class _HealthTab extends StatelessWidget {
                 : null,
           ),
           if (h.conditions.isEmpty)
-            const AppCard(
+            AppCard(
               child: Text(
                 'No conditions recorded.',
                 style: TextStyle(color: AppColors.textSecondary),
@@ -1187,7 +1256,7 @@ class _HealthTab extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.monitor_heart_outlined,
                         color: AppColors.danger,
                         size: 20,
@@ -1206,7 +1275,7 @@ class _HealthTab extends StatelessWidget {
                             if (c.notes != null)
                               Text(
                                 c.notes!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textSecondary,
                                 ),
@@ -1345,10 +1414,10 @@ class _Stat extends StatelessWidget {
       ),
       Text(
         label,
-        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
       ),
       if (sub != null)
-        Text(sub!, style: const TextStyle(fontSize: 11, color: AppColors.info)),
+        Text(sub!, style: TextStyle(fontSize: 11, color: AppColors.info)),
     ],
   );
 }
@@ -1427,7 +1496,7 @@ class _PlansTab extends StatelessWidget {
               ),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                 ),

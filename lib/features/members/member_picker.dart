@@ -170,7 +170,7 @@ class _MemberPickerSheetState extends State<_MemberPickerSheet> {
                                                 ),
                                                 Text(
                                                   '#${m.admissionNo} · ${m.phone}',
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 12,
                                                     color:
                                                         AppColors.textSecondary,

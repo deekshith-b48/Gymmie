@@ -31,6 +31,10 @@ import '../features/members/member_form_screen.dart';
 import '../features/members/members_screen.dart';
 import '../features/members/renew_screen.dart';
 import '../data/models/messaging.dart';
+import '../features/members/requests_screen.dart';
+import '../features/onboarding/walkthrough_screen.dart';
+import '../features/settings/payment_setup_screen.dart';
+import '../features/member/member_login_screen.dart';
 import '../features/messaging/broadcast_screens.dart';
 import '../features/messaging/messaging_screens.dart';
 import '../features/plans/plans_screen.dart';
@@ -64,7 +68,16 @@ class _Refresh extends ChangeNotifier {
   }
 }
 
-const _publicRoutes = {R.login, R.loginOtp, R.register, R.backendSetup};
+/// The one-time steps after an owner or manager signs in: the optional walkthrough invitation, then (owners only) the optional "collect
+/// fees online" setup. Returns the route to be on, or null when there is nothing to show. Both can be skipped and neither blocks anything.
+String? onboardingRedirect(SessionState s, String loc) {
+  final seesIntro = s.role == 'owner' || s.role == 'manager';
+  if (seesIntro && s.user != null && !WalkthroughStore.seen(s.user!.id)) return R.walkthrough;
+  if (s.role == 'owner' && (s.profile?.onboardingCompleted ?? false) && s.profile?.paymentSetup == 'none') return R.paymentIntro;
+  return null;
+}
+
+const _publicRoutes = {R.login, R.loginOtp, R.register, R.backendSetup, R.memberLogin};
 
 String? _redirect(SessionCubit session, AppConfig config, GoRouterState st) {
   final loc = st.matchedLocation;
@@ -100,6 +113,9 @@ String? _redirect(SessionCubit session, AppConfig config, GoRouterState st) {
         loc == R.gymSetup;
     return allowed ? null : R.expiredGym;
   }
+  final step = onboardingRedirect(s, loc);
+  if (step != null) return step == loc ? null : step;
+  if (loc == R.walkthrough || loc == R.paymentIntro) return R.home;
   // Optional modules the admin has switched off (Settings > App Features) are not reachable.
   if ((loc.startsWith('/attendance') && !s.feature(Feat.attendance)) ||
       (loc.startsWith('/biometrics') && !s.feature(Feat.biometrics))) {
@@ -157,6 +173,10 @@ GoRouter buildRouter() {
         builder: (_, st) => OtpScreen(args: st.extra as OtpArgs),
       ),
       GoRoute(path: R.register, builder: (_, _) => const RegisterScreen()),
+      GoRoute(path: R.memberLogin, builder: (_, _) => const MemberLoginScreen()),
+      GoRoute(path: R.walkthrough, builder: (_, _) => const WalkthroughScreen()),
+      GoRoute(path: R.paymentIntro, builder: (_, _) => const PaymentSetupScreen(onboarding: true)),
+      GoRoute(path: '/settings/payments', builder: (_, _) => const PaymentSetupScreen()),
       GoRoute(
         path: R.gymSetup,
         builder: (_, st) =>
@@ -306,6 +326,7 @@ GoRouter buildRouter() {
         path: '/members/:id/diet',
         builder: (_, st) => DietEditorScreen(memberId: st.pathParameters['id']),
       ),
+      GoRoute(path: '/membership-requests', builder: (_, _) => const MembershipRequestsScreen()),
       // ---- messaging ----
       GoRoute(path: '/broadcasts', builder: (_, _) => const BroadcastsScreen()),
       GoRoute(

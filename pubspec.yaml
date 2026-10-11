@@ -1,9 +1,9 @@
 name: gym_book_app
-description: "Gymmie: gym management for gym owners, managers, staff and trainers (reconstructed from the 1.9.4 APK)."
+description: "Gymmie: gym management for owners, managers, staff and trainers, with a member app."
 publish_to: 'none'
 
-# versionName 1.9.4 / versionCode 1178 recovered from the original APK (apktool.yml).
-version: 1.9.4+1178
+# versionName.versionCode: the build number rises with every Play upload.
+version: 2.0.0+2000
 
 environment:
   sdk: ^3.13.5
@@ -23,7 +23,6 @@ dependencies:
   shared_preferences: ^2.5.6
   intl: ^0.20.3
   flutter_svg: ^2.3.0
-  lottie: ^3.6.1
   cached_network_image: ^4.0.4
   image_picker: ^1.2.4
   url_launcher: ^6.3.3
@@ -50,6 +49,10 @@ dependencies:
   firebase_analytics: ^12.6.0
   collection: ^1.19.1
   uuid: ^4.6.0
+  path_drawing: ^1.0.1
+  video_player: ^2.9.2
+  wakelock_plus: ^1.8.1
+  file_picker: ^13.1.0
 
 dev_dependencies:
   flutter_test:
@@ -62,54 +65,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
-    - assets/lottie/
-    - assets/poster_templates/
+    - assets/fonts/
     - assets/sound/
-  fonts:
-    - family: Poppins
-      fonts:
-        - asset: assets/fonts/Poppins-Thin.ttf
-          weight: 100
-        - asset: assets/fonts/Poppins-ThinItalic.ttf
-          weight: 100
-          style: italic
-        - asset: assets/fonts/Poppins-ExtraLight.ttf
-          weight: 200
-        - asset: assets/fonts/Poppins-ExtraLightItalic.ttf
-          weight: 200
-          style: italic
-        - asset: assets/fonts/Poppins-Light.ttf
-          weight: 300
-        - asset: assets/fonts/Poppins-LightItalic.ttf
-          weight: 300
-          style: italic
-        - asset: assets/fonts/Poppins-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Poppins-Italic.ttf
-          weight: 400
-          style: italic
-        - asset: assets/fonts/Poppins-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Poppins-MediumItalic.ttf
-          weight: 500
-          style: italic
-        - asset: assets/fonts/Poppins-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Poppins-SemiBoldItalic.ttf
-          weight: 600
-          style: italic
-        - asset: assets/fonts/Poppins-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Poppins-BoldItalic.ttf
-          weight: 700
-          style: italic
-        - asset: assets/fonts/Poppins-ExtraBold.ttf
-          weight: 800
-        - asset: assets/fonts/Poppins-ExtraBoldItalic.ttf
-          weight: 800
-          style: italic
-        - asset: assets/fonts/Poppins-Black.ttf
-          weight: 900
-        - asset: assets/fonts/Poppins-BlackItalic.ttf
-          weight: 900
-          style: italic
+    - assets/member/
+    - assets/brand/

@@ -106,3 +106,50 @@ class FeatureItem {
     adminEnabled: j.b('adminEnabled'),
   );
 }
+
+/// The gym's own payment account (for collecting members' fees). Separate from what the gym pays Gymmie.
+class PaymentSetup {
+  const PaymentSetup({
+    this.status = 'none',
+    this.provider,
+    this.keyId,
+    this.mode,
+    this.verifiedAt,
+    this.webhookUrl = '',
+    this.webhookEvent = 'payment_link.paid',
+    this.canEdit = false,
+    this.supportedProviders = const ['razorpay'],
+  });
+  final String status; // none | skipped | active
+  final String? provider;
+  final String? keyId;
+  final String? mode; // test | live
+  final String? verifiedAt;
+  final String webhookUrl;
+  final String webhookEvent;
+  final bool canEdit;
+  final List<String> supportedProviders;
+  bool get active => status == 'active';
+
+  factory PaymentSetup.fromJson(Json j) => PaymentSetup(
+    status: j.s('status', 'none'),
+    provider: j.str('provider'),
+    keyId: j.str('keyId'),
+    mode: j.str('mode'),
+    verifiedAt: j.str('verifiedAt'),
+    webhookUrl: j.s('webhookUrl'),
+    webhookEvent: j.s('webhookEvent', 'payment_link.paid'),
+    canEdit: j.b('canEdit'),
+    supportedProviders: j.strings('supportedProviders'),
+  );
+}
+
+/// A checkout link for a member's dues.
+class DuesLink {
+  const DuesLink({required this.orderId, required this.amount, required this.balance, required this.url});
+  final String orderId;
+  final double amount;
+  final double balance;
+  final String url;
+  factory DuesLink.fromJson(Json j) => DuesLink(orderId: j.s('orderId'), amount: j.d('amount'), balance: j.d('balance'), url: j.s('url'));
+}

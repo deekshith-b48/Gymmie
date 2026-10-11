@@ -16,12 +16,12 @@ export const PERMISSIONS = {
     'leads.read', 'leads.write', 'attendance.write', 'attendance.read', 'products.read', 'products.write',
     'expenses.read', 'expenses.write', 'broadcasts.read', 'broadcasts.write', 'plansets.read',
     'plansets.write', 'staff.read', 'devices.read', 'devices.write', 'reports.read', 'settings.read',
-    'feedback.read', 'videos.write', 'trainers.write', 'settings.write',
+    'feedback.read', 'videos.write', 'trainers.write', 'settings.write', 'requests.read', 'requests.write',
   ],
   staff: [
     'members.read', 'members.write', 'plans.read', 'finance.read', 'finance.write', 'leads.read',
     'leads.write', 'attendance.write', 'attendance.read', 'products.read', 'products.write',
-    'plansets.read', 'reports.read', 'settings.read', 'feedback.read',
+    'plansets.read', 'reports.read', 'settings.read', 'feedback.read', 'requests.read',
   ],
   trainer: ['members.read', 'attendance.read', 'plans.read', 'plansets.read', 'plansets.write', 'trainer.self'],
 };
@@ -38,10 +38,11 @@ export class AuthService {
   }
 
   // ---- access tokens ------------------------------------------------------------------
-  signAccess(userId, sessionId) {
+  /** `extra` adds claims (member tokens carry `typ:'member'`); staff tokens are unchanged. */
+  signAccess(userId, sessionId, extra = {}) {
     const now = Math.floor(Date.now() / 1000);
     const head = b64u(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const body = b64u(JSON.stringify({ iss: 'dgymbook-dev', sub: userId, sid: sessionId, iat: now, exp: now + this.config.accessTtlSec }));
+    const body = b64u(JSON.stringify({ iss: 'gymmie', sub: userId, sid: sessionId, iat: now, exp: now + this.config.accessTtlSec, ...extra }));
     const sig = createHmac('sha256', this.config.jwtSecret).update(`${head}.${body}`).digest('base64url');
     return `${head}.${body}.${sig}`;
   }
@@ -130,8 +131,13 @@ export class AuthService {
       id, purpose, channel, target, userId, this._hashOtp(id, code), Date.now() + this.config.otpTtlSec * 1000, JSON.stringify(context), Date.now(),
     );
     if (!this.config.devExposeOtp) {
-      // Hook for a real provider. Refuse silently-dropping codes.
-      throw new ApiError(501, 'OTP_PROVIDER_NOT_CONFIGURED', 'No OTP delivery provider is configured on this server');
+      // Production: the code goes out through the configured provider. Never silently drop a code.
+      if (!this.messenger?.canSendOtp(channel)) {
+        throw new ApiError(501, 'OTP_PROVIDER_NOT_CONFIGURED', 'No OTP delivery provider is configured on this server');
+      }
+      // Sent in the background so a slow provider never holds the request; the person can ask again after the resend timer.
+      this.messenger.sendOtp({ channel, to: target, code }).catch((e) => console.error(`[otp] ${channel} delivery failed (${purpose}): ${e.message}`));
+      return { requestId: id, expiresIn: this.config.otpTtlSec, resendIn: this.config.otpResendSec };
     }
     console.log(`[otp:dev] ${purpose} via ${channel} -> ${target}: ${code}`);
     return { requestId: id, expiresIn: this.config.otpTtlSec, resendIn: this.config.otpResendSec, devOtp: code };

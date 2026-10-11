@@ -62,9 +62,14 @@ class _OtpScreenState extends State<OtpScreen> {
     try {
       final r = await widget.args.verify(_challenge.requestId, otp);
       if (!mounted) return;
-      await getIt<SessionCubit>().signedIn(
-        r,
-      ); // the router redirects off the new session state
+      final done = widget.args.onVerified;
+      if (done != null) {
+        await done(context, r); // e.g. the gym-member flow
+      } else {
+        await getIt<SessionCubit>().signedIn(
+          r as AuthResult,
+        ); // the router redirects off the new session state
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _wrong = true);
@@ -111,7 +116,7 @@ class _OtpScreenState extends State<OtpScreen> {
               isEmail
                   ? 'Enter the code sent to your email'
                   : 'Enter the 6-digit code we sent to $target',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 height: 1.5,
               ),
@@ -148,11 +153,11 @@ class _OtpScreenState extends State<OtpScreen> {
               child: _left > 0
                   ? Text(
                       'Resend in 00:${_left.toString().padLeft(2, '0')}',
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: AppColors.textSecondary),
                     )
                   : Column(
                       children: [
-                        const Text(
+                        Text(
                           "Didn't receive OTP?",
                           style: TextStyle(color: AppColors.textSecondary),
                         ),

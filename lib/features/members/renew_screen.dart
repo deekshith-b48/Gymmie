@@ -11,7 +11,7 @@ import '../../data/repositories/members_repository.dart';
 import 'membership_section.dart';
 
 /// Renew / add upcoming / upgrade a membership (routes /renew, /upgrade). Plays the recovered
-/// `success.mp3` after a renewal when the "Renewal Sound" preference is on.
+/// `success.wav` after a renewal when the "Renewal Sound" preference is on.
 class RenewScreen extends StatefulWidget {
   const RenewScreen({
     super.key,
@@ -57,7 +57,7 @@ class _RenewScreenState extends State<RenewScreen> {
       final s = getIt<SessionCubit>().state;
       if (s.profile?.renewalSound == true && s.feature(Feat.renewalSound)) {
         try {
-          await AudioPlayer().play(AssetSource('sound/success.mp3'));
+          await AudioPlayer().play(AssetSource('sound/success.wav'));
         } catch (_) {}
       }
       if (!mounted) return;

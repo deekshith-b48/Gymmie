@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -13,9 +11,10 @@ import '../../app/session_cubit.dart';
 import '../../core/config/app_config.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/brand_splash.dart';
 import '../../core/widgets/states.dart';
 
-/// Animated splash (recovered `assets/lottie/animated-splash.json`) shown while the session boots.
+/// Shown while the session boots.
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
@@ -23,43 +22,23 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final session = getIt<SessionCubit>();
     return Scaffold(
-      backgroundColor: AppColors.navy,
+      backgroundColor: AppColors.background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Lottie.asset(
-              'assets/lottie/animated-splash.json',
-              width: 220,
-              height: 220,
-              repeat: true,
-              errorBuilder: (_, _, _) =>
-                  Image.asset('assets/logo.png', width: 120),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Gymmie',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.4,
-              ),
-            ),
-            const SizedBox(height: 32),
+            const AnimatedLogo(),
+            const SizedBox(height: 24),
             StreamBuilder<SessionState>(
               stream: session.stream,
               initialData: session.state,
               builder: (context, snap) {
                 final e = snap.data?.bootError;
                 if (e == null) {
-                  return const SizedBox(
+                  return SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white70,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
                   );
                 }
                 return Column(
@@ -69,28 +48,18 @@ class SplashScreen extends StatelessWidget {
                       child: Text(
                         e.message,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                       ),
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.navy,
-                        minimumSize: const Size(160, 46),
-                      ),
+                      style: FilledButton.styleFrom(minimumSize: const Size(160, 46)),
                       onPressed: session.retryBoot,
                       child: const Text('Try again'),
                     ),
                     TextButton(
                       onPressed: () => context.go(R.backendSetup),
-                      child: const Text(
-                        'Change backend URL',
-                        style: TextStyle(color: Colors.white70),
-                      ),
+                      child: const Text('Change backend URL'),
                     ),
                   ],
                 );
@@ -110,7 +79,7 @@ class MaintenanceScreen extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     body: SafeArea(
       child: EmptyState(
-        asset: 'assets/amico.svg',
+        icon: Icons.construction_rounded,
         title: 'Under Maintenance',
         message: 'Gymmie is currently under maintenance. Please check back after a few hours.',
         actionLabel: 'Try again',
@@ -128,6 +97,9 @@ class ExpiredGymScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = getIt<SessionCubit>().state;
     final isOwner = s.can('settings.write');
+    final sub = s.profile?.subscription;
+    final trialEnded = sub?.plan == 'TRIAL' || sub?.plan == 'NONE';
+    final unavailable = s.profile?.trial?.unavailable ?? false;
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -142,12 +114,16 @@ class ExpiredGymScreen extends StatelessWidget {
           children: [
             Expanded(
               child: EmptyState(
-                asset: 'assets/subscription_expired.svg',
-                title: 'Subscription Expired!'.tr,
+                icon: Icons.lock_clock_outlined,
+                title: trialEnded ? (unavailable ? 'Choose a plan to start' : 'Your free trial has ended') : 'Subscription Expired!'.tr,
                 message: isOwner
-                    ? 'Please renew the subscription plan.'
+                    ? (trialEnded
+                        ? (unavailable
+                            ? 'The 14-day free trial is available once per owner and has already been used. Pick a plan to start using this gym.'
+                            : 'Your 14 days are up. Pick a plan to keep managing your gym: your members and data are all still here.')
+                        : 'Please renew the subscription plan.')
                     : 'Please contact admin to renew the subscription plan.',
-                actionLabel: isOwner ? 'Renew Now'.tr : null,
+                actionLabel: isOwner ? (trialEnded ? 'See plans' : 'Renew Now'.tr) : null,
                 onAction: isOwner
                     ? () => context.push('/settings/subscription')
                     : null,
@@ -180,7 +156,7 @@ class UnauthorizedScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset('assets/unauthorized_page.png', width: 150),
+              Icon(Icons.lock_outline_rounded, size: 84, color: AppColors.textMuted),
               const SizedBox(height: 24),
               Text(
                 'Access Denied',
@@ -188,7 +164,7 @@ class UnauthorizedScreen extends StatelessWidget {
                     ?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'You do not have sufficient permissions to access this. If you believe this is an error, please contact customer service for assistance.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary),
@@ -220,7 +196,7 @@ class UpdateRequiredScreen extends StatelessWidget {
         actionLabel: 'Update now',
         onAction: () => launchUrl(
           Uri.parse(
-            'https://play.google.com/store/apps/details?id=com.dgymbook.app',
+            'https://play.google.com/store/apps/details?id=app.gymmie.android',
           ),
           mode: LaunchMode.externalApplication,
         ),
@@ -305,17 +281,11 @@ class Debouncer {
   void dispose() => _t?.cancel();
 }
 
-/// SVG brand mark.
+/// The Gymmie mark (the "G" and barbell), for headers.
 class BrandLogo extends StatelessWidget {
-  const BrandLogo({super.key, this.height = 36, this.light = false});
+  const BrandLogo({super.key, this.height = 36});
   final double height;
-  final bool light;
   @override
-  Widget build(BuildContext context) => SvgPicture.asset(
-    'assets/dgymbook-logo-01.svg',
-    height: height,
-    colorFilter: light
-        ? const ColorFilter.mode(Colors.white, BlendMode.srcIn)
-        : null,
-  );
+  Widget build(BuildContext context) =>
+      Image.asset('assets/brand/logo_mark.png', height: height, fit: BoxFit.contain, semanticLabel: 'Gymmie');
 }

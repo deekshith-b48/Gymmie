@@ -181,7 +181,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _member == null
-                      ? const Text(
+                      ? Text(
                           'Walk-in customer (tap to choose a member)',
                           style: TextStyle(color: AppColors.textMuted),
                         )
@@ -224,7 +224,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
             ],
           ),
           if (_lines.isEmpty)
-            const AppCard(
+            AppCard(
               child: Text(
                 'Add at least one product.',
                 style: TextStyle(color: AppColors.textSecondary),
@@ -247,7 +247,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
                           ),
                           Text(
                             '${Fmt.money(l.product.price)} each${l.product.trackStock ? ' · ${l.product.quantity} in stock' : ''}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                             ),
@@ -377,7 +377,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
               ),
               if (_member == null &&
                   (double.tryParse(_received.text) ?? 0) < _total - 0.01)
-                const Text(
+                Text(
                   'Walk-in sales must be paid in full',
                   style: TextStyle(fontSize: 11, color: AppColors.warning),
                 ),
@@ -482,7 +482,7 @@ class _SalesScreenState extends State<SalesScreen> {
                             .join(', '),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
                         ),
@@ -673,7 +673,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           color: AppColors.dangerTint,
                           child: Row(
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Total expenses',
                                   style: TextStyle(color: AppColors.danger),
@@ -681,7 +681,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                               ),
                               Text(
                                 Fmt.money(st.meta['totalAmount'] as num),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.danger,
@@ -719,7 +719,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                   color: AppColors.dangerTint,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.north_east,
                                   color: AppColors.danger,
                                 ),
@@ -737,7 +737,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                                     ),
                                     Text(
                                       '${e.category} · ${Fmt.date(e.date)} · ${paymentTypeLabel(e.paymentType)}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
                                         color: AppColors.textSecondary,
                                       ),
@@ -747,7 +747,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                               ),
                               Text(
                                 Fmt.money(e.amount),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.danger,
                                 ),
@@ -866,7 +866,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
           ? OutlinedButton(
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.danger,
-                side: const BorderSide(color: AppColors.danger),
+                side: BorderSide(color: AppColors.danger),
               ),
               onPressed: () async {
                 if (!await confirmDialog(

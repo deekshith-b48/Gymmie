@@ -10,6 +10,10 @@ import { storeFile } from './auth.js';
 import { toCsv, FEATURE_CATALOG } from '../helpers.js';
 import { sendAutomated } from '../domain/notify.js';
 import { round2 } from '../domain/pricing.js';
+import { revokeOpenGym } from '../member_auth.js';
+import { mayReadHealth, redactForTrainer } from '../domain/privacy.js';
+import { allocateAccessCode } from './access.js';
+import { nowIso } from '../db.js';
 
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 export const HEALTH_CONDITIONS = [
@@ -103,7 +107,12 @@ export function listMembers(ctx, { restrictTrainerId } = {}) {
   return { filtered, idx, raws };
 }
 
-export function registerMemberRoutes({ router, store }) {
+export function registerMemberRoutes({ router, store, config, memberSessions }) {
+  // A member who is blocked, removed or re-numbered loses the app at once (their sessions here and in openGym).
+  const cutOffMember = (ctx, memberId) => {
+    memberSessions.revokeMember(ctx.gymId, memberId);
+    void revokeOpenGym(config, ctx.gymId, memberId);
+  };
   const findMember = (ctx, id) => {
     const m = ctx.col('members').get(id);
     if (!m) throw notFound('Member not found');
@@ -125,7 +134,10 @@ export function registerMemberRoutes({ router, store }) {
   const phoneTaken = (ctx, phone, ignoreId) => ctx.col('members').findOne((m) => m.phone === phone && m.id !== ignoreId);
 
   router.get('/v5/members', { perm: 'members.read' }, (ctx) => {
-    const { filtered } = listMembers(ctx, { restrictTrainerId: ctx.role === 'trainer' ? ctx.user.id : undefined });
+    const { filtered: all, raws } = listMembers(ctx, { restrictTrainerId: ctx.role === 'trainer' ? ctx.user.id : undefined });
+    // a trainer sees what each member chose to show them (privacy settings in the member app)
+    const byId = ctx.role === 'trainer' ? new Map(raws.map((r) => [r.id, r])) : null;
+    const filtered = byId ? all.map((s) => redactForTrainer(ctx, s, byId.get(s.id))) : all;
     const page = Math.max(1, parseInt(ctx.query.page ?? '1', 10) || 1);
     const limit = Math.min(200, Math.max(1, parseInt(ctx.query.limit ?? '20', 10) || 20));
     return {
@@ -143,8 +155,10 @@ export function registerMemberRoutes({ router, store }) {
     assertTrainer(ctx, b.trainerId);
     if (b.referredBy && !ctx.col('members').get(b.referredBy)) throw invalid('Referral member not found');
     const { photo, idCard, membership, ...rest } = b;
+    let issued = null;
     const doc = store.tx(() => {
-      const patch = { ...rest, joinedAt: rest.joinedAt ?? ctx.today(), admissionNo: store.nextCounter(ctx.gymId, 'admission'), labelIds: rest.labelIds ?? [], blocked: false };
+      issued = allocateAccessCode(store, ctx.config, ctx.gym);
+      const patch = { ...rest, joinedAt: rest.joinedAt ?? ctx.today(), admissionNo: store.nextCounter(ctx.gymId, 'admission'), labelIds: rest.labelIds ?? [], blocked: false, accessCodeHash: issued.hash, accessCodeIssuedAt: nowIso(), accessCodeIssuedById: ctx.user.id };
       if (photo) patch.photoFileId = storeFile(store, { gymId: ctx.gymId, ownerId: ctx.user.id, data: photo.data, declared: photo.contentType }).id;
       if (idCard) patch.idCardFileId = storeFile(store, { gymId: ctx.gymId, ownerId: ctx.user.id, data: idCard.data, declared: idCard.contentType }).id;
       const member = ctx.col('members').insert(patch);
@@ -153,7 +167,8 @@ export function registerMemberRoutes({ router, store }) {
     });
     if (!membership) sendAutomated(ctx, 'MEMBER_ONBOARD_SMS', doc);
     const idx = buildIndex(ctx);
-    return created(memberSummary(ctx.col('members').get(doc.id), idx));
+    // The access code is in this answer only (just its hash is kept): the owner shows or sends it to the member now.
+    return created({ ...memberSummary(ctx.col('members').get(doc.id), idx), accessCode: issued.code });
   });
 
   router.get('/v5/members/export', { perm: 'members.read' }, (ctx) => {
@@ -178,13 +193,25 @@ export function registerMemberRoutes({ router, store }) {
     const txns = ctx.col('transactions').find((t) => t.memberId === m.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 20);
     const visits = idx.visits.get(m.id) ?? [];
     const health = healthSummary(ctx, m);
-    return {
+    return redactForTrainer(ctx, {
       ...memberSummary(m, idx), address: m.address ?? null, notes: m.notes ?? null, emergencyContact: m.emergencyContact ?? null,
       referredBy: m.referredBy ?? null, idCardUrl: m.idCardFileId ? `/v5/files/${m.idCardFileId}` : null,
       memberships, recentTransactions: txns, health,
       attendance: { last30Days: visits.filter((d) => diffDays(d, idx.today) <= 29).length, total: visits.length, lastAttendedAt: idx.lastAttended.get(m.id) ?? null },
       atRisk: atRiskReasons(m, idx),
-    };
+      // Does this member use the member app, and when did they last open it (sign in or token refresh).
+      memberApp: (() => {
+        const row = store.get('SELECT COUNT(*) AS n, MAX(created_at) AS last FROM member_sessions WHERE gym_id = ? AND member_id = ?', ctx.gymId, m.id);
+        return {
+          enabled: !!ctx.gym.features?.MEMBER_APP, lastSeenAt: row?.last ? new Date(row.last).toISOString() : null, signIns: row?.n ?? 0,
+          // The member's own choice (member app settings): promotional broadcasts.
+          broadcasts: m.communication?.broadcasts !== false,
+          // closed by the member (their right to delete their app account); the gym can switch it back on
+          closedAt: m.appClosedAt ?? null, invitedAt: m.appInvitedAt ?? null,
+          pendingRequests: ctx.col('membershipRequests').count((q) => q.memberId === m.id && q.status === 'pending'),
+        };
+      })(),
+    }, m);
   });
 
   router.patch('/v5/members/:id', { perm: 'members.write' }, (ctx) => {
@@ -192,6 +219,7 @@ export function registerMemberRoutes({ router, store }) {
     const schema = { ...MEMBER };
     const b = validate(schema, ctx.body, { partial: true });
     if (b.phone && b.phone !== m.phone && phoneTaken(ctx, b.phone, m.id)) throw conflict('Member Contact Already Exists');
+    if (b.phone && b.phone !== m.phone) cutOffMember(ctx, m.id);
     if (b.labelIds) checkLabels(ctx, b.labelIds);
     if (b.trainerId) assertTrainer(ctx, b.trainerId);
     const { photo, idCard, ...rest } = b;
@@ -206,6 +234,8 @@ export function registerMemberRoutes({ router, store }) {
   router.delete('/v5/members/:id', { perm: 'settings.write' }, (ctx) => {
     findMember(ctx, ctx.params.id);
     ctx.col('members').remove(ctx.params.id);
+    cutOffMember(ctx, ctx.params.id);
+    store.run('DELETE FROM member_state WHERE gym_id = ? AND member_id = ?', ctx.gymId, ctx.params.id);
     return noContent();
   });
 
@@ -213,6 +243,7 @@ export function registerMemberRoutes({ router, store }) {
     const m = findMember(ctx, ctx.params.id);
     const b = validate({ reason: S.str({ max: 200 }) }, ctx.body);
     ctx.col('members').update(m.id, { blocked: true, blockedReason: b.reason ?? null });
+    cutOffMember(ctx, m.id);
     return memberSummary(ctx.col('members').get(m.id), buildIndex(ctx));
   });
   router.post('/v5/members/:id/unblock', { perm: 'members.write' }, (ctx) => {
@@ -255,6 +286,7 @@ export function registerMemberRoutes({ router, store }) {
   router.get('/v5/members/:id/health', { perm: 'members.read' }, (ctx) => {
     const m = findMember(ctx, ctx.params.id);
     assertVisible(ctx, m);
+    if (!mayReadHealth(ctx, m)) throw forbidden('This member keeps their health details private from trainers.');
     return healthSummary(ctx, m);
   });
   router.post('/v5/members/:id/health', { perm: 'members.write' }, (ctx) => {

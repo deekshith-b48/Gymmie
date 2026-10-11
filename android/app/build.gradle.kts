@@ -6,9 +6,9 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Release signing: provide android/key.properties (gitignored) with storeFile, storePassword,
-// keyAlias, keyPassword. Without it, release builds are signed with the DEBUG key so that
-// `flutter build apk --release` still works locally; such an APK must never be distributed.
+// Release signing: provide android/key.properties (gitignored) with storeFile, storePassword, keyAlias, keyPassword.
+// A release build WITHOUT it fails, so a debug-signed build can never be published by accident. For a local smoke test
+// of a release build only, pass -PallowDebugSigning=true.
 val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
@@ -16,8 +16,7 @@ val keystoreProperties = Properties().apply {
 val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
 
 android {
-    // Application id and namespace recovered from the original APK (AndroidManifest package).
-    namespace = "com.dgymbook.app"
+    namespace = "app.gymmie.android"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -27,8 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.dgymbook.app"
-        // Original app: minSdk 24 (apktool.yml sdkInfo).
+        applicationId = "app.gymmie.android"
         minSdk = maxOf(24, flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         // versionName / versionCode (1.9.4 / 1178) come from pubspec.yaml: version: 1.9.4+1178
@@ -49,12 +47,11 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (hasReleaseKey) {
-                signingConfigs.getByName("release")
-            } else {
-                logger.warn("WARNING: android/key.properties not found - signing the release build with the DEBUG key (local testing only).")
-                signingConfigs.getByName("debug")
-            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Resolved when the build runs (below): a release build without a key fails, a debug build never needs one.
+            signingConfig = if (hasReleaseKey) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }
     }
 }
@@ -67,4 +64,19 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+// A release build must never be signed with the debug key by accident. This runs only when a release task is in the build,
+// so debug builds and tests are unaffected.
+gradle.taskGraph.whenReady {
+    val releaseBuild = allTasks.any { t ->
+        t.project == project && (t.name.startsWith("assemble") || t.name.startsWith("bundle") || t.name.startsWith("package")) && t.name.contains("Release")
+    }
+    if (releaseBuild && !hasReleaseKey) {
+        if (project.hasProperty("allowDebugSigning")) {
+            logger.warn("WARNING: signing the release build with the DEBUG key (local testing only, never publish it).")
+        } else {
+            throw GradleException("android/key.properties is missing: create the upload keystore (docs/RELEASE.md) or pass -PallowDebugSigning=true for a local test build.")
+        }
+    }
 }

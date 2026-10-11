@@ -183,7 +183,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                       cubit: _cubit,
                       isEmpty: (d) => d.isEmpty,
                       empty: EmptyState(
-                        asset: 'assets/empty_days.svg',
+                        icon: Icons.event_available_outlined,
                         title: 'No sessions booked',
                         message: _isTrainer
                             ? 'Set your working hours to allow bookings, then add a booking.'
@@ -218,7 +218,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                                           fontSize: 13,
                                         ),
                                       ),
-                                      const Text(
+                                      Text(
                                         'to',
                                         style: TextStyle(
                                           fontSize: 10,
@@ -247,7 +247,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                                       if (b.memberPhone != null)
                                         Text(
                                           b.memberPhone!,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 12,
                                             color: AppColors.textSecondary,
                                           ),
@@ -256,7 +256,7 @@ class _TrainerScheduleScreenState extends State<TrainerScheduleScreen> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.close,
                                     color: AppColors.danger,
                                   ),
@@ -382,7 +382,7 @@ class _WorkingHoursScreenState extends State<WorkingHoursScreen> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                const Text(
+                Text(
                   'Manage your availability for each day',
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
@@ -598,7 +598,7 @@ class _AddBookingScreenState extends State<AddBookingScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _member == null
-                            ? const Text(
+                            ? Text(
                                 'Choose member',
                                 style: TextStyle(color: AppColors.textMuted),
                               )
@@ -613,7 +613,7 @@ class _AddBookingScreenState extends State<AddBookingScreen> {
                                   ),
                                   Text(
                                     '${_member!.membership?.planName} · ${_member!.membership?.sessionsLeft ?? 0} sessions left',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       color: AppColors.textSecondary,
                                     ),
@@ -626,7 +626,7 @@ class _AddBookingScreenState extends State<AddBookingScreen> {
                   ),
                 ),
                 const Gap(6),
-                const Text(
+                Text(
                   'Only members with a session-based plan can be booked. They must be assigned to this trainer.',
                   style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                 ),
@@ -650,7 +650,7 @@ class _AddBookingScreenState extends State<AddBookingScreen> {
                   ],
                 ),
                 if (_slots.isEmpty)
-                  const AppCard(
+                  AppCard(
                     child: Text(
                       'Add one or more slots. Each uses one session from the member\'s plan.',
                       style: TextStyle(color: AppColors.textSecondary),
@@ -679,7 +679,7 @@ class _AddBookingScreenState extends State<AddBookingScreen> {
                                 ),
                                 Text(
                                   '${Fmt.hhmm(s.start)} – ${Fmt.hhmm(s.end)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
                                   ),
@@ -687,7 +687,7 @@ class _AddBookingScreenState extends State<AddBookingScreen> {
                                 if (_preview != null && !_preview!.slots[i].ok)
                                   Text(
                                     _preview!.slots[i].reason ?? '',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       color: AppColors.danger,
                                     ),

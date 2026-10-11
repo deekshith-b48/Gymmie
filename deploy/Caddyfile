@@ -1,0 +1,15 @@
+# Caddy gets and renews the HTTPS certificate by itself. DOMAIN comes from .env (for example api.example.com).
+{$DOMAIN} {
+	encode gzip
+	# one reverse proxy in front of the backend: TRUST_PROXY=1 makes the backend read the client address Caddy appends
+	reverse_proxy backend:8787 {
+		header_up X-Forwarded-For {remote_host}
+	}
+	header {
+		-Server
+		Referrer-Policy no-referrer
+	}
+	request_body {
+		max_size 13MB
+	}
+}

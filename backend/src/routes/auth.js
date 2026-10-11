@@ -8,6 +8,7 @@ import {
   defaultFeatures, gymBrief, loadGym, newGymCode, publicUser, userGyms, saveGym, parseGym,
 } from '../helpers.js';
 import { COUNTRIES } from './config.js';
+import { pendingTrial, startTrialIfDue } from '../domain/trial.js';
 import { addDays, todayIn } from '../domain/dates.js';
 
 const CHANNELS = ['sms', 'whatsapp', 'email'];
@@ -92,7 +93,7 @@ export function registerAuthRoutes({ router, store, auth, config, limiter }) {
   router.post('/v5/register/partner', { auth: 'none' }, (ctx) => {
     const b = validate({
       name: S.str({ required: true, min: 2, max: 80 }), phone: S.phone({ required: true }), email: S.email(),
-      referralCode: S.str({ max: 40 }), channel: S.oneOf(['sms', 'whatsapp']),
+      referralCode: S.str({ max: 40 }), channel: S.oneOf(['sms', 'whatsapp']), consentVersion: S.str({ max: 24 }),
     }, ctx.body);
     limiter.check(`reg-ip:${ctx.ip}`, 10, 600);
     if (!/^[\p{L}\p{M} .'-]+$/u.test(b.name)) throw invalid('Name cannot contain special characters');
@@ -100,7 +101,7 @@ export function registerAuthRoutes({ router, store, auth, config, limiter }) {
       throw conflict('Email or Phone is already used in another account');
     }
     const otp = auth.createOtp({
-      purpose: 'register', channel: b.channel ?? 'sms', target: b.phone, context: { name: b.name, email: b.email ?? null, referralCode: b.referralCode ?? null },
+      purpose: 'register', channel: b.channel ?? 'sms', target: b.phone, context: { name: b.name, email: b.email ?? null, referralCode: b.referralCode ?? null, consentVersion: b.consentVersion ?? null },
     });
     return { ...otp, maskedTarget: maskTarget(b.phone) };
   });
@@ -111,6 +112,8 @@ export function registerAuthRoutes({ router, store, auth, config, limiter }) {
     if (auth.findUserByIdentifier({ phone: r.target })) throw conflict('Email or Phone is already used in another account');
     const user = store.tx(() => auth.createUser({ phone: r.target, email: r.context.email, name: r.context.name }));
     store.run('UPDATE users SET email_verified = 0 WHERE id = ?', user.id);
+    // what the person agreed to, and when (kept as evidence of consent)
+    if (r.context.consentVersion) store.run('INSERT INTO consents(user_id, version, accepted_at, ip) VALUES (?,?,?,?)', user.id, r.context.consentVersion, nowIso(), ctx.ip);
     return { ...authBundle(store.get('SELECT * FROM users WHERE id = ?', user.id)), nextStep: 'gym', isNewUser: true };
   });
 
@@ -132,11 +135,46 @@ export function registerAuthRoutes({ router, store, auth, config, limiter }) {
 
   router.post('/v5/register/partner/complete', { auth: 'gym', perm: 'settings.read' }, (ctx) => {
     saveGym(store, ctx.gymId, { onboardingCompleted: true });
-    return { onboardingCompleted: true };
+    // Registration and setup are done: this is when the 14-day trial starts (once per owner, kept on the server).
+    const gym = startTrialIfDue(store, ctx.gymId);
+    return { onboardingCompleted: true, trial: gym.trial ?? null, subscription: gym.subscription ?? null };
   });
 
   // ---- profile ------------------------------------------------------------------------------
   router.get('/v5/users/self', { auth: 'user' }, (ctx) => ({ user: publicUser(ctx.user), gyms: userGyms(store, ctx.user.id) }));
+
+  // ---- closing a staff / owner account ---------------------------------------------------------------------------------
+  // A code to the person's own phone confirms it. The person's identity is erased (name, phone, email, photo, sign-ins) and
+  // their access to every gym ends; records they created in a gym stay (they are the gym's books) but show no name.
+  // An account that owns a gym cannot be closed here: closing the gym deletes the business's data, which support does
+  // on request (scripts/admin.js delete-gym).
+  const ownsGym = (userId) => store.all(
+    `SELECT g.id, g.data FROM gym_users gu JOIN gyms g ON g.id = gu.gym_id WHERE gu.user_id = ? AND gu.role = 'owner' AND gu.status = 'active'`, userId,
+  );
+  router.post('/v5/users/self/delete-otp', { auth: 'user' }, (ctx) => {
+    limiter.check(`udel:${ctx.user.id}`, 6, 600);
+    const owned = ownsGym(ctx.user.id);
+    if (owned.length) throw conflict(`You own ${JSON.parse(owned[0].data).name}. To close it and delete its data, contact support.`, { ownsGym: true });
+    const channel = ctx.user.phone ? 'sms' : 'email';
+    const target = ctx.user.phone ?? ctx.user.email;
+    const otp = auth.createOtp({ purpose: 'user-delete', channel, target, userId: ctx.user.id });
+    return { ...otp, channel, maskedTarget: maskTarget(target), devOtp: config.devExposeOtp ? otp.devOtp : undefined };
+  });
+  router.delete('/v5/users/self', { auth: 'user' }, (ctx) => {
+    const b = validate({ requestId: S.str({ required: true }), otp: S.str({ required: true, min: 4, max: 8 }), confirm: S.str({ required: true, max: 10 }) }, ctx.body);
+    limiter.check(`udelv:${ctx.user.id}`, 10, 600);
+    if (b.confirm !== 'DELETE') throw invalid('Type DELETE to confirm.');
+    const r = auth.verifyOtp(b.requestId, b.otp, 'user-delete');
+    if (r.userId !== ctx.user.id) throw forbidden('This code was not requested for your account.');
+    if (ownsGym(ctx.user.id).length) throw conflict('You own a gym. Contact support to close it first.');
+    store.tx(() => {
+      if (ctx.user.photo_file_id) store.run('DELETE FROM files WHERE id = ? AND owner_id = ?', ctx.user.photo_file_id, ctx.user.id);
+      store.run('DELETE FROM gym_users WHERE user_id = ?', ctx.user.id);
+      store.run("UPDATE users SET name = 'Deleted user', phone = NULL, email = NULL, photo_file_id = NULL, disabled = 1 WHERE id = ?", ctx.user.id);
+      auth.revokeAll(ctx.user.id);
+    });
+    return noContent();
+  });
 
   router.patch('/v5/users/self', { auth: 'user' }, (ctx) => {
     const b = validate({
@@ -216,7 +254,7 @@ export function createGym(store, user, b, country) {
     timezone: b.timezone || country.timezone, upiId: null, logoFileId: null,
     features: defaultFeatures(), preferences: { simpleMemberCard: false, renewalSound: false },
     paymentMethods: { active: ['cash', 'upi', 'debitCard', 'creditCard'], default: 'cash' },
-    subscription: { plan: 'TRIAL', startsAt: today, endsAt: addDays(today, 14), limits: { plans: 10, staff: 5, members: 300 } },
+    ...pendingTrial(today),
     whatsapp: { enabled: false, status: 'disconnected' }, creditBalance: 0, portalQrVersion: 1,
     onboardingCompleted: false, ownerId: user.id, referralCode: b.referralCode ?? null,
   };

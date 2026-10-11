@@ -40,7 +40,7 @@ Future<T?> showFilterSheet<T>(
                       onReset();
                       setState(() {});
                     },
-                    child: const Text(
+                    child: Text(
                       'Reset',
                       style: TextStyle(color: AppColors.textPrimary),
                     ),
@@ -127,7 +127,7 @@ Future<T?> showPickerSheet<T>(
                   ),
                 Expanded(
                   child: filtered.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text(
                             'No results',
                             style: TextStyle(color: AppColors.textSecondary),
@@ -145,7 +145,7 @@ Future<T?> showPickerSheet<T>(
                                   ? null
                                   : Text(subtitleOf(it)),
                               trailing: it == selected
-                                  ? const Icon(
+                                  ? Icon(
                                       Icons.check_circle,
                                       color: AppColors.success,
                                     )

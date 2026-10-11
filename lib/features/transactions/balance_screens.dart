@@ -68,7 +68,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'All Time Balance',
                           style: TextStyle(
                             color: AppColors.danger,
@@ -77,7 +77,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                         ),
                         Text(
                           Fmt.money(d.total),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.danger,
                             fontSize: 26,
                             fontWeight: FontWeight.w600,
@@ -88,7 +88,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                   ),
                   Text(
                     '${d.members} members',
-                    style: const TextStyle(color: AppColors.danger),
+                    style: TextStyle(color: AppColors.danger),
                   ),
                 ],
               ),
@@ -117,7 +117,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                                 ),
                                 Text(
                                   b.phone,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
                                   ),
@@ -127,7 +127,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                           ),
                           Text(
                             Fmt.money(b.balance),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.danger,
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -252,13 +252,13 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   const SizedBox(height: 4),
                   Text(
                     'Balance ${Fmt.money(r.balance)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.danger,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   if (r.overdue)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(top: 4),
                       child: Text(
                         'Biometric check-in is blocked until this is cleared.',

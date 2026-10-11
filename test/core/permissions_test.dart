@@ -20,6 +20,13 @@ void main() {
       expect(roleCan('trainer', Perm.financeRead), isFalse);
       expect(roleCan('trainer', Perm.plansetsWrite), isTrue);
     });
+    test('membership requests: the front desk reads them, only the owner and managers decide, trainers see none', () {
+      expect(roleCan('owner', Perm.requestsWrite), isTrue);
+      expect(roleCan('manager', Perm.requestsWrite), isTrue);
+      expect(roleCan('staff', Perm.requestsRead), isTrue);
+      expect(roleCan('staff', Perm.requestsWrite), isFalse);
+      expect(roleCan('trainer', Perm.requestsRead), isFalse);
+    });
     test('unknown or null role gets nothing', () {
       expect(roleCan(null, Perm.membersRead), isFalse);
       expect(roleCan('intruder', Perm.membersRead), isFalse);

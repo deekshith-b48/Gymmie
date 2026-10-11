@@ -1,0 +1,63 @@
+# Publishes the browser-only demo to GitHub Pages: https://duartesantos8.github.io/openGym/
+#
+# Dormant from 2026-08-19 to 2026-09-10 while the GitHub account was suspended; live again since.
+# The same build (same command, Vite's base is './') is also served from the project's own site at
+# https://opengym.ch/demo/, so the demo has two addresses with identical content.
+#
+# Pages serves static files only, so this build has no backend — VITE_DEMO=1 makes the app
+# boot straight into guest mode with a seeded example history (see frontend/src/lib/demo.js).
+# The exercise stills and animations (180 px) come from catalogue/media and are staged next to
+# the build by scripts/catalogue/stage-media.mjs, so the demo serves them from its own origin.
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'catalogue/**'
+      - 'scripts/catalogue/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+        env:
+          VITE_DEMO: '1'
+      # The 180 px stills and animations from catalogue/media, served next to the demo
+      - run: node scripts/catalogue/stage-media.mjs frontend/dist
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5

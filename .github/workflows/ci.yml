@@ -1,0 +1,58 @@
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: cd backend && npm test
+
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  # A version tag builds the signed Play Store bundle. Secrets: UPLOAD_KEYSTORE_B64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD, API_BASE_URL
+  # Without UPLOAD_KEYSTORE_B64 the job only says so and succeeds (see docs/RELEASE.md to create the key).
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [backend, flutter]
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.UPLOAD_KEYSTORE_B64 != '' }}
+    steps:
+      - name: Signing key not configured
+        if: env.HAS_KEYSTORE != 'true'
+        run: echo "UPLOAD_KEYSTORE_B64 is not set, so no signed bundle is built. See docs/RELEASE.md."
+      - uses: actions/checkout@v4
+        if: env.HAS_KEYSTORE == 'true'
+      - uses: actions/setup-java@v4
+        if: env.HAS_KEYSTORE == 'true'
+        with: { distribution: temurin, java-version: 21 }
+      - uses: subosito/flutter-action@v2
+        if: env.HAS_KEYSTORE == 'true'
+        with: { channel: stable, cache: true }
+      - name: Signing key
+        if: env.HAS_KEYSTORE == 'true'
+        run: |
+          echo "${{ secrets.UPLOAD_KEYSTORE_B64 }}" | base64 -d > android/upload-keystore.jks
+          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=../upload-keystore.jks\n' \
+            "${{ secrets.KEYSTORE_PASSWORD }}" "${{ secrets.KEY_PASSWORD }}" "${{ secrets.KEY_ALIAS }}" > android/key.properties
+      - if: env.HAS_KEYSTORE == 'true'
+        run: flutter pub get
+      - if: env.HAS_KEYSTORE == 'true'
+        run: flutter build appbundle --release --obfuscate --split-debug-info=build/symbols --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }}
+      - uses: actions/upload-artifact@v4
+        if: env.HAS_KEYSTORE == 'true'
+        with: { name: release, path: "build/app/outputs/bundle/release/*.aab\nbuild/symbols" }

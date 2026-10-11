@@ -1,8 +1,8 @@
 {
-  "name": "dgymbook-dev-backend",
-  "version": "1.9.4",
+  "name": "gymmie-backend",
+  "version": "2.0.0",
   "private": true,
-  "description": "Development backend for the reconstructed DGymBook Partner app. NOT the original DGymBook backend.",
+  "description": "Gymmie backend: gym management API, member app API and billing.",
   "type": "module",
   "engines": { "node": ">=22.13" },
   "scripts": {

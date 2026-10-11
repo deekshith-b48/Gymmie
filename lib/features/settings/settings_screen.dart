@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'delete_account_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -136,6 +137,12 @@ class SettingsScreen extends StatelessWidget {
                 'Payment Methods'.tr,
                 '/settings/payment-methods',
                 visible: s.can(Perm.financeRead),
+              ),
+              item(
+                Icons.account_balance_wallet_outlined,
+                'Online payments',
+                '/settings/payments',
+                visible: s.can(Perm.settingsRead),
               ),
               item(
                 Icons.qr_code_2,
@@ -323,7 +330,7 @@ class SettingsScreen extends StatelessWidget {
                             ),
                             Text(
                               user.phone ?? user.email ?? '',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 13,
                               ),
@@ -339,7 +346,7 @@ class SettingsScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right,
                         color: AppColors.textMuted,
                       ),
@@ -398,13 +405,19 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
+              MenuTile(
+                icon: Icons.delete_forever_outlined,
+                title: 'Delete my account',
+                danger: true,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const DeleteAccountScreen())),
+              ),
               Center(
                 child: TextButton(
                   onPressed: () =>
                       Launch.url(context, AppConfig.supportUrls['privacy']!),
                   child: Text(
                     'Privacy Policy'.tr,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 12,
                     ),

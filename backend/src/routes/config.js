@@ -13,16 +13,21 @@ export const COUNTRIES = [
   { code: 'BD', name: 'Bangladesh', dialCode: '+880', currencyCode: 'BDT', currencySymbol: '৳', timezone: 'Asia/Dhaka' },
 ];
 
-export function registerConfigRoutes({ router, config }) {
+export function registerConfigRoutes({ router, config, store }) {
   router.get('/healthcheck', { auth: 'none' }, () => ({ status: 'ok', time: new Date().toISOString() }));
   router.get('/health', { auth: 'none' }, () => ({ status: 'ok' }));
+  // Readiness for the load balancer / uptime monitor: answers only if the database does.
+  router.get('/ready', { auth: 'none' }, () => {
+    store.get('SELECT 1 AS ok');
+    return { status: 'ready', uptimeSec: Math.round(process.uptime()) };
+  });
 
   // Reconstructed app-config contract. Keys mirror the remote-config constants found in the app binary
   // (MAINTENANCE_MODE, MINIMUM_APP_VERSION, MINIMUM_SUGGESTED_APP_VERSION, HELP_CENTER_URL, ...).
   router.get('/v5/apps/configs/settings', { auth: 'none' }, () => ({
     ...config.appSettings,
     featureCatalog: FEATURE_CATALOG,
-    backend: { name: 'dgymbook-dev-backend', environment: config.env, devOtpEnabled: config.devExposeOtp },
+    backend: { name: 'gymmie-backend', environment: config.env, devOtpEnabled: config.devExposeOtp },
   }));
 
   router.get('/v5/masters/country/phone-code', { auth: 'none' }, () => COUNTRIES);

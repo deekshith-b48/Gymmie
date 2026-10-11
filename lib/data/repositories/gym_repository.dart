@@ -9,6 +9,20 @@ class GymRepository {
   GymRepository(this._api);
   final ApiClient _api;
 
+  // ---- the gym's own payment account (optional) ------------------------------------------------------------------------
+
+  Future<PaymentSetup> paymentSetup() async => PaymentSetup.fromJson((await _api.get('/v5/gyms/payment-setup')).map);
+
+  /// Checks the keys with the provider, then saves them sealed on the server. Throws a readable error when they are wrong.
+  Future<PaymentSetup> connectPayments({required String keyId, required String keySecret, required String webhookSecret}) async =>
+      PaymentSetup.fromJson((await _api.put('/v5/gyms/payment-setup', body: {'provider': 'razorpay', 'keyId': keyId, 'keySecret': keySecret, 'webhookSecret': webhookSecret})).map);
+
+  Future<PaymentSetup> skipPaymentSetup() async => PaymentSetup.fromJson((await _api.post('/v5/gyms/payment-setup/skip')).map);
+
+  Future<void> disconnectPayments() async {
+    await _api.delete('/v5/gyms/payment-setup');
+  }
+
   Future<void> updateGym(String id, Json patch) async =>
       _api.patch('/v5/gyms/$id', body: patch);
 

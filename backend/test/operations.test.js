@@ -61,7 +61,8 @@ test('attendance: expired, blocked, duplicate and QR rules; summaries', async ()
   assert.equal((await o.as('POST', '/v5/attendance/mark', { memberId: expired.id, allowExpired: true })).status, 201);
   await o.as('POST', `/v5/members/${live.id}/block`, { reason: 'Misconduct' });
   const second = await member();
-  const blockedTry = await o.as('POST', '/v5/attendance/mark', { memberId: live.id, at: addDays(TODAY(), 0) + 'T00:30:00.000Z' });
+  // an explicit past time (a fixed "today T00:30Z" is still in the future for part of the day in time zones ahead of UTC)
+  const blockedTry = await o.as('POST', '/v5/attendance/mark', { memberId: live.id, at: new Date(Date.now() - 60_000).toISOString() });
   assert.equal(blockedTry.status, 403);
   assert.equal((await o.as('POST', '/v5/attendance/mark', { memberId: second.id, at: new Date(Date.now() + 3600_000).toISOString() })).status, 422);
   const gym = data(await o.as('GET', '/v5/gyms/current'));
@@ -182,7 +183,7 @@ test('credits: broadcast needs credits; dev payment order tops up; scheduled bro
   assert.equal(done.status, 200);
   const again = await fetch(`${h.base}${new URL(order.paymentUrl).pathname}/complete`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'result=success' });
   assert.equal(again.status, 200);
-  assert.match(await again.text(), /dgymbook:\/\/payments\?status=/);
+  assert.match(await again.text(), /gymmie:\/\/payments\?status=/);
   assert.equal(data(await o.as('GET', `/v5/payments/orders/${order.id}`)).status, 'failed'); // first (empty) POST == failure; link is single-use
   const order2 = data(await o.as('POST', '/v5/payments/orders/credit-packs', { packId: 'pack-1000' }));
   const ok = await fetch(`${h.base}${new URL(order2.paymentUrl).pathname}/complete`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'result=success' });
@@ -191,6 +192,8 @@ test('credits: broadcast needs credits; dev payment order tops up; scheduled bro
   assert.equal(stats.balance, 1100); // 1000 + 100 bonus
   // enable integration, send immediately
   assert.equal((await o.as('POST', '/v5/integrations/whatsapp/enable')).status, 200);
+  const wa = data(await o.as('GET', '/v5/integrations')).find((i) => i.key === 'whatsapp');
+  assert.equal(wa.provider, 'dev-outbox', 'no provider is configured here, so messages are only recorded');
   const bc = data(await o.as('POST', '/v5/broadcasts', { name: 'Holiday', body: 'Hi {{memberName}}, closed tomorrow - {{gymName}}', filter: {} }));
   assert.equal(bc.status, 'sent');
   const detail = data(await o.as('GET', `/v5/broadcasts/${bc.id}`));
@@ -287,8 +290,9 @@ test('feature flags gate server behaviour', async () => {
   const on = await g.as('PUT', '/v5/gyms/features/WORKOUT_PLANS', { enabled: true });
   assert.equal(on.status, 200);
   assert.equal((await g.as('GET', '/v5/workout/plans')).status, 200);
-  // hidden/admin-only flags cannot be toggled by the gym owner
-  assert.equal((await g.as('PUT', '/v5/gyms/features/WHATSAPP_INTEGRATION', { enabled: true })).status, 404);
+  // paid add-ons switch on with the plan (a trial includes everything); unknown flags do not exist
+  assert.equal((await g.as('PUT', '/v5/gyms/features/WHATSAPP_INTEGRATION', { enabled: true })).status, 200);
+  assert.equal((await g.as('PUT', '/v5/gyms/features/NOPE', { enabled: true })).status, 404);
 });
 
 test('attendance, members-in-gym and biometrics are off by default and the owner can switch them on', async () => {
@@ -393,5 +397,5 @@ test('misc: video links, documents, FCM token registration and announcements', a
   assert.equal(data(await o.as('GET', '/v5/me/feature-announcements'))[0].seen, true);
   const cfg = data(await h.call('GET', '/v5/apps/configs/settings'));
   assert.equal(cfg.maintenanceMode, false);
-  assert.equal(cfg.featureCatalog.length, 18);
+  assert.equal(cfg.featureCatalog.length, 19);
 });

@@ -59,16 +59,21 @@ class RecipientPreview {
     required this.creditsRequired,
     required this.balance,
     required this.tooMany,
+    this.optedOut = 0,
   });
   final int count;
   final int creditsRequired;
   final int balance;
   final bool tooMany;
+
+  /// Members the filter would reach who switched promotions off in the member app (they are not counted).
+  final int optedOut;
   factory RecipientPreview.fromJson(Json j) => RecipientPreview(
     count: j.i('count'),
     creditsRequired: j.i('creditsRequired'),
     balance: j.i('balance'),
     tooMany: j.b('tooMany'),
+    optedOut: j.i('optedOut'),
   );
 }
 

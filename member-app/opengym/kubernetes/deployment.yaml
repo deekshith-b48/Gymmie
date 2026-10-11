@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: opengym
+  name: opengym
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: opengym
+  template:
+    metadata:
+      labels:
+        app: opengym
+    spec:
+      containers:
+        - name: api
+          # Pin both images to one release and move them together: a tag names what you run and
+          # what you roll back to, where :latest changes under a pod whenever it is rescheduled.
+          # The API and the web image of one version belong together. The published tags are
+          # the version (1.4.0) and its minor line (1.4); see the release notes before a bump.
+          image: ghcr.io/duartesantos8/opengym-api:1.4.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PORT
+              value: "3000"
+            - name: DATA_DIR
+              value: /data
+            - name: RP_ID
+              value: opengym.example.com
+            - name: ORIGIN
+              value: https://opengym.example.com
+            # Everything else in .env.example (INVITE_ONLY, ADMIN_UIDS, FIRST_USER_ADMIN,
+            # ALLOW_GUEST, DEFAULT_LANG, PASSWORD_LOGIN, the push keys, ...) goes here the
+            # same way. FIRST_USER_ADMIN="1" makes the first profile created on an empty
+            # instance its admin (off by default).
+            # TRUST_PROXY is left off on purpose: the web container overwrites X-Forwarded-For
+            # with the address it was reached from, which here is the gateway's pod, so turning
+            # it on changes nothing for the sign-in throttle — while any pod in the cluster that
+            # talks to port 3000 directly could then choose its own address. See
+            # docs/SELF_HOSTING_KUBERNETES.md.
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+          volumeMounts:
+            - name: opengym-data
+              mountPath: /data
+          resources:
+            requests:
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+        - name: web
+          image: ghcr.io/duartesantos8/opengym-web:1.4.0   # same version as the api container
+          imagePullPolicy: IfNotPresent
+          env:
+            # Not the image's default 80: the image runs as uid 101, which can bind a port below
+            # 1024 only where the runtime sets net.ipv4.ip_unprivileged_port_start=0 (Docker
+            # does, most Kubernetes runtimes do not). The Service targets this port by name.
+            - name: NGINX_PORT
+              value: "8080"
+            # Both containers share the pod's network, so the API is on localhost. An IP here
+            # also means nginx never needs RESOLVER (Docker's DNS by default) to find it.
+            - name: BACKEND
+              value: 127.0.0.1
+            - name: PORT
+              value: "3000"
+          ports:
+            - containerPort: 8080
+              name: web
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: web
+          livenessProbe:
+            httpGet:
+              path: /
+              port: web
+            initialDelaySeconds: 30
+          # No volume: the exercise stills and animations (180 px) are part of the web image since
+          # v1.4.0. They are licensed from Gym visual for openGym only; see NOTICE.md.
+          resources:
+            requests:
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+      volumes:
+        - name: opengym-data
+          persistentVolumeClaim:
+            claimName: opengym-data

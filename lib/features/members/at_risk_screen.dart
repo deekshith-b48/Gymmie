@@ -36,7 +36,7 @@ class AtRiskScreen extends StatelessWidget {
           separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (context, i) {
             if (i == 0) {
-              return const Text(
+              return Text(
                 'Signals are computed from attendance, balances and expiry dates.',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               );
@@ -63,7 +63,7 @@ class AtRiskScreen extends StatelessWidget {
                             ),
                             Text(
                               e.member.phone,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
@@ -72,7 +72,7 @@ class AtRiskScreen extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.chat_outlined,
                           color: AppColors.success,
                         ),
@@ -91,7 +91,7 @@ class AtRiskScreen extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.trending_down,
                             size: 16,
                             color: AppColors.warning,
@@ -108,7 +108,7 @@ class AtRiskScreen extends StatelessWidget {
                     ),
                   Text(
                     'Last attended: ${e.member.lastAttendedAt == null ? 'never' : e.member.lastAttendedAt!}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       color: AppColors.textMuted,
                     ),
