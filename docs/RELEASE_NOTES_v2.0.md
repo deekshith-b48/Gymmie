@@ -38,4 +38,4 @@ SHA-256 of the APK is in `gymmie-2.0.0-android-arm64.apk.sha256`.
 ## Verified
 
 - `flutter analyze`: no issues. `flutter test`: 202 passing. `backend npm test`: 129 passing.
-- Android 15 emulator, release and debug builds: sign in as owner, issue an access code, member login, welcome, dashboard, membership card, exercise animation.
+- Android 15 emulator (debug build): owner sign-in, issue an access code, member login, welcome, dashboard, membership card, exercise animation. The release build installs and starts on the same emulator.
