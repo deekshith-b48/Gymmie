@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -133,7 +133,7 @@ class _Menu extends StatelessWidget {
           case 'trainer':
             await run(a.assignTrainer(m));
           case 'contact':
-            await _saveContact(context, m);
+            await _copyNumber(context, m);
           case 'reminder':
             await run(a.setReminder(m));
           case 'qr':
@@ -157,7 +157,7 @@ class _Menu extends StatelessWidget {
             value: 'reminder',
             child: Text('Set a Balance Reminder'),
           ),
-        const PopupMenuItem(value: 'contact', child: Text('Save Contact')),
+        const PopupMenuItem(value: 'contact', child: Text('Copy phone number')),
         const PopupMenuItem(value: 'qr', child: Text('Show member QR')),
         const PopupMenuItem(value: 'idcard', child: Text('Generate ID card')),
         if (getIt<SessionCubit>().state.can(Perm.settingsWrite))
@@ -172,36 +172,10 @@ class _Menu extends StatelessWidget {
     );
   }
 
-  Future<void> _saveContact(BuildContext context, MemberSummary m) async {
-    try {
-      if (!await FlutterContacts.permissions
-          .request(PermissionType.readWrite)
-          .then(
-            (s) =>
-                s == PermissionStatus.granted || s == PermissionStatus.limited,
-          )) {
-        if (context.mounted) {
-          showToast(
-            context,
-            'Contacts permission is needed to save the contact',
-            error: true,
-          );
-        }
-        return;
-      }
-      await FlutterContacts.create(
-        Contact(
-          name: Name(first: m.name),
-          phones: [Phone(number: m.phone)],
-          emails: [if (m.email != null) Email(address: m.email!)],
-        ),
-      );
-      if (context.mounted) showToast(context, 'Member Contact Saved');
-    } catch (_) {
-      if (context.mounted) {
-        showToast(context, 'Could not save the contact', error: true);
-      }
-    }
+  // Copying needs no permission; saving to the address book would need READ/WRITE_CONTACTS, which Play reviews closely.
+  Future<void> _copyNumber(BuildContext context, MemberSummary m) async {
+    await Clipboard.setData(ClipboardData(text: m.phone));
+    if (context.mounted) showToast(context, 'Phone number copied');
   }
 
   Future<void> _showQr(BuildContext context, MemberSummary m) async {

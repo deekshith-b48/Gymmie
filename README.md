@@ -256,6 +256,7 @@ records messages instead of sending them.
 | Step | Guide |
 |---|---|
 | Run the backend: Docker, Caddy (HTTPS), nightly verified backups, monitoring | [docs/DEPLOY.md](docs/DEPLOY.md) |
+| Everything to tick before launch, in order | [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) |
 | Sign and publish the app: keystore, R8, Play Console, checklist | [docs/RELEASE.md](docs/RELEASE.md) |
 | Pricing, pilot gyms, what to measure | [docs/GO_TO_MARKET.md](docs/GO_TO_MARKET.md) |
 | Privacy policy, terms and account-deletion page (drafts for a lawyer to review) | [docs/legal/](docs/legal/) |

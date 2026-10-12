@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.0.1] - 2026-10-12
+
+Production readiness.
+
+### Added
+- `docs/PRODUCTION_CHECKLIST.md`, the ordered list to tick before launch.
+- `backend/scripts/smoke.js`: post-deploy check that production switches are off and the edges are closed (HTTPS, CORS, forged webhook, auth, body size).
+- `deploy/offsite-backup.sh` (rclone to any S3-compatible bucket) and `deploy/healthcheck.sh` (down, disk, stale backup, optional webhook alert).
+- `tool/make-upload-keystore.sh` creates the Play upload key and `android/key.properties`.
+
+### Changed
+- "Save Contact" on a member is now "Copy phone number"; the app no longer asks for or declares the contacts permission.
+- Version tags now start CI, and the signed-bundle job reads the keystore from the path the Gradle build expects.
+
 ## [2.0.0] - 2026-10-11
 
 Gymmie 2.0 is the first version that can take a paying gym: a member app, real billing and delivery, a new look, and a clean break from

@@ -7,12 +7,13 @@
    `android/app/src/main/kotlin/app/gymmie/android` and the `package` lines in it, and `Reminders.ACTION`.
 2. **Upload key.**
    ```bash
-   keytool -genkeypair -v -keystore upload-keystore.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000
+   sh tool/make-upload-keystore.sh      # creates android/upload-keystore.jks and android/key.properties
    ```
+   (or by hand: `keytool -genkeypair -v -keystore android/upload-keystore.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000`)
    Keep the file and its passwords in a password manager (losing the upload key is recoverable through Play support; losing the app signing
    key is not, so enable Play App Signing). Create `android/key.properties` (git-ignored):
    ```
-   storeFile=../upload-keystore.jks
+   storeFile=upload-keystore.jks      # relative to android/
    storePassword=...
    keyAlias=upload
    keyPassword=...

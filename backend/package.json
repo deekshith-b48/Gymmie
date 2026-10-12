@@ -1,6 +1,6 @@
 {
   "name": "gymmie-backend",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "description": "Gymmie backend: gym management API, member app API and billing.",
   "type": "module",

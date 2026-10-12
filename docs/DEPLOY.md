@@ -47,6 +47,21 @@ docker compose run --rm backend node scripts/restore-check.js /backups/<file>.sq
 
 A copy of the database is also taken automatically before any schema upgrade (`<db>.pre-v<N>.bak`).
 
+Off-site copy and alerts are two scripts you run from cron (set `RCLONE_REMOTE` and `ALERT_WEBHOOK_URL` in `.env`):
+
+```bash
+30 3 * * *   cd /opt/gymmie/deploy && ./offsite-backup.sh >> offsite.log 2>&1
+*/5 * * * *  cd /opt/gymmie/deploy && ./healthcheck.sh      # down, disk filling, or no fresh backup
+```
+
+After the first deploy, prove the edges are closed from your own computer:
+
+```bash
+node backend/scripts/smoke.js https://<DOMAIN>
+```
+
+The full launch list is [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md).
+
 ## 5. Operating it
 
 ```bash
