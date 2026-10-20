@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.0.2] - unreleased
+## [2.0.2] - 2026-10-21
 
 Security hardening from the pre-launch audit.
 
