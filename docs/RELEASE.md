@@ -36,7 +36,7 @@ Tagging `vX.Y.Z` does the same in CI (`.github/workflows/ci.yml`; set the reposi
 
 ## Play Console checklist
 
-- Data safety: phone number, name, email, health information (PAR-Q forms), photos, contacts (read, for picking a member), crash logs (only if you set a Sentry DSN). Data is encrypted in transit; users can request deletion (in app and on the web page).
+- Data safety: phone number, name, email, health information (PAR-Q forms), photos, crash logs (only if you set a Sentry DSN). Data is encrypted in transit; users can request deletion (in app and on the web page).
 - Health apps declaration and content rating; target audience 18+ (gym operators) with members of any age handled by the gym.
 - Privacy policy URL, account deletion URL (`/delete-account`), support email.
 - Store listing: use the brand in `assets/brand/`. Screenshots from the real app; no screenshots of other products.
@@ -48,4 +48,5 @@ Tagging `vX.Y.Z` does the same in CI (`.github/workflows/ci.yml`; set the reposi
 - [ ] `grep -ri dgymbook .` finds only the accepted legacy ID-card scheme (`attendance.js`, `scan_screen.dart`) and its tests.
 - [ ] `docs/legal` drafts reviewed by a lawyer, published, and `SITE_URL` set.
 - [ ] Exercise pictures: leave `EXERCISE_MEDIA_LICENSED` unset unless you hold a licence.
-- [ ] Release APK installed on a real phone: sign in as an owner and as a member, pay a test order in Razorpay test mode.
+- [ ] Release APK installed on a real phone: sign in as an owner and as a member, pay a test order in Razorpay test mode (against the staging server, see docs/DEPLOY.md "Staging first").
+- [ ] Merged manifest checked (`aapt dump permissions`): only internet, network state, camera, notifications, boot, vibrate and wake lock. No contacts, advertising-ID or push permissions.

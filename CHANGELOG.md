@@ -12,6 +12,7 @@ Security hardening from the pre-launch audit.
 - **Text-message cost**: per-phone, per-address, per-account, per-gym-QR and global sending budgets, tighter limits on the public endpoints, an optional bot challenge (Cloudflare Turnstile), and an operator alert before the global ceiling is reached.
 - **Account enumeration**: login, registration and every resend answer a known and an unknown number alike.
 - **Payments and messages**: a payment of the wrong amount, or a second payment for a settled order, alerts the operator; operator commands to apply or close such orders; messages stuck in sending are failed and refunded once, never re-sent.
+- **Files**: a trainer reads only the gym logo, colleagues' profile photos and the photos of members assigned to them (not ID cards, documents or other uploads); other gyms, members and anonymous callers were already refused and are now covered by tests.
 - Anonymous requests are no longer read before sign-in is checked and have small body limits and a request budget; malformed URLs, `sort=__proto__` and non-object bodies return 4xx instead of 500; file storage quota per gym; device keys are rate limited and device clocks are not trusted; old sign-in records and sessions are purged; changing a sign-in number signs out other devices.
 - `node src/seed.js --reset` works again and refuses production or any database with real accounts.
 - Tests that used the UTC date for Indian gyms failed for 5.5 hours every day.
@@ -22,6 +23,7 @@ Security hardening from the pre-launch audit.
 - Separate `SEAL_KEY` and `ACCESS_CODE_KEY` so `JWT_SECRET` can be rotated.
 
 ### Changed
+- `ALLOW_TEST_PAYMENT_KEYS=1` (staging only) lets a production-mode server accept a gym's Razorpay test keys; production keeps refusing them by default.
 - Removed the unused Firebase packages: the app no longer declares advertising-ID, ad-services, push or install-referrer permissions.
 
 ## [2.0.1] - 2026-10-12

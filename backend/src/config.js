@@ -123,6 +123,8 @@ export function loadConfig(overrides = {}) {
     challenge: { secret: overrides.turnstileSecret ?? process.env.TURNSTILE_SECRET ?? '', fetchImpl: overrides.challengeFetch },
     alerts: { webhookUrl: overrides.alertWebhookUrl ?? process.env.ALERT_WEBHOOK_URL ?? '', fetchImpl: overrides.alertFetch },
     fileQuotaBytes: Number(overrides.fileQuotaBytes ?? process.env.FILE_QUOTA_MB ?? 500) * (overrides.fileQuotaBytes ? 1 : 1024 * 1024), // per gym; photos and documents are kept in the database
+    // STAGING ONLY: lets a production-mode server accept a gym's rzp_test_ keys so the fee-collection flow can be tried without real money.
+    allowTestPaymentKeys: overrides.allowTestPaymentKeys ?? flag('ALLOW_TEST_PAYMENT_KEYS', false),
     maxGymsPerOwner: Number(overrides.maxGymsPerOwner ?? process.env.MAX_GYMS_PER_OWNER ?? 10),
     billing: { graceDays: Number(overrides.graceDays ?? process.env.SUBSCRIPTION_GRACE_DAYS ?? 7) },
     publicBaseUrl: overrides.publicBaseUrl ?? process.env.PUBLIC_BASE_URL ?? '',

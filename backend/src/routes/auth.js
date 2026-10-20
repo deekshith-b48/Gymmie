@@ -248,16 +248,29 @@ export function registerAuthRoutes({ router, store, auth, config, limiter, ops }
     return created(storeFile(store, { gymId: ctx.gymId, ownerId: ctx.user.id, data: b.data, declared: b.contentType }));
   });
 
+  // Who may read a file:
+  //  * the person who uploaded it, and the owner of a profile photo;
+  //  * staff of the gym it belongs to: owner, manager and front desk can read the gym's files (they run the gym), but a TRAINER only
+  //    reads the gym logo, colleagues' profile photos and the photos of the members assigned to them. A member's ID card, a signed
+  //    PAR-Q, documents and other staff's uploads stay closed to trainers.
+  //  * nobody from another gym, and no gym member (member tokens never reach this route).
   router.get('/v5/files/:id', { auth: 'user' }, (ctx) => {
     const f = store.get('SELECT * FROM files WHERE id = ?', ctx.params.id);
     if (!f) throw notFound('Asset not found');
-    const mine = f.owner_id === ctx.user.id
-      || (f.gym_id && store.get("SELECT 1 FROM gym_users WHERE gym_id = ? AND user_id = ? AND status = 'active'", f.gym_id, ctx.user.id))
-      // profile photos of people in a shared gym are visible to that gym's staff
-      || store.get(
-        `SELECT 1 FROM users u JOIN gym_users a ON a.user_id = u.id JOIN gym_users b ON b.gym_id = a.gym_id
-         WHERE u.photo_file_id = ? AND b.user_id = ? AND b.status = 'active' LIMIT 1`, f.id, ctx.user.id);
-    if (!mine) throw forbidden('You do not have access to this file');
+    const sharedPhoto = () => store.get(
+      `SELECT 1 FROM users u JOIN gym_users a ON a.user_id = u.id JOIN gym_users b ON b.gym_id = a.gym_id
+       WHERE u.photo_file_id = ? AND b.user_id = ? AND b.status = 'active' LIMIT 1`, f.id, ctx.user.id);
+    const gymRole = f.gym_id ? store.get("SELECT role FROM gym_users WHERE gym_id = ? AND user_id = ? AND status = 'active'", f.gym_id, ctx.user.id)?.role : null;
+    let ok = f.owner_id === ctx.user.id || !!sharedPhoto();
+    if (!ok && gymRole && gymRole !== 'trainer') ok = true;
+    if (!ok && gymRole === 'trainer') {
+      const gym = loadGym(store, f.gym_id);
+      const assignedPhoto = store.get(
+        `SELECT 1 FROM docs WHERE gym_id = ? AND collection = 'members' AND deleted_at IS NULL
+         AND json_extract(data, '$.photoFileId') = ? AND json_extract(data, '$.trainerId') = ? LIMIT 1`, f.gym_id, f.id, ctx.user.id);
+      ok = gym?.logoFileId === f.id || !!assignedPhoto;
+    }
+    if (!ok) throw forbidden('You do not have access to this file');
     return raw(200, f.mime, Buffer.from(f.bytes), { 'cache-control': 'private, max-age=3600', 'content-disposition': 'inline' });
   });
 }

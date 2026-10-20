@@ -4,6 +4,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# least privilege: these jobs only read the repository (the signed bundle is uploaded as a workflow artifact, which needs no extra scope)
+permissions:
+  contents: read
+
 jobs:
   backend:
     runs-on: ubuntu-latest

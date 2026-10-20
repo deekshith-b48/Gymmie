@@ -17,7 +17,7 @@ for f in backups/gymmie-*.sqlite; do
   [ -e "$f" ] || continue
   out="backups/enc/$(basename "$f").enc"
   [ -f "$out" ] && continue
-  docker compose run --rm -T -e BACKUP_PUBLIC_KEY_FILE=/keys/backup-public.pem \
+  docker compose run --rm -T --user "$(id -u):$(id -g)" -e BACKUP_PUBLIC_KEY_FILE=/keys/backup-public.pem \
     -v "$PWD/backups:/backups" -v "$PWD/$(dirname "$PUB"):/keys:ro" backend \
     node scripts/backup-crypt.js encrypt "/backups/$(basename "$f")" "/backups/enc/$(basename "$f").enc"
   count=$((count + 1))

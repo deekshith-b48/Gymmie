@@ -147,3 +147,20 @@ test('a second, different payment for an order that is already settled is report
   await send(payload('pay_third', 100));
   assert.equal(data(await o.as('GET', `/v5/payments/orders/${order.id}`)).status, 'paid');
 });
+
+test('a production-mode server refuses a gym\'s test keys unless a staging switch is on', async () => {
+  const sentOtps = [];
+  const transport = { async sendOtp(m) { sentOtps.push(m); return { providerId: 'o' }; }, async sendText() { return { providerId: 't' }; } };
+  const keysFetch = async () => ({ ok: true, status: 200, json: async () => ({}) }); // Razorpay "keys are good"
+  for (const [allow, expected] of [[false, 422], [true, 200]]) {
+    const hh = await boot({ env: 'production', devOtp: false, devPayments: false, fixedOtp: '', otpResendSec: 0, messagingTransport: transport, jwtSecret: 'j'.repeat(40), allowTestPaymentKeys: allow, paymentsFetch: keysFetch });
+    try {
+      const reg = await hh.call('POST', '/v5/register/partner', { body: { name: 'Stage Owner', phone: '+919876655500' } });
+      const v = await hh.call('POST', '/v5/register/partner/verify', { body: { requestId: data(reg).requestId, otp: sentOtps.at(-1).code } });
+      const token = data(v).accessToken;
+      const g = await hh.call('POST', '/v5/register/partner/gym', { token, body: { name: 'Stage Gym', address: '12 MG Road, Bengaluru', pincode: '560001' } });
+      const r = await hh.call('PUT', '/v5/gyms/payment-setup', { token, gym: data(g).gym.id, body: { provider: 'razorpay', keyId: 'rzp_test_stagingkey1', keySecret: 'staging-secret-1', webhookSecret: 'staging-webhook-1' } });
+      assert.equal(r.status, expected, JSON.stringify(r.body));
+    } finally { await hh.close(); }
+  }
+});
