@@ -9,12 +9,12 @@
 Gymmie is a gym-management app for owners, managers, staff and trainers, with a native member app, and a small
 self-hostable backend that handles billing, messages and backups.
 
-[![Release](https://img.shields.io/badge/release-v2.0.0-2ea44f)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.2-2ea44f)](CHANGELOG.md)
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Android](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](#install-the-app)
 [![Node](https://img.shields.io/badge/Node.js-%E2%89%A5%2022.13-339933?logo=nodedotjs&logoColor=white)](#1-start-the-backend)
-[![Backend tests](https://img.shields.io/badge/backend%20tests-129%20passing-brightgreen)](#testing)
+[![Backend tests](https://img.shields.io/badge/backend%20tests-209%20passing-brightgreen)](#testing)
 [![Flutter tests](https://img.shields.io/badge/flutter%20tests-202%20passing-brightgreen)](#testing)
 
 <br>
@@ -58,7 +58,9 @@ message credits. See [NOTICE.md](NOTICE.md) for the work Gymmie builds on.
 - **A clean identity.** New logo and launcher icon, application id `app.gymmie.android`, AGPL-3.0, recovered third-party
   assets removed.
 
-The complete list is in [CHANGELOG.md](CHANGELOG.md).
+**2.0.2** (in this repository, not yet released) is a security-hardening release: trainer access scoped to their own members, guarded sign-in codes
+and SMS budgets, prorated subscription changes, encrypted off-site backups, operator alerts for payment and message problems, and a staging-only
+switch for Razorpay test keys. See [CHANGELOG.md](CHANGELOG.md) for the complete list.
 
 ## Screenshots
 
@@ -110,7 +112,8 @@ The seed creates 46 members, attendance, 10 leads and 6 products. Demo logins (d
 | Trainer | `+919000000003` |
 | Staff | `+919000000004` |
 
-In production mode there is no fixed OTP, and the server will not start with any `DEV_*` switch set.
+In production mode there is no fixed OTP, and the server will not start with any `DEV_*` switch set. `--reset` deletes the database file, so the seed
+refuses to run in production or on any database that holds accounts other than the demo ones: point `DB_FILE` at a throw-away file.
 
 To try the member app, open a member's page as the owner, choose **Issue access code**, then use **I am a gym member** on the
 sign-in screen.
@@ -226,7 +229,6 @@ flowchart LR
 |---|---|---|
 | `API_BASE_URL` | Backend root (HTTPS required in release builds) | debug: `http://10.0.2.2:8787`; release: none, the app asks |
 | `SENTRY_DSN` | Crash reporting (release builds) | off |
-| `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID`, `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET` | Firebase (push token, analytics); key, app id, sender id and project id are all required | off |
 | `OPENGYM_SOURCE_URL` | Where the in-app notices point for the source code (AGPL §13) | empty |
 
 ### Backend (environment variables)
@@ -245,6 +247,12 @@ The full, commented list is in [`deploy/.env.example`](deploy/.env.example).
 | `WHATSAPP_*` | WhatsApp Cloud API (approved templates) |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Email codes |
 | `SUBSCRIPTION_GRACE_DAYS`, `PRICING_FILE` | Read-only days after the plan ends; override the plan and pack prices |
+| `SEAL_KEY`, `ACCESS_CODE_KEY` | Generate once (`openssl rand -hex 32`) and **never change**: they encrypt gyms' saved Razorpay keys and key the member access codes, which lets `JWT_SECRET` be rotated. Unset, they fall back to `JWT_SECRET` |
+| `SMS_GLOBAL_PER_HOUR`, `SMS_GLOBAL_PER_DAY`, `SMS_PHONE_PER_HOUR`, `SMS_IP_PER_HOUR` ... | Ceilings on sign-in codes sent (global, per phone, per address, per account, per gym QR): set the global ones to what you can afford |
+| `ALERT_WEBHOOK_URL` | Slack / Discord / ntfy webhook for operator alerts (payment mismatches, repeated lockouts, budget warnings, stuck messages) |
+| `TURNSTILE_SECRET` | Cloudflare Turnstile secret; when set, public code-sending calls require a challenge token (the Android app does not send one yet, leave unset) |
+| `MAX_GYMS_PER_OWNER`, `FILE_QUOTA_MB` | Gyms one account may own (10), file storage per gym (500 MB) |
+| `ALLOW_TEST_PAYMENT_KEYS` | **Staging only, off by default.** Accepts a gym's `rzp_test_` keys and refuses live ones; refuses to start with live platform keys or on a database holding live gym payment accounts. Never set it in production |
 | `OPENGYM_PUBLIC_URL`, `OPENGYM_API_URL`, `OPENGYM_SSO_SECRET`, `EXERCISE_MEDIA_LICENSED` | Exercise pictures host and the licence switch, see [NOTICE.md](NOTICE.md) |
 | `COMPANY_WHATSAPP_NUMBER`, `SUPPORT_EMAIL`, `SUPPORT_NAME`, `HELP_CENTER_URL` | Contact shown once to new owners; empty shows none, nothing is invented |
 
@@ -255,12 +263,12 @@ records messages instead of sending them.
 
 | Step | Guide |
 |---|---|
-| Run the backend: Docker, Caddy (HTTPS), nightly verified backups, monitoring | [docs/DEPLOY.md](docs/DEPLOY.md) |
+| Run the backend: Docker, Caddy (HTTPS), keys, staging, encrypted off-site backups and the restore drill, rollback, monitoring | [docs/DEPLOY.md](docs/DEPLOY.md) |
 | Everything to tick before launch, in order | [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) |
 | Sign and publish the app: keystore, R8, Play Console, checklist | [docs/RELEASE.md](docs/RELEASE.md) |
 | Pricing, pilot gyms, what to measure | [docs/GO_TO_MARKET.md](docs/GO_TO_MARKET.md) |
 | Privacy policy, terms and account-deletion page (drafts for a lawyer to review) | [docs/legal/](docs/legal/) |
-| Operator console: list gyms, grant plans or credits, revenue | `node backend/scripts/admin.js` |
+| Operator console: gyms, plans, credits, revenue, security events, payment mismatches | `node backend/scripts/admin.js` |
 
 ## Project structure
 
@@ -290,12 +298,14 @@ records messages instead of sending them.
 ```bash
 flutter analyze                # no issues
 flutter test                   # 202 tests: domain parity with openGym, member UI, permissions, models, flags
-cd backend && npm test         # 129 end-to-end tests against a real HTTP server and an in-memory DB
+cd backend && npm test         # 209 end-to-end tests against a real HTTP server and an in-memory DB
 ```
 
 The backend tests cover auth and token rotation, the member principal and access codes, pricing and tax, memberships (overlap,
 renew, freeze, extend, upgrade), balances, billing and the trial, signed webhooks (valid, forged, replayed), delivery and
-credit refunds, exercise-media licensing, operations (backup, readiness) and feature gating.
+credit refunds, exercise-media licensing, operations (backup, readiness), feature gating, and the security fixes: trainer scope and file access,
+plan proration and queued downgrades, one trial per owner, sign-in lockouts and sending budgets, backup encryption, payment mismatch and stuck-message recovery
+and the staging switch.
 
 ## Building the app
 
@@ -325,12 +335,19 @@ Release builds are minified and **refuse to be signed with the debug key** unles
   licence and sets `EXERCISE_MEDIA_LICENSED=1`; otherwise the library works as text and body-map filters.
 - Member-app features not yet ported from openGym are listed in [docs/MEMBER_APP.md](docs/MEMBER_APP.md).
 - A single backend instance only: rate limits and schedulers live in the process.
+- The public portal-code and registration calls can require a Cloudflare Turnstile token, but the Android app cannot send one yet; until then the sending budgets are the cost ceiling.
+- Changing a staff sign-in number signs out other devices but does not ask for a code on the old number.
 
 ## Security
 
 - No credentials, endpoints or keys are in this repository; `deploy/.env`, keystores and `google-services.json` are git-ignored.
 - Production mode refuses the fixed dev OTP and dev payments, and requires a real `JWT_SECRET` and a webhook secret.
 - Gym Razorpay keys are sealed at rest with AES-GCM; access codes are stored only as HMAC hashes and shown once.
+- Trainers see only their own members, minus what each member hides; files, exports and plan generators follow the same scope.
+- Sign-in codes are limited per phone across all codes with escalating lockouts, sending has per-phone, per-address, per-account and global budgets, and
+  every answer looks the same for a known and an unknown number.
+- Database backups are encrypted with a public key before they leave the server; the private key stays offline (see [docs/DEPLOY.md](docs/DEPLOY.md)).
+- Payments are delivered once, from the amount Razorpay confirmed; a wrong amount or a double payment alerts the operator instead of delivering.
 - Hiding a module with an admin switch is a display choice; server permissions are what protect data.
 - Report a vulnerability privately to the maintainer instead of opening a public issue.
 

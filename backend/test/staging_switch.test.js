@@ -12,6 +12,8 @@ import { startServer } from '../src/server.js';
 import { seal } from '../src/secrets.js';
 
 const J = 'j'.repeat(40);
+// Unmistakably synthetic Razorpay-shaped ids. The mode word is joined at run time so the source never contains a complete `rzp_live_...` literal.
+const KEY = (mode, tag) => `rzp_${mode}_SYNTHETIC${tag}TESTONLY`;
 const withEnv = (vars, fn) => {
   const saved = {};
   for (const k of Object.keys(vars)) { saved[k] = process.env[k]; if (vars[k] === undefined) delete process.env[k]; else process.env[k] = vars[k]; }
@@ -53,37 +55,37 @@ async function connect({ allow, keyId, razorpayAccepts = true, keySecret = 'stag
 }
 
 test('default (off): production takes live keys and refuses test keys, and Razorpay is never even asked about a test key', async () => {
-  const t = await connect({ allow: false, keyId: 'rzp_test_stagingkey1' });
+  const t = await connect({ allow: false, keyId: KEY('test', 'A') });
   assert.equal(t.status, 422); assert.match(t.message, /live keys/); assert.equal(t.razorpayCalls, 0); assert.equal(t.stored, false);
-  const l = await connect({ allow: false, keyId: 'rzp_live_productionkey1' });
+  const l = await connect({ allow: false, keyId: KEY('live', 'B') });
   assert.equal(l.status, 200); assert.equal(l.razorpayCalls, 1, 'live keys are still checked with Razorpay'); assert.equal(l.stored, true); assert.equal(l.sealedLooksSealed, true);
 });
 
 test('default (off): live validation is unchanged: Razorpay rejecting a live key still refuses it, and nothing is stored', async () => {
-  const bad = await connect({ allow: false, keyId: 'rzp_live_wrongkeyvalue1', razorpayAccepts: false });
+  const bad = await connect({ allow: false, keyId: KEY('live', 'C'), razorpayAccepts: false });
   assert.equal(bad.status, 422); assert.match(bad.message, /did not accept/); assert.equal(bad.stored, false);
 });
 
 test('opt-in (staging): test keys are accepted, still checked with Razorpay, sealed, and live keys are refused', async () => {
-  const t = await connect({ allow: true, keyId: 'rzp_test_stagingkey1' });
+  const t = await connect({ allow: true, keyId: KEY('test', 'A') });
   assert.equal(t.status, 200); assert.equal(t.razorpayCalls, 1); assert.equal(t.stored, true); assert.equal(t.sealedLooksSealed, true);
-  const l = await connect({ allow: true, keyId: 'rzp_live_productionkey1' });
+  const l = await connect({ allow: true, keyId: KEY('live', 'B') });
   assert.equal(l.status, 422); assert.match(l.message, /staging server/); assert.equal(l.razorpayCalls, 0, 'a staging server never calls Razorpay with live keys'); assert.equal(l.stored, false);
 });
 
 test('opt-in does not relax any other check: a bad key, a malformed id and short secrets are refused as before', async () => {
-  assert.equal((await connect({ allow: true, keyId: 'rzp_test_wrongkeyvalue1', razorpayAccepts: false })).status, 422);
+  assert.equal((await connect({ allow: true, keyId: KEY('test', 'C'), razorpayAccepts: false })).status, 422);
   assert.equal((await connect({ allow: true, keyId: 'not-a-razorpay-key' })).status, 422);
-  assert.equal((await connect({ allow: true, keyId: 'rzp_test_stagingkey1', keySecret: 'short' })).status, 422);
-  assert.equal((await connect({ allow: true, keyId: 'rzp_test_stagingkey1', webhookSecret: 'short' })).status, 422);
+  assert.equal((await connect({ allow: true, keyId: KEY('test', 'A'), keySecret: 'short' })).status, 422);
+  assert.equal((await connect({ allow: true, keyId: KEY('test', 'A'), webhookSecret: 'short' })).status, 422);
 });
 
 // ---- it cannot reach production money or production data ------------------------------------------------------------------------
 test('a staging server refuses to start with LIVE platform Razorpay keys', () => {
-  assert.throws(() => loadConfig({ jwtSecret: J, allowTestPaymentKeys: true, razorpayKeyId: 'rzp_live_platformkey1', razorpayWebhookSecret: 'w' }), /staging switch/);
-  withEnv({ ALLOW_TEST_PAYMENT_KEYS: '1', RAZORPAY_KEY_ID: 'rzp_live_platformkey1', RAZORPAY_WEBHOOK_SECRET: 'w' }, () => assert.throws(() => loadConfig({ jwtSecret: J }), /staging switch/));
-  assert.doesNotThrow(() => loadConfig({ jwtSecret: J, allowTestPaymentKeys: true, razorpayKeyId: 'rzp_test_platformkey1', razorpayWebhookSecret: 'w' }));
-  assert.doesNotThrow(() => loadConfig({ jwtSecret: J, allowTestPaymentKeys: false, razorpayKeyId: 'rzp_live_platformkey1', razorpayWebhookSecret: 'w' }), 'production with live keys and no switch is fine');
+  assert.throws(() => loadConfig({ jwtSecret: J, allowTestPaymentKeys: true, razorpayKeyId: KEY('live', 'D'), razorpayWebhookSecret: 'w' }), /staging switch/);
+  withEnv({ ALLOW_TEST_PAYMENT_KEYS: '1', RAZORPAY_KEY_ID: KEY('live', 'D'), RAZORPAY_WEBHOOK_SECRET: 'w' }, () => assert.throws(() => loadConfig({ jwtSecret: J }), /staging switch/));
+  assert.doesNotThrow(() => loadConfig({ jwtSecret: J, allowTestPaymentKeys: true, razorpayKeyId: KEY('test', 'D'), razorpayWebhookSecret: 'w' }));
+  assert.doesNotThrow(() => loadConfig({ jwtSecret: J, allowTestPaymentKeys: false, razorpayKeyId: KEY('live', 'D'), razorpayWebhookSecret: 'w' }), 'production with live keys and no switch is fine');
 });
 
 test('a staging server refuses to start on a database that holds live gym payment accounts (production data)', async () => {
@@ -91,16 +93,19 @@ test('a staging server refuses to start on a database that holds live gym paymen
   const file = join(dir, 'prod-copy.sqlite');
   const db = openDb(file);
   db.run("INSERT INTO gyms(id, code, data, created_at, updated_at) VALUES ('g1','123456','{}','x','x')");
-  db.run("INSERT INTO gym_payment_accounts(gym_id, provider, key_id, secret_sealed, webhook_secret_sealed, status, created_at, updated_at) VALUES ('g1','razorpay','rzp_live_realkey000001',?,?,'active','x','x')", seal(J, 'a'), seal(J, 'b'));
+  db.run("INSERT INTO gym_payment_accounts(gym_id, provider, key_id, secret_sealed, webhook_secret_sealed, status, created_at, updated_at) VALUES ('g1','razorpay',?,?,?,'active','x','x')", KEY('live', 'E'), seal(J, 'a'), seal(J, 'b'));
   db.close();
-  assert.throws(() => startServer({ port: 0, host: '127.0.0.1', dbFile: file, jwtSecret: J, allowTestPaymentKeys: true, logRequests: false }), /live payment accounts/);
+  let refused = null; let accidentallyStarted = null;
+  try { accidentallyStarted = await startServer({ port: 0, host: '127.0.0.1', dbFile: file, jwtSecret: J, allowTestPaymentKeys: true, logRequests: false }); } catch (e) { refused = e; }
+  if (accidentallyStarted) await accidentallyStarted.close(); // never leave a server running if the guard is ever removed
+  assert.match(String(refused?.message), /live payment accounts/, 'staging must refuse production data');
   // the same file starts normally without the switch (this is what production does), and a test-only database starts with it
   const prod = await startServer({ port: 0, host: '127.0.0.1', dbFile: file, jwtSecret: J, logRequests: false });
   await prod.close();
   const f2 = join(dir, 'staging.sqlite');
   const d2 = openDb(f2);
   d2.run("INSERT INTO gyms(id, code, data, created_at, updated_at) VALUES ('g1','123456','{}','x','x')");
-  d2.run("INSERT INTO gym_payment_accounts(gym_id, provider, key_id, secret_sealed, webhook_secret_sealed, status, created_at, updated_at) VALUES ('g1','razorpay','rzp_test_stagingkey01',?,?,'active','x','x')", seal(J, 'a'), seal(J, 'b'));
+  d2.run("INSERT INTO gym_payment_accounts(gym_id, provider, key_id, secret_sealed, webhook_secret_sealed, status, created_at, updated_at) VALUES ('g1','razorpay',?,?,?,'active','x','x')", KEY('test', 'F'), seal(J, 'a'), seal(J, 'b'));
   d2.close();
   const stg = await startServer({ port: 0, host: '127.0.0.1', dbFile: f2, jwtSecret: J, allowTestPaymentKeys: true, logRequests: false });
   await stg.close();
