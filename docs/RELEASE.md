@@ -23,12 +23,26 @@
    Build with `--dart-define=SITE_URL=https://your-domain` so the app links to them.
 4. **Firebase (optional).** Push is not wired; skip it for v1.
 
+## Which key signs a release
+
+A release build is signed with the **upload key** named in `android/key.properties` (git-ignored; created by `tool/make-upload-keystore.sh`; in CI written
+from the secrets `UPLOAD_KEYSTORE_B64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). Without it the build **fails** ("android/key.properties is missing"):
+the debug key is only used when you pass `-PallowDebugSigning=true` for a local test build, which must never be uploaded. Both behaviours were checked by hand for 2.0.2 (a build with no key
+exits 1; a build with a throw-away key signed with that key, not the debug key). Check any APK or AAB before you upload it:
+
+```bash
+$ANDROID_HOME/build-tools/<version>/apksigner verify --print-certs app-release.apk     # the DN must be your upload key, never "Android Debug"
+```
+
+Google Play re-signs with the app signing key it holds (turn on Play App Signing); you only guard the upload key. Never commit, paste or email the `.jks` or its passwords.
+
 ## Every release
 
 ```bash
-# bump `version:` in pubspec.yaml (name+build, the build number must rise each upload)
+# bump `version:` in pubspec.yaml (name+build, the build number must rise each upload) and "version" in backend/package.json; update CHANGELOG.md
 flutter build appbundle --release --obfuscate --split-debug-info=build/symbols \
   --dart-define=API_BASE_URL=https://api.your-domain --dart-define=SITE_URL=https://your-domain
+# then: apksigner verify --print-certs build/app/outputs/flutter-apk/*.apk (APK builds) / jarsigner -verify -certs the .aab
 ```
 
 Upload `build/app/outputs/bundle/release/app-release.aab` and keep `build/symbols` (needed to read crash stack traces).

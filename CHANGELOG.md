@@ -23,7 +23,8 @@ Security hardening from the pre-launch audit.
 - Separate `SEAL_KEY` and `ACCESS_CODE_KEY` so `JWT_SECRET` can be rotated.
 
 ### Changed
-- `ALLOW_TEST_PAYMENT_KEYS=1` (staging only) lets a production-mode server accept a gym's Razorpay test keys; production keeps refusing them by default.
+- `ALLOW_TEST_PAYMENT_KEYS=1` (staging only, off by default) lets a production-mode server accept a gym's Razorpay test keys and then refuses live ones; it cannot start with live platform keys or on a database that holds live gym payment accounts.
+- Deployment guide: environment reference, staging rules, tested rollback procedure; release guide: which key signs a release and how to verify it; CI passes `SITE_URL` to release builds and runs with read-only repository permissions.
 - Removed the unused Firebase packages: the app no longer declares advertising-ID, ad-services, push or install-referrer permissions.
 
 ## [2.0.1] - 2026-10-12

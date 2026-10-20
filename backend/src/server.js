@@ -9,6 +9,11 @@ import { processDueBroadcasts, processExpiryReminders } from './routes/messaging
 export function startServer(overrides = {}) {
   const config = loadConfig(overrides);
   const store = openDb(config.dbFile);
+  // A staging server must never be pointed at production data: a database that already holds a gym's LIVE payment account is production data.
+  if (config.allowTestPaymentKeys && store.get("SELECT 1 x FROM gym_payment_accounts WHERE key_id LIKE 'rzp_live_%' LIMIT 1")) {
+    store.close();
+    throw new Error('ALLOW_TEST_PAYMENT_KEYS is on but this database holds live payment accounts: refusing to start staging on production data');
+  }
   const app = createApp({ store, config });
   const server = createHttpServer(app.handle, config);
   const timer = setInterval(() => { try { processDueBroadcasts(store); } catch (e) { console.error('[scheduler]', e); } }, 30_000);

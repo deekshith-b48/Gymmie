@@ -23,8 +23,9 @@ are done in the repository or are one command.
 
 ## C. Data safety
 
-- [ ] `rclone config` a bucket, set `RCLONE_REMOTE`, cron `deploy/offsite-backup.sh` daily
-- [ ] **Restore drill done once:** `docker compose run --rm backend node scripts/restore-check.js /backups/<file>`, then restore onto a scratch VM and sign in
+- [ ] `rclone config` a bucket, set `RCLONE_REMOTE`, put `backup-public.pem` in `deploy/keys/`, cron `deploy/offsite-backup.sh` daily (it refuses to run without the key)
+- [ ] **Backup key pair** made on your own computer (private key + passphrase in two offline places, only the public key on the server: docs/DEPLOY.md section 4)
+- [ ] **Restore drill done once**, from the encrypted off-site copy with the offline key (`backup-crypt.js decrypt`, then `restore-check.js`), then restore onto a scratch VM and sign in
 - [ ] Cron `deploy/healthcheck.sh` every 5 minutes with `ALERT_WEBHOOK_URL` set (down, disk, stale backup)
 - [ ] External uptime monitor on `https://<DOMAIN>/ready`
 - [ ] VM disk snapshots enabled

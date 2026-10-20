@@ -48,6 +48,8 @@ export function registerGymPaymentRoutes({ router, store, config, limiter, ops }
       webhookSecret: S.str({ required: true, min: 8, max: 120 }),
     }, ctx.body);
     if (ctx.gym.currencyCode && ctx.gym.currencyCode !== 'INR') throw invalid('Online payments support rupee (INR) gyms only for now.');
+    // Production takes live keys only. A staging server (ALLOW_TEST_PAYMENT_KEYS=1) takes test keys only, so it can never move real money.
+    if (config.production && config.allowTestPaymentKeys && b.keyId.startsWith('rzp_live_')) throw invalid('This is a staging server: use your Razorpay TEST keys (rzp_test_...).');
     if (config.production && !config.allowTestPaymentKeys && b.keyId.startsWith('rzp_test_')) throw invalid('Use your live keys: test keys cannot collect real money.');
     const gw = new PaymentGateway({ payments: { keyId: b.keyId, keySecret: b.keySecret, webhookSecret: b.webhookSecret, fetchImpl: config.payments?.fetchImpl }, devPayments: false });
     const check = await gw.verifyKeys();

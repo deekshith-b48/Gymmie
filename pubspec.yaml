@@ -3,7 +3,7 @@ description: "Gymmie: gym management for owners, managers, staff and trainers, w
 publish_to: 'none'
 
 # versionName.versionCode: the build number rises with every Play upload.
-version: 2.0.1+2001
+version: 2.0.2+2002
 
 environment:
   sdk: ^3.13.5

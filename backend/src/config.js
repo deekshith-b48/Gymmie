@@ -38,6 +38,12 @@ export function loadConfig(overrides = {}) {
     throw new Error('RAZORPAY_WEBHOOK_SECRET is required when RAZORPAY_KEY_ID is set (payments are confirmed by webhook)');
   }
 
+  // STAGING ONLY switch (see allowTestPaymentKeys below). A staging server is a test-keys-only server, so it must not also hold LIVE platform keys.
+  const allowTestKeys = overrides.allowTestPaymentKeys ?? flag('ALLOW_TEST_PAYMENT_KEYS', false);
+  if (allowTestKeys && String(rz ?? '').startsWith('rzp_live_')) {
+    throw new Error('ALLOW_TEST_PAYMENT_KEYS is a staging switch and cannot be combined with live RAZORPAY_KEY_ID keys');
+  }
+
   const ogSecret = overrides.openGymSsoSecret ?? process.env.OPENGYM_SSO_SECRET ?? '';
   const ogUrl = overrides.openGymPublicUrl ?? process.env.OPENGYM_PUBLIC_URL ?? '';
   if (ogUrl && ogSecret.length < 32) throw new Error('OPENGYM_SSO_SECRET must be at least 32 characters when OPENGYM_PUBLIC_URL is set');
@@ -124,7 +130,7 @@ export function loadConfig(overrides = {}) {
     alerts: { webhookUrl: overrides.alertWebhookUrl ?? process.env.ALERT_WEBHOOK_URL ?? '', fetchImpl: overrides.alertFetch },
     fileQuotaBytes: Number(overrides.fileQuotaBytes ?? process.env.FILE_QUOTA_MB ?? 500) * (overrides.fileQuotaBytes ? 1 : 1024 * 1024), // per gym; photos and documents are kept in the database
     // STAGING ONLY: lets a production-mode server accept a gym's rzp_test_ keys so the fee-collection flow can be tried without real money.
-    allowTestPaymentKeys: overrides.allowTestPaymentKeys ?? flag('ALLOW_TEST_PAYMENT_KEYS', false),
+    allowTestPaymentKeys: allowTestKeys,
     maxGymsPerOwner: Number(overrides.maxGymsPerOwner ?? process.env.MAX_GYMS_PER_OWNER ?? 10),
     billing: { graceDays: Number(overrides.graceDays ?? process.env.SUBSCRIPTION_GRACE_DAYS ?? 7) },
     publicBaseUrl: overrides.publicBaseUrl ?? process.env.PUBLIC_BASE_URL ?? '',

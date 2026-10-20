@@ -27,7 +27,7 @@ jobs:
       - run: flutter analyze
       - run: flutter test
 
-  # A version tag builds the signed Play Store bundle. Secrets: UPLOAD_KEYSTORE_B64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD, API_BASE_URL
+  # A version tag builds the signed Play Store bundle. Secrets: UPLOAD_KEYSTORE_B64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD, API_BASE_URL, SITE_URL
   # Without UPLOAD_KEYSTORE_B64 the job only says so and succeeds (see docs/RELEASE.md to create the key).
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -56,7 +56,7 @@ jobs:
       - if: env.HAS_KEYSTORE == 'true'
         run: flutter pub get
       - if: env.HAS_KEYSTORE == 'true'
-        run: flutter build appbundle --release --obfuscate --split-debug-info=build/symbols --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }}
+        run: flutter build appbundle --release --obfuscate --split-debug-info=build/symbols --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }} --dart-define=SITE_URL=${{ secrets.SITE_URL }}
       - uses: actions/upload-artifact@v4
         if: env.HAS_KEYSTORE == 'true'
         with: { name: release, path: "build/app/outputs/bundle/release/*.aab\nbuild/symbols" }

@@ -38,6 +38,15 @@ Run the same stack on a second small VM and a throw-away domain, with Razorpay *
 server rejects a gym's `rzp_test_` keys; on staging only, set `ALLOW_TEST_PAYMENT_KEYS=1` so the gym fee-collection flow can be tried without real
 money. Never set it on production. Staging still needs real MSG91 / WhatsApp credentials to receive real codes, so use your own number only.
 
+**Staging rules (the switch is dangerous on production, so these are enforced in code where possible).**
+- `ALLOW_TEST_PAYMENT_KEYS=1` is for the staging server only and is **off by default**. With it on, the server takes `rzp_test_` gym keys and
+  **refuses `rzp_live_` ones**; with it off (production) it does the opposite. It also refuses to start if `RAZORPAY_KEY_ID` is a live key, or if the
+  database already holds a gym's live payment account (that is production data).
+- Staging must have its **own** `JWT_SECRET`, `SEAL_KEY`, `ACCESS_CODE_KEY`, database volume, domain and Razorpay **test** account. With different
+  secrets a production token, sealed gym key or webhook signature is useless on staging (tested), and the reverse.
+- **Never restore a production backup into staging** (it holds real people's data). Make test gyms on staging by hand or with `node src/seed.js --reset`
+  against a throw-away `DB_FILE` (the seed refuses production and any database with real accounts).
+
 ## 3. Run
 
 ```bash
@@ -120,6 +129,45 @@ A person who is locked out after five wrong codes waits 15 minutes (then 30, 60 
 clears it. Nothing is sent to a locked number and the app cannot tell the difference, so tell a locked-out owner to wait rather than ask for more codes.
 
 Prices live in `backend/src/domain/catalog.js`; put a JSON file at `PRICING_FILE` to change them without a code change.
+
+## 5b. Environment reference
+
+Set by `docker-compose.yml` (do not put these in `.env`): `NODE_ENV=production`, `DB_FILE=/data/gymmie.sqlite`, `TRUST_PROXY=1`, `HOST`/`PORT`
+(0.0.0.0 / 8787), `BACKUP_DIR`, `KEEP`. Everything you may set is in `deploy/.env.example`. Optional extras (defaults are fine for a first launch):
+
+| Variable | Meaning | Default |
+|---|---|---|
+| `MINIMUM_APP_VERSION`, `MINIMUM_SUGGESTED_APP_VERSION` | Versions below the first are forced to update, below the second are nudged | `1.0.0`, `1.9.0` |
+| `MAINTENANCE_MODE` | `1` shows the maintenance screen in the app | off |
+| `ACCESS_TTL_SEC`, `REFRESH_TTL_SEC` | Access token life (15 min) and sign-in life (30 days) | 900, 2592000 |
+| `LOG_REQUESTS` | One JSON log line per request | on |
+| `WHATSAPP_API_VERSION`, `WHATSAPP_LANGUAGE` | WhatsApp Cloud API version and template language | `v20.0`, `en` |
+| `SELF_REGISTRATION_PLATFORM`, `SIGN_UP_CONTACT_NUMBER` | Values the app shows on sign-up | empty |
+| `BACKUP_PUBLIC_KEY_FILE` | Public key used by `scripts/backup-crypt.js encrypt` (set by `offsite-backup.sh`) | none |
+
+**Never set in production:** `DEV_EXPOSE_OTP`, `DEV_FIXED_OTP`, `DEV_PAYMENTS` (the server refuses to start), and `RATE_LIMIT_SCALE` (a value above 1
+silently loosens every rate limit and SMS budget; it exists for the test suite). `SMOKE_PHONE` is only for `scripts/smoke.js` on your own computer.
+
+## 5c. Rolling back an upgrade
+
+Every upgrade that changes the database first writes a copy next to it: `/data/gymmie.sqlite.pre-v<N>.bak` (N = the schema version you came from). The new server
+refuses to open a database newer than itself, so rolling back **code alone fails by design**; roll back both. The file-level behaviour (the `.bak` is
+created, the old code refuses the new database, the old code opens the restored copy) was tested locally; the `docker compose` commands below were **not** run
+against a container runtime yet, so rehearse them on staging first:
+
+```bash
+cd deploy
+docker compose --env-file .env stop backend backup
+git checkout <previous tag>                                   # the code you were running before
+docker compose --env-file .env run --rm --no-deps backend sh -c \
+  'rm -f /data/gymmie.sqlite-wal /data/gymmie.sqlite-shm && cp /data/gymmie.sqlite.pre-v<N>.bak /data/gymmie.sqlite'
+docker compose --env-file .env up -d --build
+curl https://<DOMAIN>/ready && node ../backend/scripts/smoke.js https://<DOMAIN>
+```
+
+Restoring the copy **loses everything written since the upgrade** (new members, payments). If that matters, restore from the encrypted off-site backup instead
+(section 4) or fix forward. Decide quickly: the longer the new version runs, the more data a rollback discards. Delete the `.pre-v<N>.bak` once you are sure
+you will not roll back (it is not encrypted).
 
 ## 6. Monitor
 
