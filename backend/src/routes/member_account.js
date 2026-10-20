@@ -147,14 +147,14 @@ export function registerMemberAccountRoutes({ router, store, auth, config, limit
     if (b.phone === ctx.member.phone) throw invalid('This is already your number.');
     const shape = { expiresIn: config.otpTtlSec, resendIn: config.otpResendSec, maskedTarget: maskPhone(b.phone), channel: 'sms' };
     if (phoneTaken(ctx, b.phone)) return { requestId: randomUUID(), ...shape };
-    const otp = auth.createOtp({ purpose: 'member-phone', channel: 'sms', target: b.phone, context: { memberId: ctx.member.id, gymId: ctx.gymId } });
+    const otp = auth.createOtp({ purpose: 'member-phone', channel: 'sms', target: b.phone, context: { memberId: ctx.member.id, gymId: ctx.gymId } , ip: ctx.ip, quiet: false });
     return { ...shape, requestId: otp.requestId, devOtp: config.devExposeOtp ? otp.devOtp : undefined };
   });
 
   router.post('/v5/member/me/phone/verify', { auth: 'member' }, (ctx) => {
     const b = validate({ requestId: S.str({ required: true }), otp: S.str({ required: true, min: 4, max: 8 }) }, ctx.body);
     limiter.check(`mphonev:${ctx.gymId}:${ctx.member.id}`, 20, 600);
-    const r = auth.verifyOtp(b.requestId, b.otp, 'member-phone');
+    const r = auth.verifyOtp(b.requestId, b.otp, 'member-phone', { ip: ctx.ip });
     // A code asked for by someone else is not ours to use.
     if (r.context.memberId !== ctx.member.id || r.context.gymId !== ctx.gymId) throw forbidden('This code was not requested for your account.');
     if (phoneTaken(ctx, r.target)) throw conflict('This number cannot be used.');
@@ -210,7 +210,7 @@ export function registerMemberAccountRoutes({ router, store, auth, config, limit
   // The gym can switch the app back on for them. A fresh code sent to the member's own number confirms it.
   router.post('/v5/member/me/account/delete-otp', { auth: 'member' }, (ctx) => {
     limiter.check(`mdel:${ctx.gymId}:${ctx.member.id}`, 6, 600);
-    const otp = auth.createOtp({ purpose: 'member-delete', channel: 'sms', target: ctx.member.phone, context: { memberId: ctx.member.id, gymId: ctx.gymId } });
+    const otp = auth.createOtp({ purpose: 'member-delete', channel: 'sms', target: ctx.member.phone, context: { memberId: ctx.member.id, gymId: ctx.gymId }, ip: ctx.ip, quiet: false });
     return { requestId: otp.requestId, expiresIn: config.otpTtlSec, resendIn: config.otpResendSec, maskedTarget: maskPhone(ctx.member.phone), channel: 'sms', devOtp: config.devExposeOtp ? otp.devOtp : undefined };
   });
 
@@ -218,7 +218,7 @@ export function registerMemberAccountRoutes({ router, store, auth, config, limit
     const b = validate({ requestId: S.str({ required: true }), otp: S.str({ required: true, min: 4, max: 8 }), confirm: S.str({ required: true, max: 10 }) }, ctx.body);
     limiter.check(`mdelv:${ctx.gymId}:${ctx.member.id}`, 10, 600);
     if (b.confirm !== 'DELETE') throw invalid('Type DELETE to confirm.');
-    const r = auth.verifyOtp(b.requestId, b.otp, 'member-delete');
+    const r = auth.verifyOtp(b.requestId, b.otp, 'member-delete', { ip: ctx.ip });
     if (r.context.memberId !== ctx.member.id || r.context.gymId !== ctx.gymId || r.target !== ctx.member.phone) throw forbidden('This code was not requested for your account.');
     store.tx(() => {
       const m = fresh(ctx);

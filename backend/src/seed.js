@@ -3,6 +3,7 @@
 //   Demo logins (DEV ONLY, fixed OTP 123456): owner +919000000001, manager +919000000002,
 //   trainer +919000000003, staff +919000000004.
 import { existsSync, rmSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { loadConfig } from './config.js';
 import { startServer } from './server.js';
 import { addDays, todayIn } from './domain/dates.js';
@@ -10,6 +11,7 @@ import { addCredits } from './domain/notify.js';
 import { loadGym, saveGym } from './helpers.js';
 
 const OWNER = '+919000000001';
+export const DEMO_PHONES = ['+919000000001', '+919000000002', '+919000000003', '+919000000004', '+919000000005'];
 
 let s = 1234567;
 const rnd = () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; };
@@ -19,8 +21,24 @@ const int = (lo, hi) => lo + Math.floor(rnd() * (hi - lo + 1));
 const FIRST = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Krishna', 'Ishaan', 'Rohan', 'Ananya', 'Diya', 'Saanvi', 'Aadhya', 'Kavya', 'Meera', 'Priya', 'Neha', 'Pooja', 'Riya', 'Karan', 'Rahul', 'Amit', 'Sneha', 'Tanvi', 'Varun', 'Nikhil', 'Isha', 'Manish', 'Deepak'];
 const LAST = ['Sharma', 'Verma', 'Gupta', 'Reddy', 'Nair', 'Iyer', 'Patel', 'Mehta', 'Singh', 'Kapoor', 'Rao', 'Joshi', 'Bose', 'Das', 'Kulkarni'];
 
+/**
+ * `--reset` deletes the database file, so it is only ever allowed on a throw-away demo database: never in production, and never on a file
+ * that holds anyone other than the demo accounts. (A real database has real people in it; this refuses rather than guesses.)
+ */
+export function assertSafeToReset(cfg, demoPhones) {
+  if (cfg.production) throw new Error('Refusing to reset: NODE_ENV=production. The demo seed never touches a production database.');
+  if (cfg.dbFile === ':memory:' || !existsSync(cfg.dbFile)) return;
+  const db = new DatabaseSync(cfg.dbFile, { readOnly: true });
+  try {
+    const others = db.prepare(`SELECT COUNT(*) c FROM users WHERE phone IS NOT NULL AND phone NOT IN (${demoPhones.map(() => '?').join(',')})`).get(...demoPhones).c;
+    const gyms = db.prepare('SELECT COUNT(*) c FROM gyms').get().c;
+    if (others > 0 || gyms > 1) throw new Error(`Refusing to reset ${cfg.dbFile}: it holds ${others} account(s) that are not demo accounts and ${gyms} gym(s). Point DB_FILE at a fresh file instead.`);
+  } finally { db.close(); }
+}
+
 export async function seed({ reset = false } = {}) {
   const cfg = loadConfig();
+  if (reset) assertSafeToReset(cfg, DEMO_PHONES);
   if (reset && cfg.dbFile !== ':memory:') for (const f of [cfg.dbFile, `${cfg.dbFile}-wal`, `${cfg.dbFile}-shm`]) if (existsSync(f)) rmSync(f);
   const srv = await startServer({ port: 0, host: '127.0.0.1', rateLimitScale: 1000, logRequests: false, otpResendSec: 0 });
   const base = `http://127.0.0.1:${srv.port}`;
@@ -48,8 +66,8 @@ export async function seed({ reset = false } = {}) {
     // demo gym is on a paid-up subscription with all visible features on (an admin would do this in the original product)
     const g = loadGym(srv.store, gym);
     saveGym(srv.store, gym, {
-      features: { ...g.features, WHATSAPP_INTEGRATION: true, SALES: true, GYM_UPI_QR: true, AI_INSIGHTS: true, AI_WORKOUTS: true, DIET_PLANS: true, WORKOUT_PLANS: true, RISK_MEMBERS: true, QUICK_REPORTS: true, MEMBER_HEALTH: true, TAX_INFORMATION: true, POSTER_TEMPLATE: true, RENEWAL_SOUND: true, SIMPLE_MEMBER_CARD: true, LOCALIZATION: true, MEMBER_APP: true },
-      subscription: { plan: 'GROWTH', startsAt: addDays(today, -60), endsAt: addDays(today, 300), limits: { plans: 30, staff: 10, members: 800 } }, upiId: 'irontemple@okbank', onboardingCompleted: true,
+      features: { ...g.features, WHATSAPP_INTEGRATION: true, SALES: true, GYM_UPI_QR: true, AI_INSIGHTS: true, AI_WORKOUTS: true, DIET_PLANS: true, WORKOUT_PLANS: true, RISK_MEMBERS: true, QUICK_REPORTS: true, MEMBER_HEALTH: true, TAX_INFORMATION: true, POSTER_TEMPLATE: true, RENEWAL_SOUND: true, SIMPLE_MEMBER_CARD: true, LOCALIZATION: true, MEMBER_APP: true, BIOMETRICS: true, ATTENDANCE: true, MEMBERS_IN_GYM: true },
+      subscription: { plan: 'PRO', startsAt: addDays(today, -60), endsAt: addDays(today, 300), limits: { plans: 100, staff: 50, members: 5000 } }, upiId: 'irontemple@okbank', onboardingCompleted: true,
     });
     // ---- staff ----
     for (const [name, phone, role] of [['Maya Manager', '+919000000002', 'manager'], ['Tarun Trainer', '+919000000003', 'trainer'], ['Tina Trainer', '+919000000005', 'trainer'], ['Sam Staff', '+919000000004', 'staff']]) await T('POST', '/v5/gyms/staffs', { name, phone, role });

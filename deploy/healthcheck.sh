@@ -22,6 +22,16 @@ else
   [ "$age" -lt 129600 ] || add "newest backup is $((age / 3600)) h old"
 fi
 
+# off-site: an encrypted copy no older than 36 h exists (only checked once offsite-backup.sh has ever run)
+if [ -d backups/enc ]; then
+  enc=$(ls -1t backups/enc/*.enc 2>/dev/null | head -1 || true)
+  if [ -z "$enc" ]; then add "no encrypted off-site backup yet"
+  else
+    eage=$(( $(date +%s) - $(stat -c %Y "$enc" 2>/dev/null || stat -f %m "$enc") ))
+    [ "$eage" -lt 129600 ] || add "newest encrypted off-site backup is $((eage / 3600)) h old"
+  fi
+fi
+
 if [ -n "$problems" ]; then
   msg="Gymmie alert on $(hostname):$(printf "$problems")"
   echo "$msg"

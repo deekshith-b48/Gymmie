@@ -83,3 +83,15 @@ tool/evidence/
 .env.*
 !.env.example
 !deploy/.env.example
+
+# Security audit material stays private until the findings are fixed and the report is safe to share
+docs/PRODUCTION_SECURITY_AUDIT.md
+docs/private/
+backend/scripts/audit-probe.mjs
+audit-probe-results.json
+
+# backup keys: only the public half may sit on a server, never commit either
+deploy/keys/*
+!deploy/keys/README.md
+deploy/backups/
+*.pem

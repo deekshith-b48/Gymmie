@@ -7,6 +7,7 @@ import { CREDIT_PACKS, GST_RATE, SUBSCRIPTION_PLANS } from './catalog.js';
 import { loadGym, saveGym } from '../helpers.js';
 import { nowIso } from '../db.js';
 import { round2 } from './pricing.js';
+import { applyPurchase } from './subscription.js';
 
 const PLATFORM = '_platform';
 
@@ -18,31 +19,38 @@ export function gstSplit(amount, rate = GST_RATE) {
   return { taxable, gst: round2(amount - taxable), rate };
 }
 
-/** Marks [order] paid and delivers it. Returns the order as stored (unchanged if it was already settled). */
-export function fulfilOrder(store, gymId, orderId, { paymentId = null, provider = null } = {}) {
+/**
+ * Marks [order] paid and delivers it. Returns the order as stored (unchanged if it was already settled).
+ * `from` lists the states an order may be delivered from: 'created' normally; an operator who has checked the money in the provider's
+ * dashboard may also deliver a 'mismatch' order (scripts/admin.js order-apply). Whatever happens, an order is delivered at most once.
+ */
+export function fulfilOrder(store, gymId, orderId, { paymentId = null, provider = null, from = ['created'] } = {}) {
   return store.tx(() => {
     const col = store.col(gymId, 'orders');
     const order = col.get(orderId);
     if (!order) return null;
-    if (order.status !== 'created') return order; // already paid, failed or cancelled: nothing more to do
+    if (!from.includes(order.status)) return order; // already paid, failed or cancelled: nothing more to do
     const gym = loadGym(store, gymId);
     const ctx = { store, gymId, gym, col: (n) => store.col(gymId, n) };
     if (order.type === 'credits') {
       const p = CREDIT_PACKS.find((x) => x.id === order.ref);
       if (p) addCredits(ctx, p.credits + p.bonusCredits, `order:${order.id}`);
-    } else {
-      const plan = SUBSCRIPTION_PLANS.find((x) => x.id === order.ref);
+    } else if (order.type === 'subscription') {
+      // the plan as it was sold when the order was made (the catalogue may have changed since) and the amount actually paid
+      const plan = order.planSnapshot ?? SUBSCRIPTION_PLANS.find((x) => x.id === order.ref);
       if (plan) {
-        const sub = gym.subscription ?? {};
         const today = todayIn(gym.timezone);
-        const base = sub.endsAt && sub.endsAt >= today ? sub.endsAt : today;
-        saveGym(store, gymId, { subscription: { ...sub, plan: plan.plan, startsAt: sub.startsAt ?? base, endsAt: addDays(base, plan.durationDays), limits: plan.limits } });
+        const { subscription, effect } = applyPurchase(gym.subscription ?? null, {
+          plan: plan.plan, days: plan.durationDays ?? plan.days, limits: plan.limits, price: Number(order.amount), orderId: order.id,
+        }, today);
+        saveGym(store, gymId, { subscription });
+        order.subscriptionEffect = effect;
         rewardReferrer(store, gym, order);
       }
     }
     const invoiceNo = `GYM-${new Date().getUTCFullYear()}-${String(store.nextCounter(PLATFORM, 'invoice')).padStart(5, '0')}`;
     return col.update(order.id, {
-      status: 'paid', completedAt: nowIso(), invoiceNo, tax: gstSplit(order.amount), paymentId, provider: provider ?? order.provider,
+      status: 'paid', completedAt: nowIso(), invoiceNo, tax: gstSplit(order.amount), paymentId, provider: provider ?? order.provider, subscriptionEffect: order.subscriptionEffect,
     });
   });
 }

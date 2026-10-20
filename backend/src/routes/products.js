@@ -47,7 +47,7 @@ export function registerProductRoutes({ router, store }) {
     return ctx.col('products').all().map((p) => view(p, sold))
       .filter((p) => (ctx.query.includeInactive === 'true' || p.active !== false) && (!ctx.query.category || p.category === ctx.query.category)
         && (!ctx.query.barcode || p.barcode === ctx.query.barcode) && (!q || p.name.toLowerCase().includes(q) || (p.barcode ?? '').includes(q)) && (ctx.query.lowStock !== 'true' || p.lowStock))
-      .sort(sorts[ctx.query.sort] ?? sorts.nameAsc);
+      .sort((Object.hasOwn(sorts, ctx.query.sort ?? '') ? sorts[ctx.query.sort] : sorts.nameAsc));
   });
   router.get('/v5/products/low-stock', { perm: 'products.read' }, (ctx) => ctx.col('products').all().map((p) => view(p, new Map())).filter((p) => p.lowStock && p.active !== false));
   router.get('/v5/products/:id', { perm: 'products.read' }, (ctx) => view(find(ctx, ctx.params.id), unitsSold(ctx)));

@@ -2,6 +2,7 @@
 import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual, randomUUID } from 'node:crypto';
 import { ApiError, forbidden, invalid, tooMany, unauthorized } from './errors.js';
 import { nowIso } from './db.js';
+import { maskPhone } from './ops.js';
 
 const b64u = (b) => Buffer.from(b).toString('base64url');
 const sha256 = (s) => createHash('sha256').update(s).digest('hex');
@@ -112,12 +113,100 @@ export class AuthService {
   // ---- one-time passwords -------------------------------------------------------------
   _hashOtp(id, code) { return createHmac('sha256', this.config.jwtSecret).update(`${id}:${code}`).digest('hex'); }
 
+  /** Same wording for every way a code can fail to work, so the answer never says whether a number or a request exists. */
+  static NOT_VALID = 'This code is not valid or has expired. Request a new one.';
+
+  // -- abuse guard: failures are counted per PHONE across all codes, so asking for a fresh code never resets the guesses --
+  _guardRow(target) { return this.store.get('SELECT * FROM otp_guard WHERE target = ?', target); }
+
+  /** Seconds the target is locked for (0 = not locked). */
+  lockedFor(target) {
+    const g = this._guardRow(target);
+    return g && g.locked_until > Date.now() ? Math.ceil((g.locked_until - Date.now()) / 1000) : 0;
+  }
+
+  _recordFailure(target, ip) {
+    const cfg = this.config.otpGuard;
+    const now = Date.now();
+    let g = this._guardRow(target);
+    if (!g) {
+      this.store.run('INSERT INTO otp_guard(target, fails, window_start, locked_until, level, last_fail) VALUES (?,?,?,?,?,?)', target, 0, now, 0, 0, now);
+      g = this._guardRow(target);
+    }
+    let { fails, window_start: windowStart, level } = g;
+    if (now - g.last_fail > cfg.levelResetSec * 1000) { level = 0; fails = 0; windowStart = now; }   // quiet for a day: forgiven
+    if (now - windowStart > cfg.windowSec * 1000) { fails = 0; windowStart = now; }
+    fails += 1;
+    let lockedUntil = g.locked_until;
+    if (fails >= cfg.failsBeforeLock) {
+      level += 1;
+      const secs = Math.min(cfg.lockMaxSec, cfg.lockBaseSec * 2 ** (level - 1));
+      lockedUntil = now + secs * 1000;
+      fails = 0;
+      this.ops?.event('otp_lockout', { subject: maskPhone(target), ip, detail: { level, lockedSec: secs }, alert: level >= 3 });
+    }
+    this.store.run('UPDATE otp_guard SET fails = ?, window_start = ?, locked_until = ?, level = ?, last_fail = ? WHERE target = ?', fails, windowStart, lockedUntil, level, now, target);
+    this._ipFailure(ip);
+  }
+
+  _ipFailure(ip) {
+    if (!ip) return;
+    this._ipFails ??= new Map();
+    const now = Date.now();
+    const arr = (this._ipFails.get(ip) ?? []).filter((t) => now - t < 10 * 60 * 1000);
+    arr.push(now);
+    this._ipFails.set(ip, arr);
+    if (arr.length === Math.max(10, Math.round(25 * this.config.rateLimitScale))) this.ops?.event('otp_guessing_from_address', { ip, detail: { failuresIn10Min: arr.length } });
+    if (this._ipFails.size > 5000) for (const [k, v] of this._ipFails) if (!v.some((t) => now - t < 10 * 60 * 1000)) this._ipFails.delete(k);
+  }
+
+  // -- sending budgets: a hard ceiling on what a code can cost, whoever asks -----------------------------------------------------
+  _count(where, ...args) { return this.store.get(`SELECT COUNT(*) c FROM otp_requests WHERE ${where}`, ...args).c; }
+
+  /** Returns the name of the first budget that is used up, or null. Only sms and whatsapp cost money. */
+  _overBudget({ channel, target, userId, ip, scope }) {
+    if (channel === 'email') return null;
+    const b = this.config.sendBudget;
+    const k = Math.max(1, this.config.rateLimitScale);
+    const now = Date.now();
+    const hour = now - 3600_000;
+    const day = now - 86_400_000;
+    const checks = [
+      ['phone-hour', this._count('target = ? AND created_at > ?', target, hour), b.phonePerHour * k],
+      ['phone-day', this._count('target = ? AND created_at > ?', target, day), b.phonePerDay * k],
+      ...(ip ? [['address-hour', this._count('ip = ? AND created_at > ?', ip, hour), b.ipPerHour * k]] : []),
+      ...(userId ? [['account-day', this._count('user_id = ? AND created_at > ?', userId, day), b.accountPerDay * k]] : []),
+      ...(scope ? [['scope-day', this._count('scope = ? AND created_at > ?', scope, day), b.scopePerDay * k]] : []),
+      ['global-hour', this._count('created_at > ?', hour), b.globalPerHour * k],
+      ['global-day', this._count('created_at > ?', day), b.globalPerDay * k],
+    ];
+    for (const [name, used, max] of checks) {
+      if (used >= max) return name;
+      if (name.startsWith('global') && used + 1 >= Math.floor(max * 0.8) && used < Math.floor(max * 0.8)) this.ops?.event('sms_budget_80_percent', { detail: { budget: name, used: used + 1, max }, alert: true });
+    }
+    return null;
+  }
+
   /**
-   * Creates an OTP challenge. Delivery is the single integration point for an SMS / WhatsApp /
-   * email provider: without a configured provider the dev backend only logs the code locally
-   * (never in production).
+   * Creates an OTP challenge. Delivery is the single integration point for an SMS / WhatsApp / email provider: without a configured
+   * provider the dev backend only logs the code locally (never in production).
+   *
+   * When the phone is locked or a sending budget is used up, NOTHING is sent. On a public endpoint (`quiet`, the default) the answer
+   * is still the normal-looking one, with a request id that can never verify, so an outsider cannot tell a locked or unknown number from
+   * a working one; signed-in callers (`quiet: false`) get a plain "try later".
    */
-  createOtp({ purpose, channel, target, userId = null, context = {} }) {
+  createOtp({ purpose, channel, target, userId = null, context = {}, ip = null, scope = null, quiet = true }) {
+    const shape = (requestId, extra = {}) => ({ requestId, expiresIn: this.config.otpTtlSec, resendIn: this.config.otpResendSec, ...extra });
+    const refuse = (kind, secs, detail) => {
+      this.ops?.event(kind, { subject: maskPhone(target), ip, detail: { purpose, ...detail }, alert: kind === 'sms_budget_exhausted' && /global/.test(detail?.budget ?? '') });
+      if (!quiet) throw tooMany('Too many codes were asked for. Please try again later.', secs);
+      return shape(randomUUID(), { decoy: true });
+    };
+    const lock = this.lockedFor(target);
+    if (lock) return refuse('otp_request_while_locked', lock, { lockedSec: lock });
+    const over = this._overBudget({ channel, target, userId, ip, scope });
+    if (over) return refuse('sms_budget_exhausted', 3600, { budget: over });
+
     const recent = this.store.get(
       'SELECT created_at FROM otp_requests WHERE target = ? AND purpose = ? ORDER BY created_at DESC LIMIT 1', target, purpose,
     );
@@ -127,8 +216,8 @@ export class AuthService {
     const id = randomUUID();
     const code = this.config.fixedOtp || String(randomInt(0, 1_000_000)).padStart(6, '0');
     this.store.run(
-      'INSERT INTO otp_requests(id, purpose, channel, target, user_id, code_hash, expires_at, context, created_at) VALUES (?,?,?,?,?,?,?,?,?)',
-      id, purpose, channel, target, userId, this._hashOtp(id, code), Date.now() + this.config.otpTtlSec * 1000, JSON.stringify(context), Date.now(),
+      'INSERT INTO otp_requests(id, purpose, channel, target, user_id, code_hash, expires_at, context, created_at, ip, scope) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+      id, purpose, channel, target, userId, this._hashOtp(id, code), Date.now() + this.config.otpTtlSec * 1000, JSON.stringify(context), Date.now(), ip, scope,
     );
     if (!this.config.devExposeOtp) {
       // Production: the code goes out through the configured provider. Never silently drop a code.
@@ -137,22 +226,40 @@ export class AuthService {
       }
       // Sent in the background so a slow provider never holds the request; the person can ask again after the resend timer.
       this.messenger.sendOtp({ channel, to: target, code }).catch((e) => console.error(`[otp] ${channel} delivery failed (${purpose}): ${e.message}`));
-      return { requestId: id, expiresIn: this.config.otpTtlSec, resendIn: this.config.otpResendSec };
+      return shape(id);
     }
     console.log(`[otp:dev] ${purpose} via ${channel} -> ${target}: ${code}`);
-    return { requestId: id, expiresIn: this.config.otpTtlSec, resendIn: this.config.otpResendSec, devOtp: code };
+    return shape(id, { devOtp: code });
   }
 
-  verifyOtp(requestId, code, purpose) {
-    const row = this.store.get('SELECT * FROM otp_requests WHERE id = ? AND purpose = ?', String(requestId), purpose);
-    if (!row || row.consumed) throw invalid('This code is no longer valid. Request a new one.');
-    if (row.expires_at < Date.now()) throw invalid('This code has expired. Request a new one.');
+  verifyOtp(requestId, code, purpose, { ip = null } = {}) {
+    const id = String(requestId ?? '');
+    const row = this.store.get('SELECT * FROM otp_requests WHERE id = ? AND purpose = ?', id, purpose);
+    if (!row || row.consumed || row.expires_at < Date.now()) {
+      // An id that does not exist (a number that is not registered, a locked number, a made-up id) behaves exactly like a real one:
+      // the same wording, and the same five tries before "too many".
+      this._decoy ??= new Map();
+      const n = (this._decoy.get(id) ?? 0) + 1;
+      this._decoy.set(id, n);
+      if (this._decoy.size > 20000) this._decoy.clear();
+      this._ipFailure(ip);
+      if (n > this.config.otpMaxAttempts) throw tooMany('Too many incorrect attempts. Request a new code.');
+      throw invalid(AuthService.NOT_VALID);
+    }
+    const lock = this.lockedFor(row.target);
+    if (lock) throw tooMany('Too many incorrect attempts. Try again later.', lock);
     if (row.attempts >= this.config.otpMaxAttempts) throw tooMany('Too many incorrect attempts. Request a new code.');
     this.store.run('UPDATE otp_requests SET attempts = attempts + 1 WHERE id = ?', row.id);
     const expect = Buffer.from(row.code_hash, 'hex');
     const got = Buffer.from(this._hashOtp(row.id, String(code ?? '')), 'hex');
-    if (expect.length !== got.length || !timingSafeEqual(expect, got)) throw invalid('OTP not valid. Enter 6 digit OTP');
-    this.store.run('UPDATE otp_requests SET consumed = 1 WHERE id = ?', row.id);
+    if (expect.length !== got.length || !timingSafeEqual(expect, got)) {
+      this._recordFailure(row.target, ip);
+      throw invalid(AuthService.NOT_VALID);
+    }
+    // consume atomically: of several simultaneous correct answers only one wins
+    const won = this.store.run('UPDATE otp_requests SET consumed = 1 WHERE id = ? AND consumed = 0', row.id);
+    if (won.changes === 0) throw invalid(AuthService.NOT_VALID);
+    this.store.run('DELETE FROM otp_guard WHERE target = ?', row.target);
     return { target: row.target, channel: row.channel, userId: row.user_id, context: JSON.parse(row.context) };
   }
 

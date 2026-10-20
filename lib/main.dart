@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -19,7 +18,6 @@ Future<void> main() async {
   await configureDependencies();
 
   Future<void> start() async {
-    await _initFirebase();
     SplashClock.start();
     runApp(const AppRoot());
     unawaited(getIt<SessionCubit>().boot());
@@ -35,24 +33,5 @@ Future<void> main() async {
     }, appRunner: start);
   } else {
     await start();
-  }
-}
-
-/// Firebase (push notifications, analytics) is initialised only when its options were supplied via
-/// --dart-define; nothing is bundled. See docs/BUILD.md.
-Future<void> _initFirebase() async {
-  if (!AppConfig.firebaseConfigured) return;
-  try {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: AppConfig.firebaseApiKey,
-        appId: AppConfig.firebaseAppId,
-        messagingSenderId: AppConfig.firebaseSenderId,
-        projectId: AppConfig.firebaseProjectId,
-        storageBucket: AppConfig.firebaseStorageBucket,
-      ),
-    );
-  } catch (e) {
-    debugPrint('Firebase init failed: $e');
   }
 }

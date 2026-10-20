@@ -17,11 +17,11 @@ import { todayIn } from '../domain/dates.js';
 const PROVIDERS = ['razorpay'];
 const METHOD = { upi: 'upi', card: 'creditCard', netbanking: 'netBanking', wallet: 'wallet' };
 
-export function registerGymPaymentRoutes({ router, store, config, limiter }) {
+export function registerGymPaymentRoutes({ router, store, config, limiter, ops }) {
   const account = (gymId) => store.get('SELECT * FROM gym_payment_accounts WHERE gym_id = ?', gymId);
   const baseUrl = (ctx) => config.publicBaseUrl || `http://${ctx.req.headers.host}`;
   const gatewayFor = (row) => new PaymentGateway({
-    payments: { keyId: row.key_id, keySecret: unseal(config.jwtSecret, row.secret_sealed), webhookSecret: unseal(config.jwtSecret, row.webhook_secret_sealed), fetchImpl: config.payments?.fetchImpl },
+    payments: { keyId: row.key_id, keySecret: unseal(config.sealKey, row.secret_sealed), webhookSecret: unseal(config.sealKey, row.webhook_secret_sealed), fetchImpl: config.payments?.fetchImpl },
     devPayments: false,
   });
   const view = (ctx) => {
@@ -58,7 +58,7 @@ export function registerGymPaymentRoutes({ router, store, config, limiter }) {
         `INSERT INTO gym_payment_accounts(gym_id, provider, key_id, secret_sealed, webhook_secret_sealed, status, verified_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)
          ON CONFLICT(gym_id) DO UPDATE SET provider = excluded.provider, key_id = excluded.key_id, secret_sealed = excluded.secret_sealed,
            webhook_secret_sealed = excluded.webhook_secret_sealed, status = 'active', verified_at = excluded.verified_at, updated_at = excluded.updated_at`,
-        ctx.gymId, b.provider, b.keyId, seal(config.jwtSecret, b.keySecret), seal(config.jwtSecret, b.webhookSecret), 'active', nowIso(), nowIso(), nowIso(),
+        ctx.gymId, b.provider, b.keyId, seal(config.sealKey, b.keySecret), seal(config.sealKey, b.webhookSecret), 'active', nowIso(), nowIso(), nowIso(),
       );
       saveGym(store, ctx.gymId, { paymentSetup: { status: 'active', provider: b.provider, at: nowIso() } });
     });
@@ -139,8 +139,15 @@ export function registerGymPaymentRoutes({ router, store, config, limiter }) {
     const col = (n) => store.col(gym.id, n);
     const order = col('orders').get(ev.orderId); // only this gym's own orders can be found here
     if (!order || order.type !== 'member_fee') return { received: true };
+    if (order.status !== 'created') {
+      if (ev.paymentId && order.paymentId && ev.paymentId !== order.paymentId) {
+        ops?.event('payment_for_settled_order', { subject: order.id, detail: { status: order.status, firstPaymentId: order.paymentId, newPaymentId: ev.paymentId, paidPaise: ev.amountPaise, gymId: gym.id }, alert: true });
+      }
+      return { received: true };
+    }
     if (ev.currency !== 'INR' || ev.amountPaise !== Math.round(order.amount * 100)) {
-      col('orders').update(order.id, { status: 'mismatch', failureReason: `paid ${ev.amountPaise} ${ev.currency}` });
+      col('orders').update(order.id, { status: 'mismatch', failureReason: `paid ${ev.amountPaise} ${ev.currency}`, mismatchAt: nowIso(), paymentId: ev.paymentId });
+      ops?.event('payment_amount_mismatch', { subject: order.id, detail: { type: 'member_fee', expectedPaise: Math.round(order.amount * 100), paidPaise: ev.amountPaise, currency: ev.currency, paymentId: ev.paymentId, gymId: gym.id }, alert: true });
       return { received: true };
     }
     store.tx(() => {

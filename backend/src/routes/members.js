@@ -103,7 +103,7 @@ export function listMembers(ctx, { restrictTrainerId } = {}) {
     .map((mm) => memberSummary(mm, idx));
   const pred = statusPredicate(ctx.query.status ?? 'all', ctx.query, idx, raws);
   const filtered = items.filter(pred).filter((s) => !ctx.query.planId || s.membership?.planId === ctx.query.planId);
-  filtered.sort(SORTS[ctx.query.sort] ?? SORTS.createdAtDesc);
+  filtered.sort((Object.hasOwn(SORTS, ctx.query.sort ?? '') ? SORTS[ctx.query.sort] : SORTS.createdAtDesc));
   return { filtered, idx, raws };
 }
 
@@ -172,7 +172,11 @@ export function registerMemberRoutes({ router, store, config, memberSessions }) 
   });
 
   router.get('/v5/members/export', { perm: 'members.read' }, (ctx) => {
-    const { filtered } = listMembers(ctx);
+    // A trainer exports only their own members, minus what each member hid from trainers, and never the money columns.
+    const trainer = ctx.role === 'trainer';
+    const { filtered: all, raws } = listMembers(ctx, { restrictTrainerId: trainer ? ctx.user.id : undefined });
+    const byId = trainer ? new Map(raws.map((r) => [r.id, r])) : null;
+    const filtered = trainer ? all.map((s) => ({ ...redactForTrainer(ctx, s, byId.get(s.id)), balance: null })) : all;
     const csv = toCsv(filtered, [
       { header: 'Admission No', value: (m) => m.admissionNo }, { header: 'Name', value: (m) => m.name }, { header: 'Phone', value: (m) => m.phone },
       { header: 'Email', value: (m) => m.email }, { header: 'Gender', value: (m) => m.gender }, { header: 'Birth Date', value: (m) => m.birthDate },

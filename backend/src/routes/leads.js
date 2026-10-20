@@ -66,7 +66,7 @@ export function registerLeadRoutes({ router, store }) {
       .filter((l) => !labelIds.length || labelIds.some((id) => l.labelIds?.includes(id)))
       .filter(followOk)
       .filter((l) => !q || l.name.toLowerCase().includes(q) || l.phone.replace(/\D/g, '').includes(q.replace(/\D/g, '') || '\u0000'))
-      .sort(SORTS[ctx.query.sort] ?? SORTS.createdAtDesc).map((l) => view(l, tags));
+      .sort((Object.hasOwn(SORTS, ctx.query.sort ?? '') ? SORTS[ctx.query.sort] : SORTS.createdAtDesc)).map((l) => view(l, tags));
   }
 
   router.get('/v5/prospects/members', { perm: 'leads.read' }, (ctx) => {

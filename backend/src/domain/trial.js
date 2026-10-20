@@ -45,3 +45,21 @@ export function startTrialIfDue(store, gymId) {
     });
   });
 }
+
+/**
+ * Called when a gym is created. The one free trial of an owner identity is CLAIMED here, on the server, so creating more gyms cannot
+ * produce more trials: a person who already holds a trial (on this or any other gym, even one since deleted) gets a gym that has no
+ * free time and waits for a plan. Extra gyms are fine (a real multi-gym business just pays for each); only the free time is once.
+ * Returns the { subscription, trial } the new gym starts with.
+ */
+export function claimTrialOnCreate(store, user, gymId, today, limits = TRIAL_LIMITS) {
+  const identity = identityOf(user);
+  if (store.get('SELECT 1 FROM trial_grants WHERE identity = ?', identity)) {
+    return {
+      trial: { status: 'unavailable', reason: 'already_used', checkedAt: nowIso() },
+      subscription: { plan: 'NONE', startsAt: today, endsAt: addDays(today, -30), limits },
+    };
+  }
+  store.run('INSERT INTO trial_grants(identity, gym_id, started_at, ends_at) VALUES (?,?,?,?)', identity, gymId, nowIso(), addDays(today, TRIAL_DAYS));
+  return pendingTrial(today);
+}

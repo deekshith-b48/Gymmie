@@ -6,6 +6,7 @@ import { forbidden, notFound, invalid, paymentRequired } from './errors.js';
 import { planAllows, requiredPlanFor } from './domain/billing.js';
 import { nowIso } from './db.js';
 import { todayIn } from './domain/dates.js';
+import { rollQueue } from './domain/subscription.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 /** Recovered from the original APK (assets/feature_flags_data.json). */
@@ -13,7 +14,13 @@ export const FEATURE_CATALOG = JSON.parse(readFileSync(resolve(here, 'feature_fl
 
 export const PAYMENT_TYPES = ['cash', 'upi', 'creditCard', 'debitCard', 'netBanking', 'cheque', 'wallet', 'other'];
 
-export const parseGym = (row) => (row ? { ...JSON.parse(row.data), id: row.id, code: row.code, createdAt: row.created_at } : null);
+export const parseGym = (row) => {
+  if (!row) return null;
+  const g = { ...JSON.parse(row.data), id: row.id, code: row.code, createdAt: row.created_at };
+  // a plan that was bought while a higher one was running starts when that one ends (domain/subscription.js)
+  if (g.subscription?.queued?.length) g.subscription = rollQueue(g.subscription, todayIn(g.timezone));
+  return g;
+};
 
 export function loadGym(store, gymId) {
   return parseGym(store.get('SELECT * FROM gyms WHERE id = ?', gymId));

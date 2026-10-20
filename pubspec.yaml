@@ -43,9 +43,6 @@ dependencies:
   material_symbols_icons: ^4.2960.0
   zo_animated_border: ^1.1.0
   sentry_flutter: ^9.30.1
-  firebase_core: ^4.15.0
-  firebase_messaging: ^16.7.0
-  firebase_analytics: ^12.6.0
   collection: ^1.19.1
   uuid: ^4.6.0
   path_drawing: ^1.0.1

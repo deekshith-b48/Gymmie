@@ -96,7 +96,7 @@ test('staff phone numbers are not members, and member numbers do not sign in as 
   const v = await h.call('POST', '/v5/member/auth/otp/verify', { body: { requestId: data(r).requestId, otp: '123456' } });
   assert.notEqual(v.status, 200);
   const s = await h.call('POST', '/v5/auth/login/otp', { body: { phone: '+919900000101' } });
-  assert.equal(s.status, 404);
+  assert.equal((await h.call('POST', '/v5/auth/login/otp/verify', { body: { requestId: data(s).requestId, otp: '123456' } })).status, 422, 'a member number is not a staff account');
 });
 
 test('route sweep: a member token is refused by every non-member route, a staff token by every member route', async () => {

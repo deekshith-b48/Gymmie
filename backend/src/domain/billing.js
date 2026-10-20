@@ -42,7 +42,7 @@ export function subscriptionState(gym, { graceDays = 7, now = new Date() } = {})
 }
 
 // What still works when the subscription has ended: paying, signing out, reading your own profile.
-const ALWAYS = [/^\/v5\/billings(\/|$)/, /^\/v5\/payments(\/|$)/, /^\/v5\/users\/self(\/|$)/, /^\/v3\/auth(\/|$)/, /^\/v5\/auth(\/|$)/];
+const ALWAYS = [/^\/v5\/register\/partner\/complete$/, /^\/v5\/billings(\/|$)/, /^\/v5\/payments(\/|$)/, /^\/v5\/users\/self(\/|$)/, /^\/v3\/auth(\/|$)/, /^\/v5\/auth(\/|$)/];
 const READ_ONLY_OK = [/^\/v5\/gyms(\/|$)/, /^\/v5\/files(\/|$)/, /^\/v5\/apps(\/|$)/];
 
 /** May this request run for a gym in [state]? Reading is allowed in grace; after that only paying and signing out. */

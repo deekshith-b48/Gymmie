@@ -20,25 +20,6 @@ class AppConfig {
   /// Sentry crash reporting is only initialised when a DSN is provided.
   static const sentryDsn = String.fromEnvironment('SENTRY_DSN');
 
-  /// Firebase (push notifications / analytics) is only initialised when all of these are provided.
-  static const firebaseApiKey = String.fromEnvironment('FIREBASE_API_KEY');
-  static const firebaseAppId = String.fromEnvironment('FIREBASE_APP_ID');
-  static const firebaseSenderId = String.fromEnvironment(
-    'FIREBASE_MESSAGING_SENDER_ID',
-  );
-  static const firebaseProjectId = String.fromEnvironment(
-    'FIREBASE_PROJECT_ID',
-  );
-  static const firebaseStorageBucket = String.fromEnvironment(
-    'FIREBASE_STORAGE_BUCKET',
-  );
-
-  static bool get firebaseConfigured =>
-      firebaseApiKey.isNotEmpty &&
-      firebaseAppId.isNotEmpty &&
-      firebaseSenderId.isNotEmpty &&
-      firebaseProjectId.isNotEmpty;
-
   /// Android emulator -> host loopback, where `backend/` listens by default.
   static const emulatorLocalUrl = 'http://10.0.2.2:8787';
 
@@ -48,13 +29,17 @@ class AppConfig {
   };
 
   /// The version of the terms and privacy policy a person accepts when they sign up; change it when those documents change.
-  static const consentVersion = String.fromEnvironment('CONSENT_VERSION', defaultValue: '2026-10');
+  static const consentVersion = String.fromEnvironment(
+    'CONSENT_VERSION',
+    defaultValue: '2026-10',
+  );
 
   /// Your website: privacy policy, terms, help and the page where people delete their account. Set it at build time with
   /// --dart-define=SITE_URL=https://example.com (no trailing slash). Without it the links say they are not set up yet.
   static const siteUrl = String.fromEnvironment('SITE_URL');
 
-  static String _page(String path) => siteUrl.isEmpty ? '' : '${siteUrl.replaceAll(RegExp(r'/+$'), '')}$path';
+  static String _page(String path) =>
+      siteUrl.isEmpty ? '' : '${siteUrl.replaceAll(RegExp(r'/+$'), '')}$path';
 
   /// Public pages linked from the support menu.
   static Map<String, String> get supportUrls => {

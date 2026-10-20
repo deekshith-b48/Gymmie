@@ -24,7 +24,7 @@ export function gymProfile(store, g, role) {
   };
 }
 
-export function registerGymRoutes({ router, store }) {
+export function registerGymRoutes({ router, store, config }) {
   // ---- list / create / read ---------------------------------------------------------------
   router.get('/v5/gyms', { auth: 'user' }, (ctx) => userGyms(store, ctx.user.id));
 
@@ -36,7 +36,7 @@ export function registerGymRoutes({ router, store }) {
       city: S.str({ max: 80 }), state: S.str({ max: 80 }), country: S.str({ default: 'IN', max: 2 }), phone: S.phone(), email: S.email(), timezone: S.str({ max: 64 }),
     }, ctx.body);
     const country = COUNTRIES.find((c) => c.code === b.country.toUpperCase()) ?? COUNTRIES[0];
-    return created(gymBrief(store, createGym(store, ctx.user, { ...b, country: country.code }, country), 'owner'));
+    return created(gymBrief(store, createGym(store, ctx.user, { ...b, country: country.code }, country, { maxGyms: config.maxGymsPerOwner }), 'owner'));
   });
 
   const readGym = (ctx) => {

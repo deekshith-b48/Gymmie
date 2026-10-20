@@ -8,12 +8,20 @@
 //   extend <code> <days>         extend the subscription (free days, goodwill)
 //   delete-gym <code> <code>     erase a gym and all its data (support request to close an owner account)
 //   enable <code> <FLAG> | disable <code> <FLAG>   switch a feature flag for a gym
+//   events [n]                   the last n security / operations events (lockouts, SMS budgets, payment mismatches), newest first
+//   mismatches                   orders where money arrived but the amount did not match (nothing was delivered)
+//   order-apply <code> <orderId> deliver a mismatched order AFTER you have checked the money in the Razorpay dashboard (once only)
+//   order-dismiss <code> <orderId> <note>   close a mismatched order that was refunded or is not owed (nothing is delivered)
+//   recover-messages             settle messages stuck in 'sending': marked failed and refunded once, never re-sent
 import { openDb, nowIso } from '../src/db.js';
 import { loadConfig } from '../src/config.js';
 import { addDays, todayIn } from '../src/domain/dates.js';
 import { SUBSCRIPTION_PLANS } from '../src/domain/catalog.js';
 import { loadGym, saveGym } from '../src/helpers.js';
 import { addCredits } from '../src/domain/notify.js';
+import { fulfilOrder } from '../src/domain/fulfilment.js';
+import { recoverStuckMessages } from '../src/domain/delivery.js';
+import { Ops } from '../src/ops.js';
 
 const config = loadConfig();
 const store = openDb(config.dbFile);
@@ -24,6 +32,7 @@ const byCode = (code) => {
   return loadGym(store, row.id);
 };
 const table = (rows) => console.table(rows);
+const ops = new Ops(store, config);
 
 switch (cmd) {
   case 'gyms': {
@@ -53,7 +62,7 @@ switch (cmd) {
     const g = byCode(code);
     const today = todayIn(g.timezone);
     const base = g.subscription?.endsAt >= today ? g.subscription.endsAt : today;
-    saveGym(store, g.id, { subscription: { ...(g.subscription ?? {}), plan: plan.plan, startsAt: g.subscription?.startsAt ?? today, endsAt: addDays(base, Number(days)), limits: plan.limits } });
+    saveGym(store, g.id, { subscription: { ...(g.subscription ?? {}), plan: plan.plan, startsAt: g.subscription?.startsAt ?? today, endsAt: addDays(base, Number(days)), limits: plan.limits, dailyRate: 0, queued: undefined } }); // a gift: no recorded price, so no credit later and nothing queued
     console.log(`${g.name}: ${plan.plan} until ${addDays(base, Number(days))}`);
     break;
   }
@@ -88,6 +97,47 @@ switch (cmd) {
       store.run('DELETE FROM gyms WHERE id = ?', g.id);
     });
     console.log(`Deleted gym ${g.name} (${code}).`);
+    break;
+  }
+  case 'events': {
+    const n = Math.min(500, Number(args[0] ?? 50));
+    table(store.all('SELECT at, kind, subject, ip, detail FROM security_events ORDER BY id DESC LIMIT ?', n).map((e) => ({ at: new Date(e.at).toISOString(), kind: e.kind, subject: e.subject, ip: e.ip, detail: e.detail })));
+    break;
+  }
+  case 'mismatches': {
+    const rows = [];
+    for (const { id } of store.all('SELECT id FROM gyms')) {
+      const g = loadGym(store, id);
+      for (const o of store.col(id, 'orders').find((x) => x.status === 'mismatch')) rows.push({ gym: g.code, name: g.name, order: o.id, type: o.type, item: o.ref, expected: o.amount, problem: o.failureReason, paymentId: o.paymentId ?? '', at: o.mismatchAt ?? '' });
+    }
+    table(rows);
+    console.log(rows.length ? `${rows.length} order(s) need a decision: check Razorpay, then order-apply (money is yours) or refund in Razorpay and order-dismiss.` : 'No mismatched orders.');
+    break;
+  }
+  case 'order-apply': {
+    const [code, orderId] = args;
+    const g = byCode(code);
+    const o = store.col(g.id, 'orders').get(orderId);
+    if (!o || o.status !== 'mismatch') { console.error('That order is not in the mismatch state.'); process.exit(1); }
+    if (o.type === 'member_fee') { console.error('Member fee orders belong to the gym: the gym applies those from its own payments screen.'); process.exit(1); }
+    const done = fulfilOrder(store, g.id, o.id, { paymentId: o.paymentId ?? null, provider: o.provider, from: ['mismatch'] });
+    ops.event('payment_mismatch_applied', { subject: o.id, detail: { by: 'operator', status: done.status } });
+    console.log(`${g.name}: order ${o.id} is now ${done.status}.`);
+    break;
+  }
+  case 'order-dismiss': {
+    const [code, orderId, ...note] = args;
+    const g = byCode(code);
+    const o = store.col(g.id, 'orders').get(orderId);
+    if (!o || o.status !== 'mismatch') { console.error('That order is not in the mismatch state.'); process.exit(1); }
+    if (!note.length) { console.error('Add a note, for example: refunded in Razorpay pay_ABC123'); process.exit(1); }
+    store.col(g.id, 'orders').update(o.id, { status: 'mismatch_closed', closedAt: nowIso(), closedNote: note.join(' ') });
+    ops.event('payment_mismatch_closed', { subject: o.id, detail: { note: note.join(' ').slice(0, 200) } });
+    console.log(`${g.name}: order ${o.id} closed.`);
+    break;
+  }
+  case 'recover-messages': {
+    console.log(`Recovered ${recoverStuckMessages(store, { ops })} message(s).`);
     break;
   }
   default:

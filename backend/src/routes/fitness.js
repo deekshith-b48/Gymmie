@@ -8,6 +8,7 @@ import { ensureFeature } from '../helpers.js';
 import { EXERCISE_CATEGORIES, EXERCISE_LIBRARY, EQUIPMENT, GOALS, LEVELS, DIET_PREFERENCES, estimateCalories, generateDiet, generateWorkout } from '../domain/generators.js';
 import { HEALTH_CONDITIONS } from './members.js';
 import { diffDays } from '../domain/dates.js';
+import { assertTrainerScope, hiddenFromTrainers, mayReadHealth } from '../domain/privacy.js';
 
 const EX = S.obj({
   id: S.str({ max: 64 }), exerciseId: S.str({ max: 64 }), name: S.str({ required: true, min: 1, max: 100 }), sets: S.int({ required: true, min: 1, max: 20 }),
@@ -125,15 +126,20 @@ export function registerFitnessRoutes({ router }) {
   plansApi({ base: '/v5/diet', coll: 'dietPlans', feature: 'DIET_PLANS', schema: DIET, label: 'Diet plan' });
 
   // ---- generators (unsaved drafts the user reviews before saving) -------------------------------------------------------
+  // What a generator may know about a member. A trainer only gets members assigned to them, and nothing the member chose to hide
+  // from trainers (health conditions, weight and height, age) may shape the draft: a plan built from hidden data would disclose it.
   const memberFacts = (ctx, memberId) => {
     if (!memberId) return {};
     const m = ctx.col('members').get(memberId);
     if (!m) throw notFound('Member not found');
-    const health = ctx.col('health').find((r) => r.memberId === memberId).sort((a, b) => a.date.localeCompare(b.date));
-    const weightKg = health.filter((r) => r.type === 'weight').at(-1)?.value ?? m.weightKg ?? null;
-    const heightCm = health.filter((r) => r.type === 'height').at(-1)?.value ?? m.heightCm ?? null;
-    const age = m.birthDate ? Math.floor(diffDays(m.birthDate, ctx.today()) / 365.25) : null;
-    return { member: m, weightKg, heightCm, age, gender: m.gender, conditions: ctx.col('conditions').find((c) => c.memberId === memberId).map((c) => c.name) };
+    assertTrainerScope(ctx, m);
+    const healthOk = mayReadHealth(ctx, m);
+    const ageOk = !(ctx.role === 'trainer' && hiddenFromTrainers(m).includes('birthDate'));
+    const health = healthOk ? ctx.col('health').find((r) => r.memberId === memberId).sort((a, b) => a.date.localeCompare(b.date)) : [];
+    const weightKg = healthOk ? (health.filter((r) => r.type === 'weight').at(-1)?.value ?? m.weightKg ?? null) : null;
+    const heightCm = healthOk ? (health.filter((r) => r.type === 'height').at(-1)?.value ?? m.heightCm ?? null) : null;
+    const age = ageOk && m.birthDate ? Math.floor(diffDays(m.birthDate, ctx.today()) / 365.25) : null;
+    return { member: m, weightKg, heightCm, age, gender: m.gender, conditions: healthOk ? ctx.col('conditions').find((c) => c.memberId === memberId).map((c) => c.name) : [] };
   };
 
   router.post('/v5/workout/generate', { perm: 'plansets.write' }, (ctx) => {

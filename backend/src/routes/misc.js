@@ -1,6 +1,7 @@
 // Feedback, video links, push-notification tokens, feature announcements, member documents, masters, public gym portal.
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { S, validate } from '../validate.js';
+import { requireChallenge } from '../challenge.js';
 import { ApiError, conflict, forbidden, invalid, notFound } from '../errors.js';
 import { created, noContent } from '../http.js';
 import { parseGym, loadGym } from '../helpers.js';
@@ -130,18 +131,22 @@ export function registerMiscRoutes({ router, store, auth, limiter, config }) {
       currencySymbol: g.currencySymbol,
     };
   });
-  router.post('/v5/portal/:code/otp', { auth: 'none' }, (ctx) => {
+  router.post('/v5/portal/:code/otp', { auth: 'none' }, async (ctx) => {
     const g = gymByCode(ctx.params.code);
-    const b = validate({ phone: S.phone({ required: true }) }, ctx.body);
-    limiter.check(`portal-ip:${ctx.ip}`, 20, 600);
-    limiter.check(`portal-phone:${b.phone}`, 5, 600);
-    const o = auth.createOtp({ purpose: 'portal', channel: 'sms', target: b.phone, context: { gymId: g.id } });
+    const b = validate({ phone: S.phone({ required: true }), challengeToken: S.str({ max: 2048 }) }, ctx.body);
+    limiter.check(`portal-ip:${ctx.ip}`, 5, 600);
+    limiter.check(`portal-ip-hour:${ctx.ip}`, 8, 3600);
+    limiter.check(`portal-phone:${b.phone}`, 3, 600);
+    limiter.check(`portal-resend:${b.phone}`, 1, Math.max(1, config.otpResendSec));
+    await requireChallenge(config, b.challengeToken, ctx.ip);
+    // a gym's public QR can only cause so many texts a day (scope budget), and the whole service only so many (global budget)
+    const o = auth.createOtp({ purpose: 'portal', channel: 'sms', target: b.phone, context: { gymId: g.id }, ip: ctx.ip, scope: `gym:${g.id}` });
     return { requestId: o.requestId, expiresIn: o.expiresIn, devOtp: o.devOtp };
   });
   router.post('/v5/portal/:code/verify', { auth: 'none' }, (ctx) => {
     const g = gymByCode(ctx.params.code);
     const b = validate({ requestId: S.str({ required: true }), otp: S.str({ required: true, min: 4, max: 8 }) }, ctx.body);
-    const r = auth.verifyOtp(b.requestId, b.otp, 'portal');
+    const r = auth.verifyOtp(b.requestId, b.otp, 'portal', { ip: ctx.ip });
     if (r.context.gymId !== g.id) throw forbidden('This code is not valid for this gym');
     return { portalToken: portalToken(g.id, r.target) };
   });

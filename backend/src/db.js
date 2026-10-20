@@ -172,6 +172,40 @@ export const MIGRATIONS = [
         ON docs(gym_id, json_extract(data, '$.accessCodeHash')) WHERE collection = 'members' AND deleted_at IS NULL;
     `,
   },
+  {
+    version: 6, // sign-in code abuse guard (per-phone lockouts across codes), sending budgets, and a security event log
+    up: (db) => {
+      // idempotent: a column that is already there is left alone
+      const have = new Set(db.prepare('PRAGMA table_info(otp_requests)').all().map((c) => c.name));
+      if (!have.has('ip')) db.exec('ALTER TABLE otp_requests ADD COLUMN ip TEXT');
+      if (!have.has('scope')) db.exec('ALTER TABLE otp_requests ADD COLUMN scope TEXT');
+      db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_otp_created ON otp_requests(created_at);
+      CREATE INDEX IF NOT EXISTS idx_otp_target_created ON otp_requests(target, created_at);
+      CREATE TABLE IF NOT EXISTS otp_guard (
+        target TEXT PRIMARY KEY,
+        fails INTEGER NOT NULL DEFAULT 0,
+        window_start INTEGER NOT NULL,
+        locked_until INTEGER NOT NULL DEFAULT 0,
+        level INTEGER NOT NULL DEFAULT 0,
+        last_fail INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE TABLE IF NOT EXISTS security_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        at INTEGER NOT NULL,
+        kind TEXT NOT NULL,
+        subject TEXT,
+        ip TEXT,
+        detail TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_security_events_at ON security_events(at);
+      `);
+    },
+  },
+  {
+    version: 7, // the biometric device key lookup was a full scan of every document on each unauthenticated call
+    up: `CREATE INDEX IF NOT EXISTS idx_docs_device_key ON docs(json_extract(data, '$.keyHash')) WHERE collection = 'devices' AND deleted_at IS NULL;`,
+  },
 ];
 export const SCHEMA_VERSION = MIGRATIONS.at(-1).version;
 
@@ -188,7 +222,7 @@ export function migrate(db, { file } = {}) {
     if (m.version <= current) continue;
     db.exec('BEGIN IMMEDIATE');
     try {
-      db.exec(m.up);
+      if (typeof m.up === 'function') m.up(db); else db.exec(m.up);
       db.exec(`PRAGMA user_version = ${m.version}`);
       db.exec('COMMIT');
     } catch (e) {

@@ -13,7 +13,7 @@ import { ApiError } from '../errors.js';
 const sha = (s) => createHash('sha256').update(s).digest('hex');
 const OFFLINE_AFTER_MS = 5 * 60 * 1000;
 
-export function registerDeviceRoutes({ router, store }) {
+export function registerDeviceRoutes({ router, store, limiter }) {
   const view = (d) => {
     const { keyHash, ...rest } = d;
     const online = d.lastPingAt && Date.now() - Date.parse(d.lastPingAt) < OFFLINE_AFTER_MS;
@@ -107,9 +107,9 @@ export function registerDeviceRoutes({ router, store }) {
   // ---- device callback API (x-device-key) ----------------------------------------------------------------------------------
   function deviceCtx(ctx) {
     const key = ctx.req.headers['x-device-key'];
-    if (typeof key !== 'string' || key.length < 16) throw unauthorized('Device key required');
+    if (typeof key !== 'string' || key.length < 16 || key.length > 128) { limiter.check(`devfail:${ctx.ip}`, 20, 600); throw unauthorized('Device key required'); }
     const row = store.get(`SELECT id, gym_id, data FROM docs WHERE collection = 'devices' AND deleted_at IS NULL AND json_extract(data, '$.keyHash') = ?`, sha(key));
-    if (!row) throw unauthorized('Unknown device');
+    if (!row) { limiter.check(`devfail:${ctx.ip}`, 20, 600); throw unauthorized('Unknown device'); } // wrong keys are counted per address, so guessing is bounded
     const gym = loadGym(store, row.gym_id);
     const col = (n) => store.col(row.gym_id, n);
     const g = { store, gymId: row.gym_id, gym, col, user: null, today: () => new Date().toLocaleDateString('en-CA', { timeZone: gym.timezone }), role: 'device' };
@@ -131,7 +131,9 @@ export function registerDeviceRoutes({ router, store }) {
     const results = [];
     for (const ev of b.events) {
       const member = g.col('members').findOne((m) => m.admissionNo === ev.admissionNo);
-      const at = ev.timestamp ? new Date(ev.timestamp) : new Date();
+      // a device's own clock is only believed when it is close to ours: a stolen key cannot back-date or post-date attendance
+      const claimed = ev.timestamp ? new Date(ev.timestamp) : null;
+      const at = claimed && Math.abs(claimed.getTime() - Date.now()) <= 10 * 60_000 ? claimed : new Date();
       const log = { deviceId: device.id, memberId: member?.id ?? null, admissionNo: ev.admissionNo, type: ev.type, at: at.toISOString(), date: g.today() };
       if (!member) { g.col('biometricLogs').insert({ ...log, result: 'denied', reason: 'Member not found' }); results.push({ admissionNo: ev.admissionNo, result: 'denied', reason: 'Member not found' }); continue; }
       if (ev.type === 'enroll') {

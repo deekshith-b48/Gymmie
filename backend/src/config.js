@@ -61,6 +61,11 @@ export function loadConfig(overrides = {}) {
     host: overrides.host ?? process.env.HOST ?? '0.0.0.0',
     dbFile: overrides.dbFile ?? process.env.DB_FILE ?? resolve(dataDir, 'gymmie-dev.sqlite'),
     jwtSecret,
+    // Keys that outlive a JWT_SECRET change. Left unset they fall back to JWT_SECRET (so nothing already issued breaks); set them once, and
+    // from then on JWT_SECRET can be rotated freely: it only signs short-lived access tokens, and every device just refreshes.
+    //   SEAL_KEY: encrypts gyms' own Razorpay keys. ACCESS_CODE_KEY: keys the hashes of member access codes.
+    sealKey: overrides.sealKey ?? process.env.SEAL_KEY ?? jwtSecret,
+    accessCodeKey: overrides.accessCodeKey ?? process.env.ACCESS_CODE_KEY ?? jwtSecret,
     accessTtlSec: Number(overrides.accessTtlSec ?? process.env.ACCESS_TTL_SEC ?? 15 * 60),
     refreshTtlSec: Number(overrides.refreshTtlSec ?? process.env.REFRESH_TTL_SEC ?? 30 * 24 * 3600),
     otpTtlSec: 10 * 60,
@@ -106,6 +111,19 @@ export function loadConfig(overrides = {}) {
       gstin: process.env.PLATFORM_GSTIN ?? '',
       address: process.env.PLATFORM_ADDRESS ?? '',
     },
+    // Sign-in code abuse controls (auth.js). Budgets count codes actually sent; tests scale them with rateLimitScale.
+    otpGuard: { failsBeforeLock: 5, windowSec: 30 * 60, lockBaseSec: 15 * 60, lockMaxSec: 4 * 3600, levelResetSec: 24 * 3600 },
+    sendBudget: {
+      phonePerHour: Number(process.env.SMS_PHONE_PER_HOUR ?? 5), phonePerDay: Number(process.env.SMS_PHONE_PER_DAY ?? 10),
+      ipPerHour: Number(process.env.SMS_IP_PER_HOUR ?? 20), accountPerDay: Number(process.env.SMS_ACCOUNT_PER_DAY ?? 12),
+      scopePerDay: Number(process.env.SMS_GYM_PORTAL_PER_DAY ?? 150),
+      globalPerHour: Number(overrides.smsGlobalPerHour ?? process.env.SMS_GLOBAL_PER_HOUR ?? 400), globalPerDay: Number(overrides.smsGlobalPerDay ?? process.env.SMS_GLOBAL_PER_DAY ?? 4000),
+    },
+    // Optional bot challenge (Cloudflare Turnstile) in front of the two public endpoints that text any number (portal OTP, registration).
+    challenge: { secret: overrides.turnstileSecret ?? process.env.TURNSTILE_SECRET ?? '', fetchImpl: overrides.challengeFetch },
+    alerts: { webhookUrl: overrides.alertWebhookUrl ?? process.env.ALERT_WEBHOOK_URL ?? '', fetchImpl: overrides.alertFetch },
+    fileQuotaBytes: Number(overrides.fileQuotaBytes ?? process.env.FILE_QUOTA_MB ?? 500) * (overrides.fileQuotaBytes ? 1 : 1024 * 1024), // per gym; photos and documents are kept in the database
+    maxGymsPerOwner: Number(overrides.maxGymsPerOwner ?? process.env.MAX_GYMS_PER_OWNER ?? 10),
     billing: { graceDays: Number(overrides.graceDays ?? process.env.SUBSCRIPTION_GRACE_DAYS ?? 7) },
     publicBaseUrl: overrides.publicBaseUrl ?? process.env.PUBLIC_BASE_URL ?? '',
     // number of reverse proxies in front (1 = Caddy/nginx): the client address is then read from X-Forwarded-For

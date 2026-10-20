@@ -18,7 +18,8 @@ const sign = (raw) => createHmac('sha256', SECRET).update(raw).digest('hex');
 const gymRow = (id) => JSON.parse(h.store.get('SELECT data FROM gyms WHERE id = ?', id).data);
 const patchGym = (id, patch) => h.store.run('UPDATE gyms SET data = ? WHERE id = ?', JSON.stringify({ ...gymRow(id), ...patch }), id);
 const setSub = (id, patch) => patchGym(id, { subscription: { ...gymRow(id).subscription, ...patch } });
-const today = () => new Date().toISOString().slice(0, 10);
+// the gyms in these tests are in India: "today" is the Indian date, which differs from the UTC date for 5.5 hours every day
+const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
 async function webhook(order, { amountPaise, secret = SECRET, event = 'payment_link.paid', sig } = {}) {
   const payload = JSON.stringify({
@@ -101,7 +102,8 @@ test('paying creates a Razorpay checkout; nothing changes until the signed webho
   assert.equal(ok.status, 200);
   const sub = gymRow(o.gym).subscription;
   assert.equal(sub.plan, 'GROWTH');
-  assert.equal(sub.endsAt, addDays(before, 30));
+  // the Starter time here was set by hand (no recorded price), so the upgrade starts today and is not credited with unpaid days
+  assert.equal(sub.endsAt, addDays(today(), 30));
   assert.equal(sub.limits.members, 800);
   const paid = data(await o.as('GET', `/v5/payments/orders/${order.id}`));
   assert.equal(paid.status, 'paid');
@@ -111,7 +113,7 @@ test('paying creates a Razorpay checkout; nothing changes until the signed webho
 
   // the same event again (Razorpay retries) changes nothing
   await webhook(order);
-  assert.equal(gymRow(o.gym).subscription.endsAt, addDays(before, 30));
+  assert.equal(gymRow(o.gym).subscription.endsAt, addDays(today(), 30));
 });
 
 test('a forged, unsigned or wrong-amount webhook delivers nothing', async () => {

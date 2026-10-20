@@ -83,7 +83,7 @@ export function processDueBroadcasts(store, now = new Date()) {
   return n;
 }
 
-export function registerMessagingRoutes({ router, store, config, limiter, messenger }) {
+export function registerMessagingRoutes({ router, store, config, limiter, messenger, ops }) {
   // What actually carries a gym's WhatsApp messages: the Cloud API when configured, otherwise the development outbox.
   const whatsappProvider = () => (messenger?.canSendText('whatsapp') ? 'whatsapp-cloud' : 'dev-outbox');
   const needWhatsapp = (ctx) => { ensureFeature(ctx.gym, 'WHATSAPP_INTEGRATION'); };
@@ -254,11 +254,11 @@ export function registerMessagingRoutes({ router, store, config, limiter, messen
   // available when config.devPayments is on, which production refuses. Either way the SAME fulfilment runs, once per order.
   const gateway = new PaymentGateway(config);
   const baseUrl = (ctx) => config.publicBaseUrl || `http://${ctx.req.headers.host}`;
-  async function createOrder(ctx, { type, amount, ref, description }) {
+  async function createOrder(ctx, { type, amount, ref, description, planSnapshot }) {
     const provider = gateway.provider;
     if (!provider) throw new ApiError(501, 'PAYMENT_PROVIDER_NOT_CONFIGURED', 'No payment provider is configured on this server');
     const token = randomBytes(24).toString('base64url');
-    const order = ctx.col('orders').insert({ type, amount, currency: 'INR', ref, description, token, status: 'created', createdById: ctx.user.id, provider });
+    const order = ctx.col('orders').insert({ type, amount, currency: 'INR', ref, description, token, status: 'created', createdById: ctx.user.id, provider, planSnapshot });
     if (provider === 'dev') return { ...order, token: undefined, paymentUrl: `${baseUrl(ctx)}/dev/pay/${token}` };
     const checkout = await gateway.createCheckout({
       orderId: order.id, amount, description: `${description} (${ctx.gym.name})`, callbackUrl: `${baseUrl(ctx)}/pay/return/${token}`,
@@ -288,7 +288,7 @@ export function registerMessagingRoutes({ router, store, config, limiter, messen
     if (plan.limits.staff && staff > plan.limits.staff) over.push(`${staff} staff (limit ${plan.limits.staff})`);
     if (plan.limits.plans && plans > plan.limits.plans) over.push(`${plans} membership plans (limit ${plan.limits.plans})`);
     if (over.length) throw conflict(`You are over this plan's limits: ${over.join(', ')}. Choose a bigger plan or remove some first.`, { over });
-    return created(await createOrder(ctx, { type: 'subscription', amount: plan.price, ref: plan.id, description: `${plan.name} subscription` }));
+    return created(await createOrder(ctx, { type: 'subscription', amount: plan.price, ref: plan.id, description: `${plan.name} subscription`, planSnapshot: { id: plan.id, plan: plan.plan, name: plan.name, price: plan.price, days: plan.durationDays, limits: plan.limits } }));
   });
   router.get('/v5/payments/orders/:id', { perm: 'broadcasts.read' }, (ctx) => {
     const o = ctx.col('orders').get(ctx.params.id);
@@ -324,8 +324,17 @@ export function registerMessagingRoutes({ router, store, config, limiter, messen
     if (!row) return { received: true };
     const order = store.col(row.gym_id, 'orders').get(ev.orderId);
     if (!order) return { received: true };
+    if (order.status !== 'created') {
+      // already delivered, failed or flagged. A DIFFERENT payment arriving for it means the customer may have paid twice: tell the operator.
+      if (ev.paymentId && order.paymentId && ev.paymentId !== order.paymentId) {
+        ops?.event('payment_for_settled_order', { subject: order.id, detail: { status: order.status, firstPaymentId: order.paymentId, newPaymentId: ev.paymentId, paidPaise: ev.amountPaise, gymId: row.gym_id }, alert: true });
+      }
+      return { received: true };
+    }
     if (ev.currency !== 'INR' || ev.amountPaise !== Math.round(order.amount * 100)) {
-      store.col(row.gym_id, 'orders').update(order.id, { status: 'mismatch', failureReason: `paid ${ev.amountPaise} ${ev.currency}` });
+      // Money arrived but not the money we asked for: nothing is delivered, and a human is told straight away (it needs a refund or a decision).
+      store.col(row.gym_id, 'orders').update(order.id, { status: 'mismatch', failureReason: `paid ${ev.amountPaise} ${ev.currency}`, mismatchAt: nowIso(), paymentId: ev.paymentId });
+      ops?.event('payment_amount_mismatch', { subject: order.id, detail: { type: order.type, ref: order.ref, expectedPaise: Math.round(order.amount * 100), paidPaise: ev.amountPaise, currency: ev.currency, paymentId: ev.paymentId, gymId: row.gym_id }, alert: true });
       return { received: true };
     }
     fulfilOrder(store, row.gym_id, order.id, { paymentId: ev.paymentId, provider: 'razorpay' });

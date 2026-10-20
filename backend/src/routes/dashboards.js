@@ -53,7 +53,7 @@ export function registerDashboardRoutes({ router }) {
     const balanceTotal = round2([...idx.balances.values()].reduce((s, v) => s + v, 0));
     const birthdays = summaries.filter((s) => s.birthDate && s.birthDate.slice(5) === t.slice(5)).map((s) => ({ id: s.id, name: s.name, phone: s.phone, age: ageOn(s.birthDate, t), photoUrl: s.photoUrl }));
     const sub = ctx.gym.subscription;
-    return {
+    const out = {
       today: t,
       tiles: {
         activeMembers: summaries.filter((s) => s.membership?.status === 'active').length,
@@ -74,6 +74,17 @@ export function registerDashboardRoutes({ router }) {
       whatsapp: ctx.gym.whatsapp,
       occupancy: occupancy(ctx),
     };
+    // A trainer has no finance or billing rights and sees only their own members' personal details: counts stay, money and gym-wide names go.
+    if (ctx.role === 'trainer') {
+      const mine = new Set(members.filter((m) => m.trainerId === ctx.user.id).map((m) => m.id));
+      out.balance = { total: null, members: null };
+      out.balanceReminders = [];
+      out.birthdays = out.birthdays.filter((b) => mine.has(b.id));
+      out.subscription = null;
+      out.credits = null;
+      out.whatsapp = null;
+    }
+    return out;
   });
 
   // ---- quick reports ---------------------------------------------------------------------------------------------

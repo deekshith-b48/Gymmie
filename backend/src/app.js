@@ -31,17 +31,23 @@ import { registerMemberAccountRoutes } from './routes/member_account.js';
 import { registerMemberStaffRoutes } from './routes/member_staff.js';
 import { MemberSessions, memberContext } from './member_auth.js';
 import { Messenger } from './messenger.js';
+import { Ops } from './ops.js';
 import { loadPricing } from './domain/catalog.js';
+
+const ANON_MAX_BODY = 64 * 1024; // sign-in, registration, portal and similar public calls are tiny
 
 export function createApp({ store, config }) {
   loadPricing(config.pricingFile);
+  store.fileQuota = config.fileQuotaBytes;
   const router = new Router();
   const auth = new AuthService(store, config);
   const messenger = new Messenger(config);
   auth.messenger = messenger;
+  const ops = new Ops(store, config);
+  auth.ops = ops;
   const limiter = new RateLimiter(config.rateLimitScale);
   const memberSessions = new MemberSessions(store, auth, config);
-  const deps = { store, config, auth, limiter, router, memberSessions, messenger };
+  const deps = { store, config, auth, limiter, router, memberSessions, messenger, ops };
 
   registerConfigRoutes(deps);
   registerAuthRoutes(deps);
@@ -68,8 +74,9 @@ export function createApp({ store, config }) {
   registerMemberStaffRoutes(deps);
 
   async function handle(req, url) {
-    const { route, params, pathMatched } = router.match(req.method, url.pathname);
+    const { route, params, pathMatched, malformed } = router.match(req.method, url.pathname);
     if (!route) {
+      if (malformed) throw badRequest('Malformed URL');
       if (pathMatched) throw new ApiError(405, 'METHOD_NOT_ALLOWED', 'Method not allowed');
       throw notFound('Route not found');
     }
@@ -80,7 +87,18 @@ export function createApp({ store, config }) {
       ip: clientIp(req, config.trustProxy),
       body: {},
     };
-    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) ctx.body = await readJson(req, opts.maxBody);
+    const hasBody = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
+    // The body is read AFTER the caller has been identified, never before: an anonymous client cannot make the server buffer and parse
+    // megabytes just to be told it is not signed in. Anonymous routes get a small body limit and a per-address request budget.
+    const anonymous = opts.auth === 'none';
+    if (anonymous && !/^\/(health|healthcheck|ready)$|\/webhooks\//.test(url.pathname)) limiter.check(`anon:${ctx.ip}`, 300, 600);
+    const readBody = async () => {
+      if (!hasBody) return;
+      ctx.body = await readJson(req, opts.maxBody ?? (anonymous ? ANON_MAX_BODY : undefined));
+      // every handler treats the body as an object: a JSON null, list or number is a client error, not a crash
+      if (ctx.body === null || typeof ctx.body !== 'object' || Array.isArray(ctx.body)) throw badRequest('Request body must be a JSON object');
+    };
+    if (anonymous) await readBody();
 
     if (opts.auth !== 'none') {
       const header = req.headers.authorization ?? '';
@@ -132,8 +150,9 @@ export function createApp({ store, config }) {
       const paid = FEATURE_ROUTES.find(([re]) => re.test(url.pathname));
       if (paid) ensureFeature(ctx.gym, paid[1]);
     }
+    if (!anonymous) await readBody();
     const out = await route.handler(ctx);
     return out === undefined ? { __envelope: true, status: 204 } : out;
   }
-  return { handle, router, auth, store, config, raw, messenger };
+  return { handle, router, auth, store, config, raw, messenger, ops, limiter };
 }

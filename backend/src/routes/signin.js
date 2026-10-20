@@ -39,20 +39,21 @@ export function registerSigninRoutes({ router, store, auth, config, limiter, mem
     const b = validate({ phone: S.phone({ required: true }), channel: S.oneOf(['sms', 'whatsapp']), gymCode: S.str({ max: 12 }) }, ctx.body);
     limiter.check(`sin-ip:${ctx.ip}`, 30, 600);
     limiter.check(`sin-target:${b.phone}`, 6, 600);
+    limiter.check(`sin-resend:${b.phone}`, 1, Math.max(1, config.otpResendSec)); // the same wait for every number, registered or not
     const channel = b.channel ?? 'sms';
     const shape = { expiresIn: config.otpTtlSec, resendIn: config.otpResendSec, maskedTarget: maskPhone(b.phone), channel };
     const staff = auth.findUserByIdentifier({ phone: b.phone });
     const candidates = findMembersByPhone(store, b.phone, b.gymCode);
     const staffId = staff && !staff.disabled ? staff.id : null;
     if (!staffId && !candidates.length) return { requestId: randomUUID(), ...shape }; // same answer: nothing is revealed
-    const otp = auth.createOtp({ purpose: 'signin', channel, target: b.phone, userId: staffId ?? undefined, context: { staffUserId: staffId, candidates } });
+    const otp = auth.createOtp({ purpose: 'signin', channel, target: b.phone, userId: staffId ?? undefined, context: { staffUserId: staffId, candidates }, ip: ctx.ip });
     return { ...shape, requestId: otp.requestId, devOtp: config.devExposeOtp ? otp.devOtp : undefined };
   });
 
   router.post('/v5/auth/signin/verify', { auth: 'none' }, (ctx) => {
     const b = validate({ requestId: S.str({ required: true }), otp: S.str({ required: true, min: 4, max: 8 }), device: S.str({ max: 120 }) }, ctx.body);
     limiter.check(`sinv-ip:${ctx.ip}`, 60, 600);
-    const r = auth.verifyOtp(b.requestId, b.otp, 'signin');
+    const r = auth.verifyOtp(b.requestId, b.otp, 'signin', { ip: ctx.ip });
     const { staff, members } = rolesFor(r.target, r.context.candidates, r.context.staffUserId);
     if (staff) store.run('UPDATE users SET phone_verified = 1 WHERE id = ?', staff.id);
     if (!staff && !members.length) throw forbidden('Access is not available for this number. Ask your gym.');
@@ -99,7 +100,7 @@ export function registerSigninRoutes({ router, store, auth, config, limiter, mem
     limiter.check(`mcode-gym-ip:${parsed.gymCode}:${ctx.ip}`, 10, 600);
     const gymRow = store.get('SELECT id FROM gyms WHERE code = ?', parsed.gymCode);
     if (!gymRow) throw bad();
-    const hash = hashCode(config.jwtSecret, parsed.gymCode, parsed.tail);
+    const hash = hashCode(config.accessCodeKey, parsed.gymCode, parsed.tail);
     const row = store.get(
       "SELECT id FROM docs WHERE gym_id = ? AND collection = 'members' AND deleted_at IS NULL AND json_extract(data, '$.accessCodeHash') = ? LIMIT 1", gymRow.id, hash,
     );

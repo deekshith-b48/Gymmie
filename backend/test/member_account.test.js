@@ -8,7 +8,8 @@ import { processExpiryReminders } from '../src/routes/messaging.js';
 let h; let A; let B; let manager; let desk; let trainer; let otherTrainer;
 let gold; let silver; let short;
 let alice; let bob; let carol; let bobTrainerless;
-const TODAY = () => new Date().toISOString().slice(0, 10);
+// the gyms in these tests are in India: "today" is the Indian date, which differs from the UTC date for 5.5 hours every day
+const TODAY = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 const PDF = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF').toString('base64');
 

@@ -2,7 +2,8 @@ import { loadConfig } from './config.js';
 import { openDb } from './db.js';
 import { createApp } from './app.js';
 import { createHttpServer } from './http.js';
-import { processOutbox } from './domain/delivery.js';
+import { processOutbox, recoverStuckMessages } from './domain/delivery.js';
+import { purgeExpired } from './domain/housekeeping.js';
 import { processDueBroadcasts, processExpiryReminders } from './routes/messaging.js';
 
 export function startServer(overrides = {}) {
@@ -20,13 +21,20 @@ export function startServer(overrides = {}) {
   const deliveryTimer = setInterval(async () => {
     if (busy || !app.messenger.anyText) return;
     busy = true;
-    try { await processOutbox(store, app.messenger); } catch (e) { console.error('[delivery]', e); } finally { busy = false; }
+    try { await processOutbox(store, app.messenger, { ops: app.ops }); } catch (e) { console.error('[delivery]', e); } finally { busy = false; }
   }, 10_000);
   deliveryTimer.unref();
+  // messages the process died while sending: marked failed and refunded once, never re-sent
+  const recoveryTimer = setInterval(() => { try { recoverStuckMessages(store, { ops: app.ops }); } catch (e) { console.error('[recovery]', e); } }, 5 * 60_000);
+  recoveryTimer.unref();
+  const purgeTimer = setInterval(() => { try { purgeExpired(store); } catch (e) { console.error('[purge]', e); } }, 24 * 3600_000);
+  purgeTimer.unref();
+  try { purgeExpired(store); } catch (e) { console.error('[purge]', e); }
+  recoverStuckMessages(store, { ops: app.ops }); // and once at start-up, which is exactly when a crash is noticed
   return new Promise((resolve) => {
     server.listen(config.port, config.host, () => {
       const addr = server.address();
-      resolve({ server, store, config, app, port: addr.port, close: () => new Promise((r) => { clearInterval(timer); clearInterval(expiryTimer); clearInterval(deliveryTimer); server.close(() => { store.close(); r(); }); }) });
+      resolve({ server, store, config, app, port: addr.port, close: () => new Promise((r) => { clearInterval(timer); clearInterval(expiryTimer); clearInterval(deliveryTimer); clearInterval(recoveryTimer); clearInterval(purgeTimer); server.close(() => { store.close(); r(); }); }) });
     });
   });
 }

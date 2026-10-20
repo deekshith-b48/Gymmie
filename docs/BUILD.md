@@ -47,9 +47,8 @@ flutter build apk --release --dart-define=API_BASE_URL=https://your-backend.exam
 |---|---|---|
 | `API_BASE_URL` | Backend root (https required in release) | debug: `http://10.0.2.2:8787`; release: none → the app opens *Backend URL* setup |
 | `SENTRY_DSN` | Enables Sentry crash reporting (release builds only) | off |
-| `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID`, `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET` | Enables Firebase (FCM push token registration, Analytics) | off |
 
-No keys, DSNs or Firebase config are compiled into the repository. The values that exist inside the
+No keys or DSNs are compiled into the repository. Push notifications (Firebase) are not part of this build. The values that exist inside the
 original APK (Sentry DSN, PostHog key, Firebase client config) were deliberately **not** copied.
 
 ### Release signing

@@ -1659,12 +1659,6 @@ class DevToolsScreen extends StatelessWidget {
                   s.settings.devOtpEnabled ? 'yes' : 'no',
                 ),
                 InfoRow(
-                  'Firebase',
-                  AppConfig.firebaseConfigured
-                      ? 'configured'
-                      : 'not configured',
-                ),
-                InfoRow(
                   'Sentry',
                   AppConfig.sentryDsn.isNotEmpty ? 'enabled' : 'off',
                 ),

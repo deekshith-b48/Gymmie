@@ -7,7 +7,7 @@ import { newAccessCode } from '../domain/access_code.js';
 
 /** A code no other member of this gym holds. Returns { code, hash }. */
 export function allocateAccessCode(store, config, gym) {
-  return newAccessCode(config.jwtSecret, gym.code, (hash) => !!store.get(
+  return newAccessCode(config.accessCodeKey, gym.code, (hash) => !!store.get(
     "SELECT 1 FROM docs WHERE gym_id = ? AND collection = 'members' AND json_extract(data, '$.accessCodeHash') = ? LIMIT 1", gym.id, hash,
   ));
 }

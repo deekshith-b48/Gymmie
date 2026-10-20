@@ -117,14 +117,14 @@ export function registerMemberAppRoutes({ router, store, auth, config, limiter, 
     const candidates = findMembersByPhone(store, b.phone, b.gymCode);
     const shape = { expiresIn: config.otpTtlSec, resendIn: config.otpResendSec, maskedTarget: maskPhone(b.phone), channel: 'sms' };
     if (!candidates.length) return { requestId: randomUUID(), ...shape };
-    const otp = auth.createOtp({ purpose: 'member-login', channel: 'sms', target: b.phone, context: { candidates } });
+    const otp = auth.createOtp({ purpose: 'member-login', channel: 'sms', target: b.phone, context: { candidates }, ip: ctx.ip });
     return { ...shape, requestId: otp.requestId, devOtp: config.devExposeOtp ? otp.devOtp : undefined };
   });
 
   router.post('/v5/member/auth/otp/verify', { auth: 'none' }, (ctx) => {
     const b = validate({ requestId: S.str({ required: true }), otp: S.str({ required: true, min: 4, max: 8 }), device: S.str({ max: 120 }) }, ctx.body);
     limiter.check(`motpv-ip:${ctx.ip}`, 60, 600);
-    const r = auth.verifyOtp(b.requestId, b.otp, 'member-login');
+    const r = auth.verifyOtp(b.requestId, b.otp, 'member-login', { ip: ctx.ip });
     // Re-judge each candidate now: it may have been blocked or removed since the code was sent.
     const live = (r.context.candidates ?? []).filter((c) => memberAllowed(store, c.gymId, c.memberId, r.target));
     if (!live.length) throw forbidden('Member access is not available for this number. Ask your gym.');

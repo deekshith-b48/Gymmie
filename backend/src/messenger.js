@@ -48,7 +48,7 @@ export class Messenger {
   }
 
   async _json(url, init) {
-    const res = await this.fetch(url, init);
+    const res = await this.fetch(url, { signal: AbortSignal.timeout(15_000), ...init }); // a stalled provider must not hold a message in 'sending'
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(`provider ${res.status}: ${JSON.stringify(body).slice(0, 200)}`);
     return body;

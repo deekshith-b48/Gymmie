@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.0.2] - unreleased
+
+Security hardening from the pre-launch audit.
+
+### Fixed
+- **Trainer scope**: a trainer's member export is limited to their own members and hides what members chose to hide, with no money column; the dashboard no longer shows a trainer gym-wide dues, billing or other members' names; the workout and diet generators refuse members who are not theirs and never use health data a member hid from trainers.
+- **Subscriptions**: buying a plan no longer grants a higher tier for time that was not paid for or removes paid time. Same-tier purchases renew, upgrades are prorated from what was actually paid, downgrades queue until the current plan ends. Delivery uses the plan as sold and the amount confirmed by the payment.
+- **Free trial**: one trial per owner is claimed when a gym is created; extra gyms are allowed (up to 10 per account) but wait for a plan. Referring your own gym earns nothing.
+- **Sign-in codes**: failures are counted per phone across all codes with escalating lockouts (15 min up to 4 h); locked or unknown numbers look identical; codes that fail all read the same.
+- **Text-message cost**: per-phone, per-address, per-account, per-gym-QR and global sending budgets, tighter limits on the public endpoints, an optional bot challenge (Cloudflare Turnstile), and an operator alert before the global ceiling is reached.
+- **Account enumeration**: login, registration and every resend answer a known and an unknown number alike.
+- **Payments and messages**: a payment of the wrong amount, or a second payment for a settled order, alerts the operator; operator commands to apply or close such orders; messages stuck in sending are failed and refunded once, never re-sent.
+- Anonymous requests are no longer read before sign-in is checked and have small body limits and a request budget; malformed URLs, `sort=__proto__` and non-object bodies return 4xx instead of 500; file storage quota per gym; device keys are rate limited and device clocks are not trusted; old sign-in records and sessions are purged; changing a sign-in number signs out other devices.
+- `node src/seed.js --reset` works again and refuses production or any database with real accounts.
+- Tests that used the UTC date for Indian gyms failed for 5.5 hours every day.
+
+### Added
+- Encrypted off-site backups with a public key (`backend/scripts/backup-crypt.js`), key-management and restore-drill documentation.
+- Operator console: `events`, `mismatches`, `order-apply`, `order-dismiss`, `recover-messages`.
+- Separate `SEAL_KEY` and `ACCESS_CODE_KEY` so `JWT_SECRET` can be rotated.
+
+### Changed
+- Removed the unused Firebase packages: the app no longer declares advertising-ID, ad-services, push or install-referrer permissions.
+
 ## [2.0.1] - 2026-10-12
 
 Production readiness.

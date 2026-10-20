@@ -17,7 +17,8 @@ const fakeFetch = async (url, init) => {
   return { ok: true, status: 200, json: async () => ({ id: `plink_${calls.length}`, short_url: `https://rzp.io/i/${body.reference_id.slice(0, 6)}` }) };
 };
 let h;
-const today = () => new Date().toISOString().slice(0, 10);
+// the gyms in these tests are in India: "today" is the Indian date, which differs from the UTC date for 5.5 hours every day
+const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 const gymRow = (id) => JSON.parse(h.store.get('SELECT data FROM gyms WHERE id = ?', id).data);
 const patchGym = (id, p) => h.store.run('UPDATE gyms SET data = ? WHERE id = ?', JSON.stringify({ ...gymRow(id), ...p }), id);
 const enableMemberApp = (id) => patchGym(id, { features: { ...gymRow(id).features, MEMBER_APP: true } });
@@ -85,7 +86,9 @@ test('signing out, signing in again, or registering the same number again never 
   await o.complete();
   const ends = gymRow(o.gym).subscription.endsAt;
   const again = await h.call('POST', '/v5/register/partner', { body: { name: 'Same Person', phone: '+919876505004' } });
-  assert.equal(again.status, 409, 'the number is already registered');
+  assert.equal(again.status, 200, 'registering an existing number looks like any other request; the code then fails to create a second account');
+  const dupVerify = await h.call('POST', '/v5/register/partner/verify', { body: { requestId: data(again).requestId, otp: '123456' } });
+  assert.equal(dupVerify.status, 409, 'the number is already registered');
   const login = await h.call('POST', '/v5/auth/signin/otp', { body: { phone: '+919876505004' } });
   const v = await h.call('POST', '/v5/auth/signin/verify', { body: { requestId: data(login).requestId, otp: '123456' } });
   assert.equal(data(v).kind, 'staff');

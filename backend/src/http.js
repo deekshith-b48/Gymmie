@@ -35,7 +35,7 @@ export class Router {
       if (r.method !== method) continue;
       if (!best || r.keys.length < best.route.keys.length) {
         const params = {};
-        r.keys.forEach((k, i) => { params[k] = decodeURIComponent(m[i + 1]); });
+        try { r.keys.forEach((k, i) => { params[k] = decodeURIComponent(m[i + 1]); }); } catch { return { route: null, pathMatched: true, malformed: true }; }
         best = { route: r, params };
       }
     }
@@ -46,6 +46,8 @@ export class Router {
 export async function readJson(req, limit = MAX_BODY) {
   const chunks = [];
   let size = 0;
+  // refuse by the declared length before reading a byte
+  if (Number(req.headers['content-length'] ?? 0) > limit) throw new ApiError(413, 'PAYLOAD_TOO_LARGE', 'Request body too large');
   for await (const c of req) {
     size += c.length;
     if (size > limit) throw new ApiError(413, 'PAYLOAD_TOO_LARGE', 'Request body too large');

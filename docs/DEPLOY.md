@@ -29,23 +29,41 @@ curl https://<DOMAIN>/ready        # {"data":{"status":"ready",...}}
 
 Caddy gets the HTTPS certificate by itself. Logs are one JSON line per request (`docker compose logs -f backend`); the query string is never logged.
 
-## 4. Backups (do the restore drill once, today)
+## 4. Backups (encrypted off-site, and do the restore drill once, today)
 
-The `backup` service writes a verified copy of the database to `deploy/backups/` every night and keeps the newest 14. Copy that folder
-off the machine, for example with rclone to any S3-compatible bucket:
+The `backup` service writes a verified copy of the database to `deploy/backups/` every night and keeps the newest 14. Those files hold phone
+numbers, birth dates and health answers **in clear**, so they must never leave the machine unencrypted. `deploy/offsite-backup.sh` encrypts
+each one with a **public** key and uploads only the encrypted `.enc` files; it refuses to run without the key.
+
+### Key management (read this once, carefully)
+
+The scheme is public-key: the server holds only the public key, so a stolen bucket or a hacked server cannot read any backup. Whoever holds the
+**private key and its passphrase** can read all of them, and **if you lose them the encrypted backups are unrecoverable**.
+
+1. On **your own computer** (not the server): `BACKUP_KEY_PASSPHRASE='<a long passphrase>' node backend/scripts/backup-crypt.js genkeypair ./gymmie-backup-key`
+   writes `backup-private.pem` (itself passphrase-protected) and `backup-public.pem`, and prints a fingerprint.
+2. Copy **only** `backup-public.pem` to the server as `deploy/keys/backup-public.pem`.
+3. Store `backup-private.pem` in **two** offline places (a password manager's file vault and a USB stick in a safe). Store the passphrase and the
+   fingerprint **separately** from the key file (for example on paper). Never put either on the server, in the bucket, in git, or in chat.
+4. Rotating: generate a new pair, install the new public key. Old backups still need the old private key, so keep it until they expire (30 days).
+5. A second person (co-founder, lawyer, trusted family member) should know where the offline copy is. If only you know and you are unavailable, the
+   business cannot recover.
+
+### Restore drill (prove recovery works before you need it)
 
 ```bash
-rclone sync deploy/backups remote:gymmie-backups
+# on your computer, with the private key: fetch one encrypted backup from the bucket, then
+BACKUP_PRIVATE_KEY_FILE=./backup-private.pem BACKUP_KEY_PASSPHRASE='...' \
+  node backend/scripts/backup-crypt.js decrypt gymmie-<stamp>.sqlite.enc restored.sqlite      # refuses a wrong key or a tampered file
+node backend/scripts/restore-check.js restored.sqlite                                          # integrity ok, counts look right
+# to restore for real: stop the stack, copy the file to the data volume as gymmie.sqlite, start again
 ```
 
-Restore drill (prove it works before you need it):
+`backup-crypt.js verify <file>` checks that a backup decrypts and authenticates without writing anything. Do the drill after the first upload and
+then every quarter; write down the date.
 
-```bash
-docker compose run --rm backend node scripts/restore-check.js /backups/<file>.sqlite   # integrity ok, counts look right
-# to restore: stop the stack, copy the file to the data volume as gymmie.sqlite, start again
-```
-
-A copy of the database is also taken automatically before any schema upgrade (`<db>.pre-v<N>.bak`).
+A copy of the database is also taken automatically before any schema upgrade (`<db>.pre-v<N>.bak`; it is **not** encrypted: delete it once the
+upgrade is confirmed, and use full-disk encryption on the VM).
 
 Off-site copy and alerts are two scripts you run from cron (set `RCLONE_REMOTE` and `ALERT_WEBHOOK_URL` in `.env`):
 

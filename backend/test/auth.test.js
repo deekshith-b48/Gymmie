@@ -28,9 +28,13 @@ test('registration validates input and refuses duplicate phones', async () => {
   const bad = await h.call('POST', '/v5/register/partner', { body: { name: 'A', phone: '12345' } });
   assert.equal(bad.status, 422);
   const o = await h.owner({ phone: '+919876500102', gymName: 'Dup Gym' });
+  // asking to register an existing number looks exactly like registering a new one (no "already registered" oracle) ...
   const dup = await h.call('POST', '/v5/register/partner', { body: { name: 'Another Person', phone: '+919876500102' } });
-  assert.equal(dup.status, 409);
-  assert.match(dup.body.error.message, /already used/);
+  assert.equal(dup.status, 200);
+  // ... and only someone who proves they hold the number is told an account exists
+  const dupVerify = await h.call('POST', '/v5/register/partner/verify', { body: { requestId: data(dup).requestId, otp: '123456' } });
+  assert.equal(dupVerify.status, 409);
+  assert.match(dupVerify.body.error.message, /already has a Gymmie account/);
   const g2 = await h.call('POST', '/v5/register/partner/gym', { token: o.token, body: { name: 'dup gym', address: '99 Another Street' } });
   assert.equal(g2.status, 409);
   assert.equal(g2.body.error.message, 'Gym Already Registered');
@@ -40,9 +44,7 @@ test('OTP: wrong code is rejected, attempts are capped, codes are single-use', a
   await h.owner({ phone: '+919876500103', gymName: 'Otp Gym' });
   const r = await h.call('POST', '/v5/auth/login/otp', { body: { phone: '+919876500103' } });
   const id = data(r).requestId;
-  for (let i = 0; i < 5; i++) assert.equal((await h.call('POST', '/v5/auth/login/otp/verify', { body: { requestId: id, otp: '000000' } })).status, 422);
-  const locked = await h.call('POST', '/v5/auth/login/otp/verify', { body: { requestId: id, otp: '123456' } });
-  assert.equal(locked.status, 429);
+  for (let i = 0; i < 4; i++) assert.equal((await h.call('POST', '/v5/auth/login/otp/verify', { body: { requestId: id, otp: '000000' } })).status, 422);
   const r2 = await h.call('POST', '/v5/auth/login/otp', { body: { phone: '+919876500103' } });
   const ok = await h.call('POST', '/v5/auth/login/otp/verify', { body: { requestId: data(r2).requestId, otp: '123456' } });
   assert.equal(ok.status, 200);
@@ -50,9 +52,15 @@ test('OTP: wrong code is rejected, attempts are capped, codes are single-use', a
   assert.equal(replay.status, 422);
 });
 
-test('unknown account on login is a 404, not a silent success', async () => {
-  const r = await h.call('POST', '/v5/auth/login/otp', { body: { phone: '+919000011111' } });
-  assert.equal(r.status, 404);
+test('login does not say whether a number has an account: the answer is the same and the code never works', async () => {
+  const known = await h.call('POST', '/v5/auth/login/otp', { body: { phone: '+919876500103' } });
+  const unknown = await h.call('POST', '/v5/auth/login/otp', { body: { phone: '+919000011111' } });
+  assert.equal(unknown.status, 200);
+  const keys = (r) => Object.keys(data(r)).filter((k) => k !== 'devOtp').sort().join();
+  assert.equal(keys(unknown), keys(known));
+  assert.equal(data(unknown).devOtp, undefined, 'no code exists for an unknown number, even in development');
+  const v = await h.call('POST', '/v5/auth/login/otp/verify', { body: { requestId: data(unknown).requestId, otp: '123456' } });
+  assert.equal(v.status, 422);
 });
 
 test('refresh tokens rotate and a replayed token revokes the whole session family', async () => {
