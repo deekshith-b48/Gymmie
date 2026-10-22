@@ -38,6 +38,14 @@ Google Play re-signs with the app signing key it holds (turn on Play App Signing
 
 ## Every release
 
+Production builds have no manual server selection, hidden developer unlock, or developer routes. They ignore saved server overrides
+from earlier test builds. Deploy the backend first and supply its final HTTPS address with `API_BASE_URL`; Gradle rejects release builds
+without it, including local releases signed with a debug key. Normal debug builds retain emulator/server tools.
+
+CI uses Flutter 3.47.7 and fails tagged releases if signing material or valid HTTPS API/site URLs are missing. Set optional `SENTRY_DSN`
+for crash reporting; CI supplies the exact GitHub source revision through `OPENGYM_SOURCE_URL`. Ensure that source URL is accessible
+to recipients; a private repository link alone does not provide source access.
+
 ```bash
 # bump `version:` in pubspec.yaml (name+build, the build number must rise each upload) and "version" in backend/package.json; update CHANGELOG.md
 flutter build appbundle --release --obfuscate --split-debug-info=build/symbols \

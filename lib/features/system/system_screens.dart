@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -21,6 +22,17 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final session = getIt<SessionCubit>();
+    if (!getIt<AppConfig>().isConfigured) {
+      return const Scaffold(
+        body: SafeArea(
+          child: EmptyState(
+            icon: Icons.app_blocking_outlined,
+            title: 'Please update Gymmie',
+            message: 'This version cannot connect to Gymmie. Install the latest version or contact Gymmie support.',
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
@@ -38,7 +50,10 @@ class SplashScreen extends StatelessWidget {
                   return SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.accent,
+                    ),
                   );
                 }
                 return Column(
@@ -48,19 +63,25 @@ class SplashScreen extends StatelessWidget {
                       child: Text(
                         e.message,
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
-                      style: FilledButton.styleFrom(minimumSize: const Size(160, 46)),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(160, 46),
+                      ),
                       onPressed: session.retryBoot,
                       child: const Text('Try again'),
                     ),
-                    TextButton(
-                      onPressed: () => context.go(R.backendSetup),
-                      child: const Text('Change backend URL'),
-                    ),
+                    if (kDebugMode && getIt<AppConfig>().devToolsEnabled)
+                      TextButton(
+                        onPressed: () => context.go(R.backendSetup),
+                        child: const Text('Change backend URL'),
+                      ),
                   ],
                 );
               },
@@ -115,15 +136,21 @@ class ExpiredGymScreen extends StatelessWidget {
             Expanded(
               child: EmptyState(
                 icon: Icons.lock_clock_outlined,
-                title: trialEnded ? (unavailable ? 'Choose a plan to start' : 'Your free trial has ended') : 'Subscription Expired!'.tr,
+                title: trialEnded
+                    ? (unavailable
+                          ? 'Choose a plan to start'
+                          : 'Your free trial has ended')
+                    : 'Subscription Expired!'.tr,
                 message: isOwner
                     ? (trialEnded
-                        ? (unavailable
-                            ? 'The 14-day free trial is available once per owner and has already been used. Pick a plan to start using this gym.'
-                            : 'Your 14 days are up. Pick a plan to keep managing your gym: your members and data are all still here.')
-                        : 'Please renew the subscription plan.')
+                          ? (unavailable
+                                ? 'The 14-day free trial is available once per owner and has already been used. Pick a plan to start using this gym.'
+                                : 'Your 14 days are up. Pick a plan to keep managing your gym: your members and data are all still here.')
+                          : 'Please renew the subscription plan.')
                     : 'Please contact admin to renew the subscription plan.',
-                actionLabel: isOwner ? (trialEnded ? 'See plans' : 'Renew Now'.tr) : null,
+                actionLabel: isOwner
+                    ? (trialEnded ? 'See plans' : 'Renew Now'.tr)
+                    : null,
                 onAction: isOwner
                     ? () => context.push('/settings/subscription')
                     : null,
@@ -156,7 +183,11 @@ class UnauthorizedScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.lock_outline_rounded, size: 84, color: AppColors.textMuted),
+              Icon(
+                Icons.lock_outline_rounded,
+                size: 84,
+                color: AppColors.textMuted,
+              ),
               const SizedBox(height: 24),
               Text(
                 'Access Denied',
@@ -215,7 +246,6 @@ class VersionFooter extends StatefulWidget {
 
 class _VersionFooterState extends State<VersionFooter> {
   String _v = '';
-  int _taps = 0;
 
   @override
   void initState() {
@@ -234,25 +264,11 @@ class _VersionFooterState extends State<VersionFooter> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        GestureDetector(
-          onTap: () async {
-            if (++_taps >= 5) {
-              _taps = 0;
-              await cfg.setDevToolsEnabled(true);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Developer tools enabled')),
-                );
-                setState(() {});
-              }
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Text(_v, style: TextStyle(fontSize: 12, color: color)),
-          ),
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(_v, style: TextStyle(fontSize: 12, color: color)),
         ),
-        if (cfg.devToolsEnabled)
+        if (kDebugMode && cfg.devToolsEnabled)
           TextButton.icon(
             onPressed: () => context.push(R.backendSetup),
             icon: const Icon(Icons.dns_outlined, size: 16),
@@ -286,6 +302,10 @@ class BrandLogo extends StatelessWidget {
   const BrandLogo({super.key, this.height = 36});
   final double height;
   @override
-  Widget build(BuildContext context) =>
-      Image.asset('assets/brand/logo_mark.png', height: height, fit: BoxFit.contain, semanticLabel: 'Gymmie');
+  Widget build(BuildContext context) => Image.asset(
+    'assets/brand/logo_mark.png',
+    height: height,
+    fit: BoxFit.contain,
+    semanticLabel: 'Gymmie',
+  );
 }

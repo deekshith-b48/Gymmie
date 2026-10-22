@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/config/app_config.dart';
@@ -72,20 +73,37 @@ class _Refresh extends ChangeNotifier {
 /// fees online" setup. Returns the route to be on, or null when there is nothing to show. Both can be skipped and neither blocks anything.
 String? onboardingRedirect(SessionState s, String loc) {
   final seesIntro = s.role == 'owner' || s.role == 'manager';
-  if (seesIntro && s.user != null && !WalkthroughStore.seen(s.user!.id)) return R.walkthrough;
-  if (s.role == 'owner' && (s.profile?.onboardingCompleted ?? false) && s.profile?.paymentSetup == 'none') return R.paymentIntro;
+  if (seesIntro && s.user != null && !WalkthroughStore.seen(s.user!.id)) {
+    return R.walkthrough;
+  }
+  if (s.role == 'owner' &&
+      (s.profile?.onboardingCompleted ?? false) &&
+      s.profile?.paymentSetup == 'none') {
+    return R.paymentIntro;
+  }
   return null;
 }
 
-const _publicRoutes = {R.login, R.loginOtp, R.register, R.backendSetup, R.memberLogin};
+const _publicRoutes = {
+  R.login,
+  R.loginOtp,
+  R.register,
+  R.backendSetup,
+  R.memberLogin,
+};
 
 String? _redirect(SessionCubit session, AppConfig config, GoRouterState st) {
   final loc = st.matchedLocation;
   final s = session.state;
   if (!config.isConfigured) {
-    return loc == R.backendSetup ? null : R.backendSetup;
+    return loc == R.splash ? null : R.splash;
   }
-  if (loc == R.backendSetup) return null; // always reachable (developer tools)
+  if (loc == R.backendSetup || loc == '/settings/dev') {
+    if (!kDebugMode || !config.devToolsEnabled) {
+      return s.signedIn ? R.home : R.login;
+    }
+    return null;
+  }
   if (s.status == SessionStatus.booting) {
     return loc == R.splash ? null : R.splash;
   }
@@ -149,10 +167,11 @@ GoRouter buildRouter() {
     ),
     routes: [
       GoRoute(path: R.splash, builder: (_, _) => const SplashScreen()),
-      GoRoute(
-        path: R.backendSetup,
-        builder: (_, _) => const BackendSetupScreen(),
-      ),
+      if (kDebugMode && config.devToolsEnabled)
+        GoRoute(
+          path: R.backendSetup,
+          builder: (_, _) => const BackendSetupScreen(),
+        ),
       GoRoute(
         path: R.maintenance,
         builder: (_, _) => const MaintenanceScreen(),
@@ -173,10 +192,22 @@ GoRouter buildRouter() {
         builder: (_, st) => OtpScreen(args: st.extra as OtpArgs),
       ),
       GoRoute(path: R.register, builder: (_, _) => const RegisterScreen()),
-      GoRoute(path: R.memberLogin, builder: (_, _) => const MemberLoginScreen()),
-      GoRoute(path: R.walkthrough, builder: (_, _) => const WalkthroughScreen()),
-      GoRoute(path: R.paymentIntro, builder: (_, _) => const PaymentSetupScreen(onboarding: true)),
-      GoRoute(path: '/settings/payments', builder: (_, _) => const PaymentSetupScreen()),
+      GoRoute(
+        path: R.memberLogin,
+        builder: (_, _) => const MemberLoginScreen(),
+      ),
+      GoRoute(
+        path: R.walkthrough,
+        builder: (_, _) => const WalkthroughScreen(),
+      ),
+      GoRoute(
+        path: R.paymentIntro,
+        builder: (_, _) => const PaymentSetupScreen(onboarding: true),
+      ),
+      GoRoute(
+        path: '/settings/payments',
+        builder: (_, _) => const PaymentSetupScreen(),
+      ),
       GoRoute(
         path: R.gymSetup,
         builder: (_, st) =>
@@ -326,7 +357,10 @@ GoRouter buildRouter() {
         path: '/members/:id/diet',
         builder: (_, st) => DietEditorScreen(memberId: st.pathParameters['id']),
       ),
-      GoRoute(path: '/membership-requests', builder: (_, _) => const MembershipRequestsScreen()),
+      GoRoute(
+        path: '/membership-requests',
+        builder: (_, _) => const MembershipRequestsScreen(),
+      ),
       // ---- messaging ----
       GoRoute(path: '/broadcasts', builder: (_, _) => const BroadcastsScreen()),
       GoRoute(
@@ -478,7 +512,11 @@ GoRouter buildRouter() {
         path: '/settings/support',
         builder: (_, _) => const SupportScreen(),
       ),
-      GoRoute(path: '/settings/dev', builder: (_, _) => const DevToolsScreen()),
+      if (kDebugMode && config.devToolsEnabled)
+        GoRoute(
+          path: '/settings/dev',
+          builder: (_, _) => const DevToolsScreen(),
+        ),
       GoRoute(path: '/profile', builder: (_, _) => const ProfileScreen()),
       // ---- members ----
       GoRoute(

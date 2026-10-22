@@ -45,7 +45,7 @@ flutter build apk --release --dart-define=API_BASE_URL=https://your-backend.exam
 
 | Define | Purpose | Default |
 |---|---|---|
-| `API_BASE_URL` | Backend root (https required in release) | debug: `http://10.0.2.2:8787`; release: none → the app opens *Backend URL* setup |
+| `API_BASE_URL` | Backend root (HTTPS required for release) | debug: `http://10.0.2.2:8787`; release: required, build fails if missing/invalid |
 | `SENTRY_DSN` | Enables Sentry crash reporting (release builds only) | off |
 
 No keys or DSNs are compiled into the repository. Push notifications (Firebase) are not part of this build. The values that exist inside the

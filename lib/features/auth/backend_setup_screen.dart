@@ -101,6 +101,7 @@ class _BackendSetupScreenState extends State<BackendSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!kDebugMode || !_cfg.devToolsEnabled) return const SizedBox.shrink();
     return Scaffold(
       appBar: AppBar(title: const Text('Backend URL')),
       body: SafeArea(

@@ -2,6 +2,7 @@
 // notices, membership requests and closing the app account. Every change is a call the server authorises for THIS
 // member (it never takes an id from here), so each screen simply says what happened or why it could not.
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -284,7 +285,7 @@ class _CodeStepState extends State<_CodeStep> {
   @override
   Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
     Text('We sent a code to ${widget.challenge.maskedTarget ?? 'your phone'}.', style: TextStyle(color: OG.dim)),
-    if (widget.challenge.devOtp != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text('Development server: code ${widget.challenge.devOtp}', style: TextStyle(color: OG.orange, fontSize: 12))),
+    if (kDebugMode && widget.challenge.devOtp != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text('Development server: code ${widget.challenge.devOtp}', style: TextStyle(color: OG.orange, fontSize: 12))),
     const SizedBox(height: 12),
     TextField(
       controller: _code, keyboardType: TextInputType.number, maxLength: 8, enabled: !_busy, autofocus: true,

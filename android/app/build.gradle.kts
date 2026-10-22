@@ -1,4 +1,6 @@
 import java.util.Properties
+import java.util.Base64
+import java.net.URI
 
 plugins {
     id("com.android.application")
@@ -14,6 +16,24 @@ val keystoreProperties = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
+
+fun requireReleaseApiUrl() {
+    val defines = (project.findProperty("dart-defines") as? String).orEmpty()
+        .split(',').filter { it.isNotBlank() }
+        .map { String(Base64.getDecoder().decode(it), Charsets.UTF_8) }
+        .associate { it.substringBefore('=') to it.substringAfter('=', "") }
+    val endpoint = defines["API_BASE_URL"].orEmpty().trim()
+    val uri = runCatching { URI(endpoint) }.getOrNull()
+    if (uri == null || uri.scheme != "https" || uri.host.isNullOrBlank() ||
+        uri.rawUserInfo != null || uri.rawQuery != null || uri.rawFragment != null) {
+        throw GradleException("Release builds require --dart-define=API_BASE_URL=https://<your-api-domain>. Customers cannot configure a server in the app.")
+    }
+}
+
+// Fail explicit release requests before configuring all plugin subprojects.
+if (gradle.startParameter.taskNames.any { it.substringAfterLast(':').contains("Release") }) {
+    requireReleaseApiUrl()
+}
 
 android {
     namespace = "app.gymmie.android"
@@ -78,5 +98,8 @@ gradle.taskGraph.whenReady {
         } else {
             throw GradleException("android/key.properties is missing: create the upload keystore (docs/RELEASE.md) or pass -PallowDebugSigning=true for a local test build.")
         }
+    }
+    if (releaseBuild) {
+        requireReleaseApiUrl()
     }
 }

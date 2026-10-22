@@ -14,8 +14,8 @@ self-hostable backend that handles billing, messages and backups.
 [![Flutter](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Android](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)](#install-the-app)
 [![Node](https://img.shields.io/badge/Node.js-%E2%89%A5%2022.13-339933?logo=nodedotjs&logoColor=white)](#1-start-the-backend)
-[![Backend tests](https://img.shields.io/badge/backend%20tests-209%20passing-brightgreen)](#testing)
-[![Flutter tests](https://img.shields.io/badge/flutter%20tests-202%20passing-brightgreen)](#testing)
+[![Backend tests](https://img.shields.io/badge/backend%20tests-219%20passing-brightgreen)](#testing)
+[![Flutter tests](https://img.shields.io/badge/flutter%20tests-209%20passing-brightgreen)](#testing)
 
 <br>
 
@@ -86,9 +86,9 @@ Captured on an Android emulator against a demo gym ("Iron Temple Fitness"). All 
 **Download:** the APK is attached to the [release](../../releases) (64-bit Android 7.0 or newer). Allow installs from your
 browser or file manager when Android asks.
 
-> The attached APK is a **test build**: it is signed with a debug key and is not for the Play Store. It has no backend
-> address built in, so on first start it asks for the HTTPS address of **your** backend (see
-> [docs/DEPLOY.md](docs/DEPLOY.md)). For your own branded build, see [Building the app](#building-the-app) and
+> The previously attached APK is a **test build**: it is signed with a debug key and is not for the Play Store.
+> New production builds require a bundled HTTPS backend address and never ask customers to configure a server.
+> Deploy the API first (see [docs/DEPLOY.md](docs/DEPLOY.md)). For your own branded build, see [Building the app](#building-the-app) and
 > [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Quick start (developers)
@@ -125,8 +125,9 @@ flutter pub get
 flutter run -d <emulator-or-device>
 ```
 
-A debug build talks to `http://10.0.2.2:8787` by default (the host machine, as seen from the Android emulator). Use the
-server address on the sign-in screen to point it elsewhere.
+A debug build talks to `http://10.0.2.2:8787` by default (the host machine, as seen from the Android emulator). Debug builds
+offer server tools on the sign-in screen. Production builds use only `--dart-define=API_BASE_URL=https://...`, ignore saved
+server overrides, and have no server-selection or developer-tool routes.
 
 ### 3. On a physical phone
 
@@ -142,7 +143,7 @@ adb install -r build/app/outputs/flutter-apk/app-debug.apk
 
 | Area | What you can do |
 |---|---|
-| **Sign-in** | One screen for everyone, phone or email with a one-time code, access-code login for members, multi-gym switching, forced-update and maintenance screens |
+| **Sign-in** | One screen for everyone, phone or email with a one-time code, access-code login for members, multi-gym switching, forced-update and maintenance screens; production connects automatically to its bundled service |
 | **Dashboard** | Active, all, at-risk and expiring members, today's leads, balances and reminders, quick reports, insights, credits |
 | **Members** | Search, filters and sort, add or edit, detail tabs, renew or add an upcoming membership, upgrade, freeze, extend, end, block, labels, trainer assignment, member QR, access code |
 | **Plans and pricing** | Plans and groups, session-based plans, live price quote with discount and tax, partial payments, invoice PDF |
@@ -227,7 +228,7 @@ flowchart LR
 
 | Define | Purpose | Default |
 |---|---|---|
-| `API_BASE_URL` | Backend root (HTTPS required in release builds) | debug: `http://10.0.2.2:8787`; release: none, the app asks |
+| `API_BASE_URL` | Backend root (required HTTPS address for release builds) | debug: `http://10.0.2.2:8787`; release: build fails if missing/invalid |
 | `SENTRY_DSN` | Crash reporting (release builds) | off |
 | `OPENGYM_SOURCE_URL` | Where the in-app notices point for the source code (AGPL §13) | empty |
 
@@ -297,8 +298,8 @@ records messages instead of sending them.
 
 ```bash
 flutter analyze                # no issues
-flutter test                   # 202 tests: domain parity with openGym, member UI, permissions, models, flags
-cd backend && npm test         # 209 end-to-end tests against a real HTTP server and an in-memory DB
+flutter test                   # 209 tests: domain parity, member UI, permissions, production navigation/configuration, models, flags
+cd backend && npm test         # 219 tests: real HTTP, route-wide RBAC, in-memory and disposable file-backed SQLite
 ```
 
 The backend tests cover auth and token rotation, the member principal and access codes, pricing and tax, memberships (overlap,

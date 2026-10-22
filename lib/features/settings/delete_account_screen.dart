@@ -1,6 +1,7 @@
 // Closing a staff or owner account: a code to the person's own phone, and typing DELETE. Gym owners are told to contact
 // support, because closing a gym deletes the business's data.
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../app/di.dart';
 import '../../app/session_cubit.dart';
@@ -86,7 +87,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           LoadingButton(label: 'Send me a code', onPressed: _send, loading: _busy, destructive: true)
         else ...[
           Text('We sent a code to ${_challenge!.maskedTarget ?? 'you'}.', style: TextStyle(color: AppColors.textSecondary)),
-          if (_challenge!.devOtp != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text('Development backend: code ${_challenge!.devOtp}', style: TextStyle(color: AppColors.warning, fontSize: 12))),
+          if (kDebugMode && _challenge!.devOtp != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text('Development backend: code ${_challenge!.devOtp}', style: TextStyle(color: AppColors.warning, fontSize: 12))),
           const SizedBox(height: 12),
           AppTextField(controller: _code, label: 'Code', keyboardType: TextInputType.number, maxLength: 8),
           const SizedBox(height: 12),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
 import 'delete_account_screen.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -294,7 +297,7 @@ class SettingsScreen extends StatelessWidget {
                 Icons.developer_mode,
                 'Developer tools',
                 '/settings/dev',
-                visible: cfg.devToolsEnabled,
+                visible: kDebugMode && cfg.devToolsEnabled,
               ),
             ],
           ),
@@ -346,10 +349,7 @@ class SettingsScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: AppColors.textMuted,
-                      ),
+                      Icon(Icons.chevron_right, color: AppColors.textMuted),
                     ],
                   ),
                 ),
@@ -409,7 +409,11 @@ class SettingsScreen extends StatelessWidget {
                 icon: Icons.delete_forever_outlined,
                 title: 'Delete my account',
                 danger: true,
-                onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const DeleteAccountScreen())),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const DeleteAccountScreen(),
+                  ),
+                ),
               ),
               Center(
                 child: TextButton(
@@ -417,10 +421,7 @@ class SettingsScreen extends StatelessWidget {
                       Launch.url(context, AppConfig.supportUrls['privacy']!),
                   child: Text(
                     'Privacy Policy'.tr,
-                    style: TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 12),
                   ),
                 ),
               ),

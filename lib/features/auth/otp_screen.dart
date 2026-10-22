@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/di.dart';
@@ -116,10 +117,7 @@ class _OtpScreenState extends State<OtpScreen> {
               isEmail
                   ? 'Enter the code sent to your email'
                   : 'Enter the 6-digit code we sent to $target',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                height: 1.5,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, height: 1.5),
             ),
             if (isEmail)
               Padding(
@@ -132,7 +130,7 @@ class _OtpScreenState extends State<OtpScreen> {
             const SizedBox(height: 28),
             OtpField(controller: _code, onCompleted: _verify, error: _wrong),
             const SizedBox(height: 16),
-            if (_challenge.devOtp != null)
+            if (kDebugMode && _challenge.devOtp != null)
               // Only a development backend returns the code; production servers never do.
               InfoBanner(
                 'Development backend: your code is ${_challenge.devOtp}. Tap to fill it in.',

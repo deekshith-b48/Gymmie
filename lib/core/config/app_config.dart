@@ -1,18 +1,27 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Build-time + user-selectable configuration.
-///
-/// Nothing secret is compiled in. Values come from `--dart-define` (see docs/BUILD.md) or, for the
-/// backend URL, from the in-app "Developer tools" screen (the original app has the same feature:
-/// "Backend URL", "Dev URL", "Change URL").
+/// Production uses the bundled endpoint exclusively. Saved development settings
+/// are ignored outside debug builds, including after an upgrade from a test APK.
 class AppConfig {
-  AppConfig(this._prefs);
+  AppConfig(this._prefs)
+    : _debugMode = kDebugMode,
+      _apiBaseUrl = definedBaseUrl;
+
+  @visibleForTesting
+  factory AppConfig.forTesting(
+    SharedPreferences prefs, {
+    required bool debugMode,
+    String apiBaseUrl = '',
+  }) => AppConfig._(prefs, debugMode, apiBaseUrl);
+
+  AppConfig._(this._prefs, this._debugMode, this._apiBaseUrl);
 
   final SharedPreferences _prefs;
+  final bool _debugMode;
+  final String _apiBaseUrl;
 
   static const _kBackendUrl = 'backend_url';
-  static const _kShowDevTools = 'dev_tools_enabled';
 
   /// `--dart-define=API_BASE_URL=https://...`
   static const definedBaseUrl = String.fromEnvironment('API_BASE_URL');
@@ -54,33 +63,48 @@ class AppConfig {
 
   static const pincodeLookupUrl = 'https://api.postalpincode.in/pincode/';
 
-  /// Resolution order: user override -> --dart-define -> debug default -> unconfigured ('').
+  /// Release/profile: a valid bundled HTTPS endpoint only.
+  /// Debug: saved override -> bundled endpoint -> emulator.
   String get baseUrl {
+    if (!_debugMode) {
+      return validateBaseUrl(_apiBaseUrl, allowHttp: false) == null
+          ? _trim(_apiBaseUrl)
+          : '';
+    }
     final override = _prefs.getString(_kBackendUrl);
-    if (override != null && override.isNotEmpty) return override;
-    if (definedBaseUrl.isNotEmpty) return _trim(definedBaseUrl);
-    return kDebugMode ? emulatorLocalUrl : '';
+    if (override != null && validateBaseUrl(override) == null) {
+      return _trim(override);
+    }
+    if (validateBaseUrl(_apiBaseUrl) == null) return _trim(_apiBaseUrl);
+    return emulatorLocalUrl;
   }
 
   bool get isConfigured => baseUrl.isNotEmpty;
-  bool get hasOverride => (_prefs.getString(_kBackendUrl) ?? '').isNotEmpty;
+  bool get hasOverride =>
+      _debugMode && (_prefs.getString(_kBackendUrl) ?? '').isNotEmpty;
 
   Future<void> setBaseUrl(String url) async {
+    if (!_debugMode) {
+      throw StateError('The service address is managed by Gymmie.');
+    }
     final v = validateBaseUrl(url);
     if (v != null) throw ArgumentError(v);
     await _prefs.setString(_kBackendUrl, _trim(url));
   }
 
-  Future<void> resetBaseUrl() => _prefs.remove(_kBackendUrl);
+  Future<void> resetBaseUrl() async {
+    if (!_debugMode) {
+      throw StateError('The service address is managed by Gymmie.');
+    }
+    await _prefs.remove(_kBackendUrl);
+  }
 
-  bool get devToolsEnabled =>
-      kDebugMode || (_prefs.getBool(_kShowDevTools) ?? false);
-  Future<void> setDevToolsEnabled(bool v) => _prefs.setBool(_kShowDevTools, v);
+  bool get devToolsEnabled => _debugMode;
 
   static String _trim(String u) => u.trim().replaceAll(RegExp(r'/+$'), '');
 
   /// Returns an error message, or null when [url] is acceptable.
-  static String? validateBaseUrl(String url) {
+  static String? validateBaseUrl(String url, {bool allowHttp = kDebugMode}) {
     final u = Uri.tryParse(url.trim());
     if (u == null || !u.hasScheme || u.host.isEmpty) {
       return 'Please enter a valid URL';
@@ -88,12 +112,13 @@ class AppConfig {
     if (u.scheme != 'http' && u.scheme != 'https') {
       return 'URL must start with http:// or https://';
     }
-    if (u.scheme == 'http' && !kDebugMode) {
+    if (u.scheme == 'http' && !allowHttp) {
       return 'Plain HTTP is blocked in release builds. Use an https:// URL.';
     }
     if (u.hasQuery || u.hasFragment) {
       return 'URL must not contain a query or fragment';
     }
+    if (u.userInfo.isNotEmpty) return 'URL must not contain credentials';
     return null;
   }
 

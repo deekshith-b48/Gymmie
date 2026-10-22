@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
 import '../../core/legal/notices.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -148,7 +149,11 @@ class _GymDetailsScreenState extends State<GymDetailsScreen> {
                           color: AppColors.navy,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.camera_alt, size: 16, color: AppColors.onNavy),
+                        child: Icon(
+                          Icons.camera_alt,
+                          size: 16,
+                          color: AppColors.onNavy,
+                        ),
                       ),
                     ),
                 ],
@@ -810,10 +815,7 @@ class _TimezoneScreenState extends State<TimezoneScreen> {
                   itemBuilder: (context, i) => ListTile(
                     title: Text(list[i]),
                     trailing: list[i] == current
-                        ? Icon(
-                            Icons.check_circle,
-                            color: AppColors.success,
-                          )
+                        ? Icon(Icons.check_circle, color: AppColors.success)
                         : null,
                     onTap: () async {
                       final ok = await confirmDialog(
@@ -897,7 +899,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final code = await promptText(
         context,
         title: 'Enter the OTP',
-        message: ch.devOtp != null
+        message: kDebugMode && ch.devOtp != null
             ? 'Development backend: your code is ${ch.devOtp}'
             : 'Enter the 6-digit code we sent to ${ch.maskedTarget ?? value}',
         label: 'OTP',
@@ -977,7 +979,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppColors.navy,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.camera_alt, size: 16, color: AppColors.onNavy),
+                      child: Icon(
+                        Icons.camera_alt,
+                        size: 16,
+                        color: AppColors.onNavy,
+                      ),
                     ),
                   ),
                 ],
@@ -1039,10 +1045,7 @@ class _Contact extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
               Text(
                 value ?? 'Not added',
@@ -1145,10 +1148,7 @@ class _UpiScreenState extends State<UpiScreen> {
             const Gap(10),
             Text(
               'UPI payment QR for ${g.name}',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
             Text(
               'Shown to members when they renew. Check the amount in your UPI app before confirming a payment.',
@@ -1219,7 +1219,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       } else if (o.status == 'created' && _polls < 6) {
         // paid at the bank but the payment provider has not confirmed yet: look again in a few seconds
         _polls++;
-        Future<void>.delayed(const Duration(seconds: 3), () { if (mounted) _checkOrder(); });
+        Future<void>.delayed(const Duration(seconds: 3), () {
+          if (mounted) _checkOrder();
+        });
       } else if (o.status == 'failed') {
         _pendingOrder = null;
         if (mounted) {
@@ -1370,13 +1372,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               'Plans',
               padding: EdgeInsets.fromLTRB(2, 20, 2, 4),
             ),
-            Padding(
-              padding: EdgeInsets.only(bottom: 8),
-              child: Text(
-                'Development catalogue and a simulated payment provider. Prices are placeholders.',
-                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+            if (kDebugMode)
+              Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Development catalogue and a simulated payment provider. Prices are placeholders.',
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                ),
               ),
-            ),
             BlocProvider.value(
               value: _plans,
               child:
@@ -1624,7 +1627,7 @@ class SupportScreen extends StatelessWidget {
                       : '',
                 ),
               ),
-              if (cfg.devToolsEnabled)
+              if (kDebugMode && cfg.devToolsEnabled)
                 MenuTile(
                   icon: Icons.developer_mode,
                   title: 'Developer tools',
@@ -1642,7 +1645,9 @@ class DevToolsScreen extends StatelessWidget {
   const DevToolsScreen({super.key});
   @override
   Widget build(BuildContext context) {
+    if (!kDebugMode) return const SizedBox.shrink();
     final cfg = getIt<AppConfig>();
+    if (!cfg.devToolsEnabled) return const SizedBox.shrink();
     final s = getIt<SessionCubit>().state;
     return Scaffold(
       appBar: AppBar(title: const Text('Developer tools')),
@@ -1671,14 +1676,6 @@ class DevToolsScreen extends StatelessWidget {
             onPressed: () => context.push('/backend-setup'),
             icon: const Icon(Icons.dns_outlined),
             label: const Text('Change URL'),
-          ),
-          const Gap(8),
-          OutlinedButton(
-            onPressed: () async {
-              await cfg.setDevToolsEnabled(false);
-              if (context.mounted) context.pop();
-            },
-            child: const Text('Hide developer tools'),
           ),
         ],
       ),

@@ -163,7 +163,9 @@ class ApiClient {
     bool retried = false,
   }) async {
     if (!config.isConfigured) {
-      throw ApiException.unexpected('Backend URL is not configured');
+      throw ApiException.unexpected(
+        'This version cannot connect to Gymmie. Please update the app or contact Gymmie support.',
+      );
     }
     Response<dynamic> res;
     try {
